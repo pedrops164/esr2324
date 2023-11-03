@@ -9,6 +9,7 @@ public class NeighbourReader
 {
     private String neighbourFile;
     private int id;
+    private String rp;
 
     public NeighbourReader(int id, String neighbourFile)
     {
@@ -16,6 +17,14 @@ public class NeighbourReader
         this.neighbourFile = neighbourFile;
     }
     
+    public String removeComment(String str)
+    {
+        int commentIdx = str.indexOf('#');
+        if (commentIdx != -1)
+            return str.substring(0, commentIdx);
+        return str;
+    }
+
     public Map<Integer, String> readNeighbours()
     {
         HashMap<Integer, String> neighbours = new HashMap<>();
@@ -24,11 +33,14 @@ public class NeighbourReader
             FileInputStream fis = new FileInputStream(neighbourFile);
             Scanner scanner = new Scanner(fis);
 
-            int i=0;
+            // the RP is in the first line
+            rp = removeComment(scanner.nextLine());
+
+            int i=1;
             while (i++ < id)
                 scanner.nextLine();
             
-            String neighbourLine = scanner.nextLine(); 
+            String neighbourLine = removeComment(scanner.nextLine()); 
             String[] pairs = neighbourLine.split(" ");
 
             for (String pair : pairs)
@@ -52,5 +64,10 @@ public class NeighbourReader
         }
 
         return neighbours;
-    }    
+    }
+
+    public String getRPString ()
+    {
+        return rp;
+    }
 }
