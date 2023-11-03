@@ -1,6 +1,9 @@
-import Common.NeighbourReader;
+package Rendezvous_Point;
 
-public class RP {
+import Common.NeighbourReader;
+import java.util.*;
+
+public class RP{
     private int id;
     private Map<Integer, String> neighbours;
     
@@ -9,14 +12,8 @@ public class RP {
     private Map<Integer, List<String>> streamServers;
     private int streamCounter;
 
-    public static void main(String args[]){
-        this.id = Integer.parseInt(args[1]);
-        NeighbourReader nr = new NeighbourReader(this.id, args[0]);
+    public RP(String args[], NeighbourReader nr){
+        this.id = Integer.parseInt(args[0]);
         this.neighbours = nr.readNeighbours();
-
-        // Testar a leitura dos neighbours
-        for (Map.Entry<String, Integer> entry : map.entrySet()) {
-            System.out.println(entry.getKey() + ": " + entry.getValue());
-        }
     }
 }
