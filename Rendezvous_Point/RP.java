@@ -16,4 +16,6 @@ public class RP{
         this.id = Integer.parseInt(args[0]);
         this.neighbours = nr.readNeighbours();
     }
+
+    
 }

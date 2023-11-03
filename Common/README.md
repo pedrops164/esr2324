@@ -1,1 +1,1 @@
-# Directory for all the *common* elementos to every component
+# Directory for all the *common* elements to every component
