@@ -14,8 +14,7 @@ public class RP{
     private Map<Integer, String> neighbours;
     private ServerSocket ss;
     
-    // A ideia deste Map é ter para cada uma das streams existentes
-    // a lista de IP's dos servidores que têm essas streams.
+    // Map that associates each server id to it's available streams
     private Map<Integer, List<String>> streamServers;
     private int streamCounter;
 
