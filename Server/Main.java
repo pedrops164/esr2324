@@ -1,10 +1,13 @@
-package Rendezvous_Point;
+package Server;
+
 import Common.NeighbourReader;
 
 public class Main {
     public static void main(String args[]){
         NeighbourReader nr = new NeighbourReader(Integer.parseInt(args[0]), args[1]);
-        RP rp = new RP(args, nr);
-        rp.listen(); 
+        Server server = new Server(args, nr);
+
+        // Tell the available streams to the RP
+        server.notifyStreamsRP();
     }
 }
