@@ -96,4 +96,10 @@ class RPWorker1 implements Runnable{
         // End TCP connection
         this.connection.stopConnection();
     }
+
+    public static void main(String args[]){
+        NeighbourReader nr = new NeighbourReader(Integer.parseInt(args[0]), args[1]);
+        RP rp = new RP(args, nr);
+        rp.listen(); 
+    }
 }
