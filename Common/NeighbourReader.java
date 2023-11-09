@@ -21,7 +21,7 @@ public class NeighbourReader
     {
         int commentIdx = str.indexOf('#');
         if (commentIdx != -1)
-            return str.substring(0, commentIdx);
+            return str.substring(0, commentIdx).strip();
         return str;
     }
 
@@ -35,6 +35,7 @@ public class NeighbourReader
 
             // the RP is in the first line
             rp = removeComment(scanner.nextLine());
+            rp = rp.replaceAll(".*:", "");
 
             int i=1;
             while (i++ < id)

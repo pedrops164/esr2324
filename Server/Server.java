@@ -9,6 +9,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.util.*;
 
@@ -41,7 +42,6 @@ public class Server {
         try{    
             // Send request
             ServerStreams sstreams = new ServerStreams(this.streams, this.id);
-            // Socket s = new Socket("127.0.0.1", 333);
             Socket s = new Socket(this.RPIP, 333);
             TCPConnection c = new TCPConnection(s);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();

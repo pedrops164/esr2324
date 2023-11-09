@@ -24,8 +24,7 @@ public class RP{
         this.streamServers = new HashMap<>();
 
         try{
-            this.ss = new ServerSocket(333, 16, InetAddress.getByName("0.0.0.0"));
-            //this.ss = new ServerSocket(333);
+            this.ss = new ServerSocket(333);
         }catch(Exception e){
             e.printStackTrace();
         }
@@ -70,7 +69,7 @@ public class RP{
         }
         System.out.println(this.streamServers);
     }
-    
+
     public static void main(String args[]){
         NeighbourReader nr = new NeighbourReader(Integer.parseInt(args[0]), args[1]);
         RP rp = new RP(args, nr);
