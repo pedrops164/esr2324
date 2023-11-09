@@ -15,7 +15,7 @@ public class RP{
     private ServerSocket ss;
     
     // Map that associates each server id to it's available streams
-    private Map<Integer, List<String>> streamServers;
+    private Map<String, List<Integer>> streamServers;
     private int streamCounter;
 
     public RP(String args[], NeighbourReader nr){
@@ -24,7 +24,8 @@ public class RP{
         this.streamServers = new HashMap<>();
 
         try{
-            this.ss = new ServerSocket(333);
+            this.ss = new ServerSocket(333, 16, InetAddress.getByName("0.0.0.0"));
+            //this.ss = new ServerSocket(333);
         }catch(Exception e){
             e.printStackTrace();
         }
@@ -56,9 +57,24 @@ public class RP{
         }
     }
 
-    public void addServerStreams(int serverID, List<String> streams){
-        this.streamServers.put(serverID, streams);
+    public synchronized void addServerStreams(int serverID, List<String> streams){
+        for (String stream : streams)
+        {
+            List<Integer> servers;
+            if (this.streamServers.containsKey(stream))
+                servers = this.streamServers.get(stream);
+            else
+                servers = new ArrayList<>();
+            servers.add(serverID);
+            this.streamServers.put(stream, servers);
+        }
         System.out.println(this.streamServers);
+    }
+    
+    public static void main(String args[]){
+        NeighbourReader nr = new NeighbourReader(Integer.parseInt(args[0]), args[1]);
+        RP rp = new RP(args, nr);
+        rp.listen(); 
     }
 }
 
@@ -97,9 +113,5 @@ class RPWorker1 implements Runnable{
         this.connection.stopConnection();
     }
 
-    public static void main(String args[]){
-        NeighbourReader nr = new NeighbourReader(Integer.parseInt(args[0]), args[1]);
-        RP rp = new RP(args, nr);
-        rp.listen(); 
-    }
+    
 }
