@@ -1,7 +1,6 @@
 package Common;
 
 import java.io.*;
-import java.util.*;
 import java.net.*;
 
 // This class contains all the information for every type of management TCP packet 

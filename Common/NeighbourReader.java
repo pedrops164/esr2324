@@ -44,8 +44,8 @@ public class NeighbourReader
             String neighbourLine = removeComment(scanner.nextLine()); 
             String[] pairs = neighbourLine.split(" ");
 
-            for (String pair : pairs)
-            {
+            for(int j=1; j < pairs.length; j++){
+                String pair = pairs[j];
                 String[] neighbour = pair.split("[,:]");
                 if (neighbour.length != 2)
                 {
@@ -54,10 +54,12 @@ public class NeighbourReader
                 }
                 
                 int idN = Integer.parseInt(neighbour[0]);
-
                 neighbours.put(idN, neighbour[1]);
             }
-        
+            
+            // Insert the own ID and IP in the map
+            neighbours.put(this.id, pairs[0]);
+
             scanner.close();
         } catch (Exception e) 
         {
