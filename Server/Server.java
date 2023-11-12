@@ -44,28 +44,48 @@ public class Server {
     }
 
     // Notify the RP about the available streams in this Server
-    public void notifyStreamsRP(){
-        try{    
-            // Send request
-            ServerStreams sstreams = new ServerStreams(this.streams, this.id, this.ip);
-            Socket s = new Socket(this.RPIP, 333);
-            TCPConnection c = new TCPConnection(s);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            DataOutputStream out = new DataOutputStream(baos);
-            sstreams.serialize(out);
-            out.flush();
-            byte [] data = baos.toByteArray();
-            c.send(1, data); // Send the request to the RP
+    public boolean notifyStreamsRP(){
+        int maxRetries = 10; // Maximum number of retries
+        int retryInterval = 1000; // Delay between retries in milliseconds (1 second)
+        int retryCount = 0;
+        do {
+            try{    
+                // Send request
+                ServerStreams sstreams = new ServerStreams(this.streams, this.id, this.ip);
+                Socket s = new Socket(this.RPIP, 333);
+                TCPConnection c = new TCPConnection(s);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                DataOutputStream out = new DataOutputStream(baos);
+                sstreams.serialize(out);
+                out.flush();
+                byte [] data = baos.toByteArray();
+                c.send(1, data); // Send the request to the RP
 
-            // Answer to the request
-            Packet p = c.receive();
-            ByteArrayInputStream bais = new ByteArrayInputStream(p.data);
-            DataInputStream in = new DataInputStream(bais);
-            String resp = in.readUTF();
-            System.out.println("RP response: " +  resp);
-        }catch(Exception e){
-            e.printStackTrace();
-        }
+                // Answer to the request
+                Packet p = c.receive();
+                ByteArrayInputStream bais = new ByteArrayInputStream(p.data);
+                DataInputStream in = new DataInputStream(bais);
+                String resp = in.readUTF();
+                System.out.println("RP response: " +  resp);
+                return true;
+            }catch(ConnectException e) {
+                System.out.println("ConnectException caught!!");
+                retryCount++;
+                System.out.println("Unable to connect to RP. Retrying in " + retryInterval / 1000 + " seconds. Attempt " + retryCount);
+                try {
+                    Thread.sleep(retryInterval); // Wait before retrying
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    System.out.println("Thread interrupted during retry wait.");
+                    break;
+                }
+            }catch(Exception e){
+                e.printStackTrace();
+                break;
+            }
+        } while (retryCount < maxRetries);
+        System.out.println("Server: Couldn't establish connection with RP.");
+        return false;
     }   
 
     // Listens to new requests sent to the RP
@@ -107,8 +127,10 @@ public class Server {
         Server server = new Server(args, nr);
 
         // Tell the available streams to the RP
-        server.notifyStreamsRP();
-        server.listen(); // Listen to new TCP requests
+        if (server.notifyStreamsRP()) {
+            // notifyStreamsRP returns true if it went successful
+            server.listen(); // Listen to new TCP requests
+        }
     }
 }
 
