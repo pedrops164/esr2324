@@ -5,6 +5,7 @@ import Common.ServerStreams;
 import Common.StreamRequest;
 import Common.TCPConnection;
 import Common.TCPConnection.Packet;
+import Rendezvous_Point.RP;
 import Common.VideoStream;
 import Common.RTPpacket;
 
@@ -54,7 +55,7 @@ public class Server {
             try{    
                 // Send request
                 ServerStreams sstreams = new ServerStreams(this.streams, this.id, this.ip);
-                Socket s = new Socket(this.RPIP, 333);
+                Socket s = new Socket(this.RPIP, RP.RP_PORT);
                 TCPConnection c = new TCPConnection(s);
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 DataOutputStream out = new DataOutputStream(baos);
@@ -103,7 +104,7 @@ public class Server {
                 // Creates different types of workers based on the type of packet received
                 switch (p.type) {
                     case 2: // New video stream request
-                        t = new Thread(new ServerWorker1(c, p, this.RPIP));
+                        t = new Thread(new ServerWorker1(p, this.RPIP));
                         t.start();
                         break;
                     default:
@@ -138,14 +139,11 @@ public class Server {
 
 // Responsible to handle new resquests of video streaming!
 class ServerWorker1 implements Runnable{
-    private TCPConnection connection;
     private Packet receivedPacket;
     private String RPIP;
     private DatagramSocket RTPsocket;
-    static int RP_PORT = 333; // port that RP is listening on
 
-    public ServerWorker1(TCPConnection c, Packet p, String RPIP){
-        this.connection = c;
+    public ServerWorker1(Packet p, String RPIP){
         this.receivedPacket = p;
         this.RPIP = RPIP;
         try {
@@ -164,16 +162,17 @@ class ServerWorker1 implements Runnable{
 
         String videoPath = sr.getStreamName();
 
-        int videoLength = 100;
+        // get video attributes....
+        int videoLength = 100; // number of frames
         int frame_period = 100; // time between frames in ms.
         int video_extension = 26; //26 is Mjpeg type
         
         System.out.println("The RP wants me to start streaming: " + videoPath + "!");
 
+        // Start the UDP video streaming. (Send directly to the RP)
+        System.out.println("Sending frame packets using UDP!");
         try {
             VideoStream video = new VideoStream(videoPath);
-            Socket s = new Socket(this.RPIP, 333);
-            TCPConnection c = new TCPConnection(s);
             byte[] videoBuffer = new byte[15000]; //allocate memory for the sending buffer
             for (int frameNumber = 0; frameNumber < videoLength; frameNumber++) {
 	            int image_length = video.getnextframe(videoBuffer);
@@ -188,23 +187,17 @@ class ServerWorker1 implements Runnable{
 	            rtp_packet.getpacket(packet_bits);
 
 	            //send the packet as a DatagramPacket over the UDP socket 
-	            DatagramPacket senddp = new DatagramPacket(packet_bits, packet_length, InetAddress.getByName(this.RPIP), RP_PORT);
+	            DatagramPacket senddp = new DatagramPacket(packet_bits, packet_length, InetAddress.getByName(this.RPIP), RP.RP_PORT);
 	            this.RTPsocket.send(senddp);
 
-	            rtp_packet.printheader();
-                //c.send(4, videoBuffer);
+	            //rtp_packet.printheader();
                 System.out.println("Sent video frame " + frameNumber);
 
             }
-            c.stopConnection();
         } catch (Exception e) {
             e.printStackTrace();
         }
         
-        // End TCP connection
-        this.connection.stopConnection();
-
-        // Start the UDP video streaming. (Send directly to the RP)
 
     }    
 }
