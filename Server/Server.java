@@ -167,10 +167,9 @@ class ServerWorker1 implements Runnable{
         int frame_period = 100; // time between frames in ms.
         int video_extension = 26; //26 is Mjpeg type
         
-        System.out.println("The RP wants me to start streaming: " + videoPath + "!");
 
         // Start the UDP video streaming. (Send directly to the RP)
-        System.out.println("Sending frame packets using UDP!");
+        System.out.println("Streaming '" + videoPath + "' through UDP!");
         try {
             VideoStream video = new VideoStream(videoPath);
             byte[] videoBuffer = new byte[15000]; //allocate memory for the sending buffer
@@ -191,7 +190,7 @@ class ServerWorker1 implements Runnable{
 	            this.RTPsocket.send(senddp);
 
 	            //rtp_packet.printheader();
-                System.out.println("Sent video frame " + frameNumber);
+                //System.out.println("Sent video frame " + frameNumber);
 
             }
         } catch (Exception e) {

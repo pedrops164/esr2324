@@ -1,10 +1,16 @@
 package Rendezvous_Point;
 
 import Common.NeighbourReader;
+import Common.RTPpacket;
 import Common.ServerStreams;
 import Common.StreamRequest;
 import Common.TCPConnection;
 import Common.TCPConnection.Packet;
+
+import java.awt.event.*;
+
+import javax.swing.ImageIcon;
+import javax.swing.Timer;
 
 import java.io.*;
 import java.net.*;
@@ -14,7 +20,9 @@ public class RP{
     private int id;
     private Map<Integer, String> neighbours;
     private ServerSocket ss;
+    private DatagramSocket ds;
     public static int RP_PORT = 333;
+    private byte[] udpBuffer;
     
     // Map that associates each server id to it's available streams
     private Map<String, List<Integer>> streamServers;
@@ -28,10 +36,18 @@ public class RP{
         this.servers = new HashMap<>();
 
         try{
-            this.ss = new ServerSocket(RP_PORT);
+            this.ss = new ServerSocket(RP_PORT); // socket that receives TCP packets
+            this.ds = new DatagramSocket(RP_PORT); // socket that receives UDP packets
         }catch(Exception e){
             e.printStackTrace();
         }
+
+        Timer udpTimer = new Timer(20, new handlerUDP(this.ds));
+        udpTimer.setInitialDelay(0);
+        udpTimer.setCoalesce(true);
+        udpTimer.start();
+
+        udpBuffer = new byte[15000];
     }
 
     // Listens to new requests sent to the RP
@@ -108,6 +124,39 @@ public class RP{
         NeighbourReader nr = new NeighbourReader(Integer.parseInt(args[0]), args[1]);
         RP rp = new RP(args, nr);
         rp.listen(); 
+    }
+
+    class handlerUDP implements ActionListener {
+        private DatagramSocket ds;
+
+        public handlerUDP(DatagramSocket ds) {
+            super();
+            this.ds = ds;
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            //Construct a DatagramPacket to receive data from the UDP socket
+            DatagramPacket rcvdp = new DatagramPacket(udpBuffer, udpBuffer.length);
+
+            try{
+	            //receive the DP from the socket:
+	            this.ds.receive(rcvdp);
+	            //create an RTPpacket object from the DP
+	            RTPpacket rtp_packet = new RTPpacket(rcvdp.getData(), rcvdp.getLength());
+
+	            //print important header fields of the RTP packet received: 
+	            //System.out.println("Got RTP packet with SeqNum # "+rtp_packet.getsequencenumber()+" TimeStamp "+rtp_packet.gettimestamp()+" ms, of type "+rtp_packet.getpayloadtype());
+	            
+                //get the payload bitstream from the RTPpacket object
+	            int payload_length = rtp_packet.getpayload_length();
+	            byte [] payload = new byte[payload_length];
+	            rtp_packet.getpayload(payload);
+            } catch (InterruptedIOException iioe){
+	            System.out.println("Nothing to read");
+            } catch (IOException ioe) {
+	            System.out.println("Exception caught: "+ioe);
+            }
+        }
     }
 }
 
