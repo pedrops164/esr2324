@@ -57,6 +57,10 @@ public class RP{
                         t = new Thread(new RPWorker3(c, p, this));
                         t.start();
                         break;
+                    case 4: // Server starts streaming
+                        t = new Thread(new RPWorker4(c, p, this));
+                        t.start();
+                        break;
                     default:
                         System.out.println("Packet type not recognized. Message ignored!");
                         c.stopConnection();
@@ -183,6 +187,8 @@ class RPWorker2 implements Runnable{
 
         // Now we receive the UDP video stream
 
+        this.connection.stopConnection();
+
     }    
 }
 
@@ -222,4 +228,40 @@ class RPWorker3 implements Runnable{
         // End TCP connection
         this.connection.stopConnection();
     }    
+}
+
+class RPWorker4 implements Runnable {
+    private RP rp;
+    private TCPConnection connection;
+    private Packet receivedPacket;
+    
+    public RPWorker4(TCPConnection c, Packet p, RP rp){
+        this.rp = rp;
+        this.connection = c;
+        this.receivedPacket = p;
+    }
+
+    public void run() {
+        byte[] data = this.receivedPacket.data;
+        String received = new String(data);
+
+        System.out.println("Received video packet: " + received);
+        while(true) {
+            try {
+                Packet packet = this.connection.receive();
+                data = packet.data;
+                received = new String(data);
+                System.out.println("Received video packet: " + received);
+            } catch(EOFException e) {
+                // the server closed the TCP connection on his end!!
+                System.out.println("The streaming ended!");
+                break;
+            } catch (Exception e) {
+                e.printStackTrace();
+                break;
+            }
+        }
+
+        this.connection.stopConnection();
+    }
 }

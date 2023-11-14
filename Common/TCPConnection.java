@@ -61,7 +61,7 @@ public class TCPConnection {
         }
     }
 
-    public Packet receive(){
+    public Packet receive() throws EOFException {
         int tag = -1;
         byte[] data = null;
 
@@ -70,7 +70,9 @@ public class TCPConnection {
             int comp = this.in.readInt();
             data = new byte[comp];
             this.in.readFully(data);
-        }catch (Exception e){
+        } catch (EOFException e) {
+            throw e;
+        } catch (Exception e){
             e.printStackTrace();
         }
 
