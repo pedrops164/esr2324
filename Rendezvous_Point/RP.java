@@ -14,6 +14,7 @@ public class RP{
     private int id;
     private Map<Integer, String> neighbours;
     private ServerSocket ss;
+    public static int RP_PORT = 333;
     
     // Map that associates each server id to it's available streams
     private Map<String, List<Integer>> streamServers;
@@ -27,7 +28,7 @@ public class RP{
         this.servers = new HashMap<>();
 
         try{
-            this.ss = new ServerSocket(333);
+            this.ss = new ServerSocket(RP_PORT);
         }catch(Exception e){
             e.printStackTrace();
         }
