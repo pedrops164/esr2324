@@ -1,7 +1,7 @@
-package Client;
+package Common;
 
-public class InvalidNodeExecption extends Exception{
-    public InvalidNodeExecption(String message)
+public class InvalidNodeException extends Exception{
+    public InvalidNodeException(String message)
     {
         super(message);
     }

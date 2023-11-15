@@ -2,18 +2,35 @@ package Common;
 
 import java.nio.ByteBuffer;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 
 public class PathNode {
     private int nodeId, nodePort;
-    private String nodeIpAdress;    
+    private IPAddress nodeIPAddress;    
     private LocalDateTime timeStamp;
     
-    public PathNode (int nodeID, int nodePort, String nodeIpAdress)
+    public PathNode (int nodeID, int nodePort, String nodeIPAddress)
     {
         this.nodeId = nodeID;
         this.nodePort = nodePort;
-        this.nodeIpAdress = nodeIpAdress;
+        this.nodeIPAddress = new IPAddress(nodeIPAddress);
         this.timeStamp = LocalDateTime.now();
+    }
+
+    public PathNode (byte[] arr)
+    {
+        ByteBuffer buffer = ByteBuffer.wrap(arr);
+        this.nodeId = buffer.getInt(0*4);
+        this.nodePort = buffer.getInt(1*4);
+        this.nodeIPAddress = IPAddress.deserialize(Arrays.copyOfRange(arr, 2*4, 6*4));
+        int year = buffer.getInt(6*4);
+        int month = buffer.getInt(7*4);
+        int day = buffer.getInt(8*4);
+        int hour = buffer.getInt(9*4);
+        int minute = buffer.getInt(10*4);
+        int second = buffer.getInt(11*4);
+        int nano = buffer.getInt(12*4);
+        this.timeStamp = LocalDateTime.of(year, month, day, hour, minute, second, nano);
     }
     
     public int getNodeId() {
@@ -32,12 +49,12 @@ public class PathNode {
         this.nodePort = nodePort;
     }
     
-    public String getNodeIpAdress() {
-        return nodeIpAdress;
+    public IPAddress getNodeIPAddress() {
+        return nodeIPAddress;
     }
     
-    public void setNodeIpAdress(String nodeIpAdress) {
-        this.nodeIpAdress = nodeIpAdress;
+    public void setNodeIPAddress(IPAddress nodeIPAddress) {
+        this.nodeIPAddress = nodeIPAddress;
     }
     
     public LocalDateTime getTimeStamp() {
@@ -60,7 +77,7 @@ public class PathNode {
         PathNode node = (PathNode)o;
         return  node.getNodeId() == nodeId && 
                 node.getNodePort() == nodePort &&
-                node.getNodeIpAdress().equals(nodeIpAdress);
+                node.getNodeIPAddress().equals(nodeIPAddress);
     }
 
     @Override
@@ -68,18 +85,28 @@ public class PathNode {
     {
         return "PathNode{ nodeId: " + nodeId + 
                         " nodePort: " + nodePort + 
-                        " nodeIpAddress: " + nodeIpAdress + "}";
+                        " nodeIPAddress: " + nodeIPAddress + " }";
     }
 
-    public static byte[] serialize(PathNode node)
+    public byte[] serialize()
     {
-        int strLens = node.getNodeIpAdress().length() + node.getTimeStamp().toString().length();
-        ByteBuffer bb = ByteBuffer.allocate(4 + 4 + strLens);
-        bb = bb.putInt(node.getNodeId());
-        bb = bb.putInt(node.getNodePort());
-        bb = bb.put(node.getNodeIpAdress().getBytes());
-        bb = bb.put(node.getTimeStamp().toString().getBytes());
+        ByteBuffer bb = ByteBuffer.allocate(13*4);
+        bb = bb.putInt(getNodeId());
+        bb = bb.putInt(getNodePort());
+        bb = bb.put(this.nodeIPAddress.serialize());
+        bb = bb.putInt(timeStamp.getYear());
+        bb = bb.putInt(timeStamp.getMonthValue());
+        bb = bb.putInt(timeStamp.getDayOfMonth());
+        bb = bb.putInt(timeStamp.getHour());
+        bb = bb.putInt(timeStamp.getMinute());
+        bb = bb.putInt(timeStamp.getSecond());
+        bb = bb.putInt(timeStamp.getNano());
 
         return bb.array();
+    }
+
+    public static PathNode deserialize(byte[] arr)
+    {
+        return new PathNode(arr);
     }
 }

@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,6 +23,15 @@ public class Path {
         this.addNode(firstNode);    
     }
     
+    public Path(byte[] arr) 
+    {
+        this.nodeList = new ArrayList<>();
+        for (int i=0 ; i<arr.length ; i+=13*4)
+        {
+            nodeList.add(PathNode.deserialize(Arrays.copyOfRange(arr, i, i+13*4)));
+        }
+    }
+
     public void addNode(PathNode pathNode)
     {
         this.nodeList.add(pathNode);
@@ -40,15 +50,12 @@ public class Path {
         
         return time;
     }
+
+    public int getNoJumps()
+    {
+        return nodeList.size() - 1;
+    }
     
-    public List<PathNode> getNodeList() {
-        return nodeList;
-    }
-
-    public void setNodeList(List<PathNode> nodeList) {
-        this.nodeList = nodeList;
-    }
-
     public int indexOf(int id)
     {
         return nodeList.stream().map(PathNode::getNodeId).collect(Collectors.toList()).indexOf(id);
@@ -68,30 +75,40 @@ public class Path {
     @Override
     public String toString()
     {
-        String r = "Path{";
+        String r = "Path{\n";
         for (PathNode pn : nodeList)
-            r += " " + pn + " ";
+            r += " " + pn + " \n";
         return r + "}";
     }
     
-    public static byte[] serialize(Path path)
+    public byte[] serialize()
     {
-        int totalSize = 0;
-        List<byte[]> bytes = new ArrayList<>();
+        ByteBuffer buffer = ByteBuffer.allocate(nodeList.size() * 13 * 4);
 
-        for (PathNode node : path.getNodeList())
+        for (PathNode node : nodeList)
         {
-            byte[] arr = PathNode.serialize(node);
-            bytes.add(arr);
-            totalSize += arr.length;
-        }
-
-        ByteBuffer buffer = ByteBuffer.allocate(totalSize);
-
-        for (byte[] arr : bytes)
+            byte[] arr = node.serialize();
             buffer.put(arr);
+        }
 
         return buffer.array();
     }
 
+    public static Path deserialize (byte[] arr)
+    {
+        return new Path(arr);
+    }
+
+    // Main used to test serialize and deserialize
+    // public static void main(String[] args) {
+    //     Path p = new Path();
+    //     int[] arr = {192, 168, 56, 100};
+
+    //     for (int i=0 ; i<10 ; arr[3]++, i++)
+    //     {
+    //         p.addNode(new PathNode(i+1, 333, new IPAddress(arr).toString()));
+    //     }
+
+    //     System.out.println(deserialize(p.serialize()));
+    // }
 }
