@@ -78,6 +78,9 @@ public class RP{
                         t = new Thread(new RPWorker4(c, p, this));
                         t.start();
                         break;
+                    case 5: // Client Flood Message
+                        t = new Thread(new RPWorker5());
+                        t.start();
                     default:
                         System.out.println("Packet type not recognized. Message ignored!");
                         c.stopConnection();
