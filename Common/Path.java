@@ -82,6 +82,11 @@ public class Path {
         return this.nodeList.get(this.nodeList.size()-1);
     }
 
+    public boolean inPath(PathNode pathNode)
+    {
+        return this.nodeList.contains(pathNode);
+    }
+
     @Override
     public String toString()
     {

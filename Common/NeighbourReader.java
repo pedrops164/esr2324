@@ -61,6 +61,7 @@ public class NeighbourReader
             neighbours.put(this.id, pairs[0]);
 
             scanner.close();
+            fis.close();
         } catch (Exception e) 
         {
             e.printStackTrace();

@@ -18,21 +18,25 @@ public class RPFloodWorker implements Runnable
     {
         this.node = node;
         this.path = Path.deserialize(p.data);
-        this.path.addNode(new PathNode(this.node.getId(), 333, node.getIp()));
     }
 
     public void run ()
     {
-        byte[] serializedPath = this.path.serialize();
-        try 
+        PathNode pathNode = new PathNode(this.node.getId(), 333, node.getIp());
+        if (!this.path.inPath(pathNode))
         {
-            Socket s = new Socket(path.getClient().getNodeIPAddress().toString(), 333);
-            TCPConnection c = new TCPConnection(s);
-            c.send(new Packet(6, serializedPath));
-        } 
-        catch (Exception e) 
-        {
-            e.printStackTrace();
+            this.path.addNode(pathNode);
+            byte[] serializedPath = this.path.serialize();
+            try 
+            {
+                Socket s = new Socket(path.getClient().getNodeIPAddress().toString(), 333);
+                TCPConnection c = new TCPConnection(s);
+                c.send(new Packet(6, serializedPath));
+            } 
+            catch (Exception e) 
+            {
+                e.printStackTrace();
+            }
         }
     }
 }
