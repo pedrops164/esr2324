@@ -1,26 +1,35 @@
 package Client;
 
 import Common.NeighbourReader;
+import Common.Node;
+import Common.NormalFloodWorker;
+import Common.Path;
+import Common.PathNode;
 import Common.StreamRequest;
 import Common.TCPConnection;
 import Common.TCPConnection.Packet;
 
 import java.io.*;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
-public class Client {
-    private int id;
-    private String RPIP;
-    private Map<Integer, String> neighbours;
+public class Client extends Node {
 
     private List<String> availableStreams;
+    private RoutingTree routingTree;
+    private Lock routingTreeLock;
+    private Condition hasPaths;
 
     public Client(String args[], NeighbourReader nr){
-        this.id = Integer.parseInt(args[0]);
-        this.neighbours = nr.readNeighbours(); 
-        this.RPIP = nr.getRPString();
+        super(Integer.parseInt(args[0]), nr);
         this.availableStreams = new ArrayList<>();
+        this.routingTree = new RoutingTree();
+        this.routingTreeLock = new ReentrantLock();
+        this.hasPaths = this.routingTreeLock.newCondition();
     }
 
     public void getAvailableStreams(){
@@ -45,6 +54,21 @@ public class Client {
             }
         }catch(Exception e){
             e.printStackTrace();
+        }
+    }
+
+    public void receivePath(Packet packet)
+    {
+        this.routingTreeLock.lock();
+        try
+        {
+            Path path = Path.deserialize(packet.data);
+            this.routingTree.addPath(path);
+            this.hasPaths.signalAll();
+        }
+        finally
+        {
+            this.routingTreeLock.unlock();
         }
     }
     
@@ -76,14 +100,111 @@ public class Client {
         }
     }
 
-    public static void main(String args[]){
-        NeighbourReader nr = new NeighbourReader(Integer.parseInt(args[0]), args[1]);
-        Client c = new Client(args, nr);
-        c.getAvailableStreams();
-        c.showAvailableStreams();
+    public void flood()
+    {
+        Path path = new Path(new PathNode(this.id, 333, this.ip));
+        byte[] serializedPath = path.serialize();
+        try
+        {
+            for (String neighbour : this.neighbours.values())
+            {
+                Socket s = new Socket(neighbour, 333);
+                TCPConnection c = new TCPConnection(s);
+                Packet p = new Packet(5, serializedPath);
+                c.send(p);
+            }
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    public void run() throws InterruptedException, NoPathsAvailableException
+    {
+        // inicializar a receção por TCP
+        Thread tcp = new Thread(new TCP_Worker(this));
+        tcp.start();
+
+        // executar o flood
+        this.flood();
+        
+        // enquanto não houver caminhos esperar
+        this.routingTreeLock.lock();
+        try
+        {
+            while (!this.routingTree.isAvailable())
+                this.hasPaths.await();
+        }
+        finally
+        {
+            this.routingTreeLock.unlock();
+        }
+
+        // obter o melhor caminho
+        Path bestPath = this.routingTree.getBestPath();
+
+        // TODO : enviar o caminho junto com o pedido de stream
+        this.getAvailableStreams();
+        this.showAvailableStreams();
         Scanner in = new Scanner(System.in);
         int streamId = in.nextInt();
-        c.requestStreaming(streamId);
+        this.requestStreaming(streamId);
         in.close();
     }
+    public static void main(String args[]) throws InterruptedException, NoPathsAvailableException{
+        NeighbourReader nr = new NeighbourReader(Integer.parseInt(args[0]), args[1]);
+        Client c = new Client(args, nr);
+        c.run();
+    }
 }   
+
+class TCP_Worker implements Runnable
+{
+    private ServerSocket ss;
+    private Client client;
+    
+    public TCP_Worker(Client client)
+    {
+        this.client = client;
+        
+        try 
+        {
+            this.ss = new ServerSocket(333);
+        } 
+        catch (Exception e) 
+        {
+            e.printStackTrace();    
+        }
+    }
+    
+    @Override
+    public void run() 
+    {
+        try
+        {
+            while(true)
+            {
+                Socket s = this.ss.accept();
+                TCPConnection c = new TCPConnection(s);
+                Packet p = c.receive();
+                
+                switch(p.type)
+                {
+                    case 5: // Flood Message from client
+                        Thread t = new Thread(new NormalFloodWorker(client, p));    
+                        t.start();
+                        break;
+                    case 6: // Flood Response from RP
+                        client.receivePath(p);
+                        break;
+                }
+            }
+            
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+}

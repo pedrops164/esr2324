@@ -1,33 +1,28 @@
 package Server;
 
 import Common.NeighbourReader;
+import Common.Node;
+import Common.NormalFloodWorker;
 import Common.ServerStreams;
 import Common.StreamRequest;
 import Common.TCPConnection;
 import Common.TCPConnection.Packet;
 import Rendezvous_Point.RP;
-import Common.VideoStream;
-import Common.RTPpacket;
+//import Common.VideoStream;
+//import Common.RTPpacket;
 
 import java.io.*;
 import java.net.*;
 import java.util.*;
 
-public class Server {
-    private int id;
-    private String ip;
-    private String RPIP;
-    private Map<Integer, String> neighbours;
+public class Server extends Node {
     private ServerSocket ss;
 
     private List<String> streams;
 
     public Server(String []args, NeighbourReader nr){
-        this.id = Integer.parseInt(args[0]);
-        this.neighbours = nr.readNeighbours();
-        this.RPIP = nr.getRPString();
+        super(Integer.parseInt(args[0]), nr);
         this.streams = new ArrayList<>();
-        this.ip = this.neighbours.get(this.id);
 
         try{
             this.ss = new ServerSocket(1234);
@@ -107,6 +102,10 @@ public class Server {
                         t = new Thread(new ServerWorker1(p, this.RPIP));
                         t.start();
                         break;
+                    case 5: // Flood message
+                        t = new Thread(new NormalFloodWorker(this, p));
+                        t.start();
+                        break;
                     default:
                         System.out.println("Packet type not recognized. Message ignored!");
                         c.stopConnection();
@@ -129,7 +128,7 @@ public class Server {
         NeighbourReader nr = new NeighbourReader(Integer.parseInt(args[0]), args[1]);
         Server server = new Server(args, nr);
 
-        // Tell the available streams to the RP
+        // Tell the available streams to the RP 
         if (server.notifyStreamsRP()) {
             // notifyStreamsRP returns true if it went successful
             server.listen(); // Listen to new TCP requests
@@ -171,28 +170,28 @@ class ServerWorker1 implements Runnable{
         // Start the UDP video streaming. (Send directly to the RP)
         System.out.println("Streaming '" + videoPath + "' through UDP!");
         try {
-            VideoStream video = new VideoStream(videoPath);
-            byte[] videoBuffer = new byte[15000]; //allocate memory for the sending buffer
-            for (int frameNumber = 0; frameNumber < videoLength; frameNumber++) {
-	            int image_length = video.getnextframe(videoBuffer);
-                //Builds an RTPpacket object containing the frame
-	            RTPpacket rtp_packet = new RTPpacket(video_extension, frameNumber, frameNumber*frame_period, videoBuffer, image_length);
+            // VideoStream video = new VideoStream(videoPath);
+            // byte[] videoBuffer = new byte[15000]; //allocate memory for the sending buffer
+            // for (int frameNumber = 0; frameNumber < videoLength; frameNumber++) {
+	        //     int image_length = video.getnextframe(videoBuffer);
+            //     //Builds an RTPpacket object containing the frame
+	        //     RTPpacket rtp_packet = new RTPpacket(video_extension, frameNumber, frameNumber*frame_period, videoBuffer, image_length);
 
-	            //get to total length of the full rtp packet to send
-	            int packet_length = rtp_packet.getlength();
+	        //     //get to total length of the full rtp packet to send
+	        //     int packet_length = rtp_packet.getlength();
 
-	            //retrieve the packet bitstream and store it in an array of bytes
-	            byte[] packet_bits = new byte[packet_length];
-	            rtp_packet.getpacket(packet_bits);
+	        //     //retrieve the packet bitstream and store it in an array of bytes
+	        //     byte[] packet_bits = new byte[packet_length];
+	        //     rtp_packet.getpacket(packet_bits);
 
-	            //send the packet as a DatagramPacket over the UDP socket 
-	            DatagramPacket senddp = new DatagramPacket(packet_bits, packet_length, InetAddress.getByName(this.RPIP), RP.RP_PORT);
-	            this.RTPsocket.send(senddp);
+	        //     //send the packet as a DatagramPacket over the UDP socket 
+	        //     DatagramPacket senddp = new DatagramPacket(packet_bits, packet_length, InetAddress.getByName(this.RPIP), RP.RP_PORT);
+	        //     this.RTPsocket.send(senddp);
 
-	            //rtp_packet.printheader();
-                //System.out.println("Sent video frame " + frameNumber);
+	        //     //rtp_packet.printheader();
+            //     //System.out.println("Sent video frame " + frameNumber);
 
-            }
+            // }
         } catch (Exception e) {
             e.printStackTrace();
         }

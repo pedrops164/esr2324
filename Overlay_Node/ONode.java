@@ -3,23 +3,19 @@ package Overlay_Node;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import Common.NeighbourReader;
-import Common.Path;
-import Common.PathNode;
+import Common.Node;
 import Common.TCPConnection;
 import Common.TCPConnection.Packet;
+import Common.NormalFloodWorker;
 
-public class ONode {
-    private int id;
-    private Map<Integer, String> neighbours;
+public class ONode extends Node {
+
 
     public ONode(int id, NeighbourReader nr)
     {
-        this.id = id;
-        this.neighbours = nr.readNeighbours(); 
-        
+        super(id, nr);
     }
 
     public int getId()
@@ -31,14 +27,27 @@ public class ONode {
     {
         return neighbours;
     }
+
+    public void run()
+    {
+        Thread tcp = new Thread(new TCP_Worker(this));
+        tcp.start();
+    }
+
+    public static void main(String args[]){
+        int id = Integer.parseInt(args[0]);
+        NeighbourReader nr = new NeighbourReader(id, args[1]);
+        ONode onode = new ONode(id, nr);
+        onode.run();
+    }
 }
 
 class TCP_Worker implements Runnable
 {
     private ServerSocket ss;
-    private ONode node;
+    private Node node;
     
-    public TCP_Worker(ONode node)
+    public TCP_Worker(Node node)
     {
         this.node = node;
         
@@ -66,44 +75,13 @@ class TCP_Worker implements Runnable
                 switch(p.type)
                 {
                     case 5: // Flood Message from client
-                        Thread t = new Thread(new FloodWorker(node, p, s.getInetAddress().getHostAddress()));    
+                        Thread t = new Thread(new NormalFloodWorker(node, p));    
                         t.start();
                 }
             }
             
         }
         catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-    }
-}
-
-class FloodWorker implements Runnable 
-{
-    private ONode node;
-    private Path path;
-
-    public FloodWorker (ONode node, Packet p, String ip)
-    {
-        this.node = node;
-        this.path = Path.deserialize(p.data);
-        this.path.addNode(new PathNode(this.node.getId(), 333, ip));
-    }
-
-    public void run ()
-    {
-        byte[] serializedPath = this.path.serialize();
-        try 
-        {
-            for (Entry<Integer, String> neighbour : node.getNeighbours().entrySet())
-            {
-                Socket s = new Socket(neighbour.getValue(), 333);
-                TCPConnection c = new TCPConnection(s);
-                c.send(new Packet(5, serializedPath));
-            }
-        } 
-        catch (Exception e) 
         {
             e.printStackTrace();
         }

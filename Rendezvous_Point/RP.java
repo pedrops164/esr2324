@@ -1,7 +1,8 @@
 package Rendezvous_Point;
 
 import Common.NeighbourReader;
-import Common.RTPpacket;
+import Common.Node;
+//import Common.RTPpacket;
 import Common.ServerStreams;
 import Common.StreamRequest;
 import Common.TCPConnection;
@@ -16,9 +17,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-public class RP{
-    private int id;
-    private Map<Integer, String> neighbours;
+public class RP extends Node{
     private ServerSocket ss;
     private DatagramSocket ds;
     public static int RP_PORT = 333;
@@ -30,8 +29,7 @@ public class RP{
     private int streamCounter;
 
     public RP(String args[], NeighbourReader nr){
-        this.id = Integer.parseInt(args[0]);
-        this.neighbours = nr.readNeighbours();
+        super(Integer.parseInt(args[0]), nr);
         this.streamServers = new HashMap<>();
         this.servers = new HashMap<>();
 
@@ -79,7 +77,7 @@ public class RP{
                         t.start();
                         break;
                     case 5: // Client Flood Message
-                        t = new Thread(new RPWorker5());
+                        t = new Thread(new RPFloodWorker(this, p));
                         t.start();
                     default:
                         System.out.println("Packet type not recognized. Message ignored!");
@@ -141,24 +139,24 @@ public class RP{
             //Construct a DatagramPacket to receive data from the UDP socket
             DatagramPacket rcvdp = new DatagramPacket(udpBuffer, udpBuffer.length);
 
-            try{
-	            //receive the DP from the socket:
-	            this.ds.receive(rcvdp);
-	            //create an RTPpacket object from the DP
-	            RTPpacket rtp_packet = new RTPpacket(rcvdp.getData(), rcvdp.getLength());
+            // try{
+	        //     //receive the DP from the socket:
+	        //     this.ds.receive(rcvdp);
+	        //     //create an RTPpacket object from the DP
+	        //     RTPpacket rtp_packet = new RTPpacket(rcvdp.getData(), rcvdp.getLength());
 
-	            //print important header fields of the RTP packet received: 
-	            //System.out.println("Got RTP packet with SeqNum # "+rtp_packet.getsequencenumber()+" TimeStamp "+rtp_packet.gettimestamp()+" ms, of type "+rtp_packet.getpayloadtype());
+	        //     //print important header fields of the RTP packet received: 
+	        //     //System.out.println("Got RTP packet with SeqNum # "+rtp_packet.getsequencenumber()+" TimeStamp "+rtp_packet.gettimestamp()+" ms, of type "+rtp_packet.getpayloadtype());
 	            
-                //get the payload bitstream from the RTPpacket object
-	            int payload_length = rtp_packet.getpayload_length();
-	            byte [] payload = new byte[payload_length];
-	            rtp_packet.getpayload(payload);
-            } catch (InterruptedIOException iioe){
-	            System.out.println("Nothing to read");
-            } catch (IOException ioe) {
-	            System.out.println("Exception caught: "+ioe);
-            }
+            //     //get the payload bitstream from the RTPpacket object
+	        //     int payload_length = rtp_packet.getpayload_length();
+	        //     byte [] payload = new byte[payload_length];
+	        //     rtp_packet.getpayload(payload);
+            // } catch (InterruptedIOException iioe){
+	        //     System.out.println("Nothing to read");
+            // } catch (IOException ioe) {
+	        //     System.out.println("Exception caught: "+ioe);
+            // }
         }
     }
 }

@@ -72,6 +72,16 @@ public class Path {
         return nodeList.get(index+1);
     }
 
+    public PathNode getClient()
+    {
+        return this.nodeList.get(0);
+    }
+
+    public PathNode getLast()
+    {
+        return this.nodeList.get(this.nodeList.size()-1);
+    }
+
     @Override
     public String toString()
     {

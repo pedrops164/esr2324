@@ -38,10 +38,17 @@ public class RoutingTree {
         this.paths.add(path);
     }
 
-    public Path getBestPath()
+    public Path getBestPath() throws NoPathsAvailableException
     {
+        if (paths.size() == 0)
+            throw new NoPathsAvailableException("Exception: There are no available paths yet");
         Comparator<Path> c = (heuristic == Heuristic.DELAY) ?(new ComparePathDelay()) :(new ComparePathJumps());
 
         return paths.stream().min(c).get();
+    }
+
+    public boolean isAvailable()
+    {
+        return this.paths.size() > 0;
     }
 }
