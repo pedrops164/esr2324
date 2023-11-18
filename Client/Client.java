@@ -8,6 +8,8 @@ import Common.PathNode;
 import Common.StreamRequest;
 import Common.TCPConnection;
 import Common.TCPConnection.Packet;
+import Common.LogEntry;
+import Common.Logger;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -24,8 +26,8 @@ public class Client extends Node {
     private Lock routingTreeLock;
     private Condition hasPaths;
 
-    public Client(String args[], NeighbourReader nr){
-        super(Integer.parseInt(args[0]), nr);
+    public Client(String args[], NeighbourReader nr, boolean debugMode){
+        super(Integer.parseInt(args[0]), nr, debugMode);
         this.availableStreams = new ArrayList<>();
         this.routingTree = new RoutingTree();
         this.routingTreeLock = new ReentrantLock();
@@ -43,6 +45,7 @@ public class Client extends Node {
             out.flush();
             byte [] data = baos.toByteArray();
             c.send(3, data); // Send the request to the RP
+
 
             // Answer to the request
             Packet p = c.receive();
@@ -112,6 +115,7 @@ public class Client extends Node {
                 TCPConnection c = new TCPConnection(s);
                 Packet p = new Packet(5, serializedPath);
                 c.send(p);
+                this.logger.log(new LogEntry("Sent flood message to " + neighbour + ":" + 333));
             }
         }
         catch(Exception e)
@@ -141,7 +145,7 @@ public class Client extends Node {
             this.routingTreeLock.unlock();
         }
 
-        // obter o melhor caminho
+        // obter o melhor caminho, tem que levar update sempre que receber caminhos novos
         Path bestPath = this.routingTree.getBestPath();
 
         // TODO : enviar o caminho junto com o pedido de stream
@@ -154,7 +158,8 @@ public class Client extends Node {
     }
     public static void main(String args[]) throws InterruptedException, NoPathsAvailableException{
         NeighbourReader nr = new NeighbourReader(Integer.parseInt(args[0]), args[1]);
-        Client c = new Client(args, nr);
+        boolean debugMode = Arrays.stream(args).anyMatch(s -> s.equals("-g"));
+        Client c = new Client(args, nr, debugMode);
         c.run();
     }
 }   
@@ -192,10 +197,12 @@ class TCP_Worker implements Runnable
                 switch(p.type)
                 {
                     case 5: // Flood Message from client
+                    this.client.log(new LogEntry("Received flood message from " + s.getInetAddress().getHostAddress()));
                         Thread t = new Thread(new NormalFloodWorker(client, p));    
                         t.start();
                         break;
                     case 6: // Flood Response from RP
+                        this.client.log(new LogEntry("Received flood response from RP: " + s.getInetAddress().getHostAddress()));
                         client.receivePath(p);
                         break;
                 }

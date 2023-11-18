@@ -28,8 +28,8 @@ public class RP extends Node{
     private Map<Integer, String> servers; // serverID to serverIP
     private int streamCounter;
 
-    public RP(String args[], NeighbourReader nr){
-        super(Integer.parseInt(args[0]), nr);
+    public RP(String args[], NeighbourReader nr, boolean debugMode){
+        super(Integer.parseInt(args[0]), nr, debugMode);
         this.streamServers = new HashMap<>();
         this.servers = new HashMap<>();
 
@@ -123,7 +123,8 @@ public class RP extends Node{
 
     public static void main(String args[]){
         NeighbourReader nr = new NeighbourReader(Integer.parseInt(args[0]), args[1]);
-        RP rp = new RP(args, nr);
+        boolean debugMode = Arrays.stream(args).anyMatch(s -> s.equals("-g"));
+        RP rp = new RP(args, nr, debugMode);
         rp.listen(); 
     }
 

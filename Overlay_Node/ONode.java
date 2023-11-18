@@ -2,6 +2,7 @@ package Overlay_Node;
 
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.Map;
 
 import Common.NeighbourReader;
@@ -13,9 +14,9 @@ import Common.NormalFloodWorker;
 public class ONode extends Node {
 
 
-    public ONode(int id, NeighbourReader nr)
+    public ONode(int id, NeighbourReader nr, boolean debugMode)
     {
-        super(id, nr);
+        super(id, nr, debugMode);
     }
 
     public int getId()
@@ -37,7 +38,8 @@ public class ONode extends Node {
     public static void main(String args[]){
         int id = Integer.parseInt(args[0]);
         NeighbourReader nr = new NeighbourReader(id, args[1]);
-        ONode onode = new ONode(id, nr);
+        boolean debugMode = Arrays.stream(args).anyMatch(s -> s.equals("-g"));
+        ONode onode = new ONode(id, nr, debugMode);
         onode.run();
     }
 }

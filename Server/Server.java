@@ -20,8 +20,8 @@ public class Server extends Node {
 
     private List<String> streams;
 
-    public Server(String []args, NeighbourReader nr){
-        super(Integer.parseInt(args[0]), nr);
+    public Server(String []args, NeighbourReader nr, boolean debugMode){
+        super(Integer.parseInt(args[0]), nr, debugMode);
         this.streams = new ArrayList<>();
 
         try{
@@ -126,7 +126,8 @@ public class Server extends Node {
 
     public static void main(String args[]){
         NeighbourReader nr = new NeighbourReader(Integer.parseInt(args[0]), args[1]);
-        Server server = new Server(args, nr);
+        boolean debugMode = Arrays.stream(args).anyMatch(s -> s.equals("-g"));
+        Server server = new Server(args, nr, debugMode);
 
         // Tell the available streams to the RP 
         if (server.notifyStreamsRP()) {
