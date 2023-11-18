@@ -1,5 +1,6 @@
 package Server;
 
+import Common.LogEntry;
 import Common.NeighbourReader;
 import Common.Node;
 import Common.NormalFloodWorker;
@@ -25,8 +26,17 @@ public class Server extends Node {
         this.streams = new ArrayList<>();
 
         try{
-            this.ss = new ServerSocket(1234);
+            this.ss = new ServerSocket(333);
         }catch(Exception e){
+            e.printStackTrace();
+        }
+
+        try 
+        {
+            this.logger.log(new LogEntry("Getting availabe Streams"));
+        } 
+        catch (IOException e) 
+        {
             e.printStackTrace();
         }
 
@@ -58,38 +68,56 @@ public class Server extends Node {
                 out.flush();
                 byte [] data = baos.toByteArray();
                 c.send(1, data); // Send the request to the RP
+                this.logger.log(new LogEntry("Notifying Rendezvous Point about the available streams"));
 
                 // Answer to the request
                 Packet p = c.receive();
                 ByteArrayInputStream bais = new ByteArrayInputStream(p.data);
                 DataInputStream in = new DataInputStream(bais);
                 String resp = in.readUTF();
-                System.out.println("RP response: " +  resp);
+                this.logger.log(new LogEntry("Received Response to Available Streams notification to Rendezvous Point: " +  resp));
                 return true;
             }catch(ConnectException e) {
-                System.out.println("ConnectException caught!!");
-                retryCount++;
-                System.out.println("Unable to connect to RP. Retrying in " + retryInterval / 1000 + " seconds. Attempt " + retryCount);
-                try {
-                    Thread.sleep(retryInterval); // Wait before retrying
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    System.out.println("Thread interrupted during retry wait.");
-                    break;
+                try 
+                {
+                    this.logger.log(new LogEntry("ConnectException caught!!"));
+                    retryCount++;
+                    this.logger.log(new LogEntry("Unable to connect to RP. Retrying in " + retryInterval / 1000 + " seconds. Attempt " + retryCount));
+                    try {
+                        Thread.sleep(retryInterval); // Wait before retrying
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        System.out.println("Thread interrupted during retry wait.");
+                        break;
+                    }
+                }
+                catch (IOException e2)
+                {
+                    e.printStackTrace();
                 }
             }catch(Exception e){
                 e.printStackTrace();
                 break;
             }
         } while (retryCount < maxRetries);
-        System.out.println("Server: Couldn't establish connection with RP.");
+        
+        try 
+        {
+            this.logger.log(new LogEntry("Server: Couldn't establish connection with RP."));
+        } 
+        catch (IOException e) 
+        {
+            e.printStackTrace();
+        }
+
         return false;
     }   
 
     // Listens to new requests sent to the RP
     public void listen(){
-        while(true){
-            try{
+        try{
+            this.logger.log(new LogEntry("Now Listening to TCP requests"));
+            while(true){
                 System.out.println("Server waiting for new requests!");
                 Socket s = this.ss.accept();
                 TCPConnection c = new TCPConnection(s);
@@ -99,21 +127,24 @@ public class Server extends Node {
                 // Creates different types of workers based on the type of packet received
                 switch (p.type) {
                     case 2: // New video stream request
-                        t = new Thread(new ServerWorker1(p, this.RPIP));
+                        this.logger.log(new LogEntry("Received Video Stream Request from " + s.getInetAddress().getHostAddress()));
+                        t = new Thread(new ServerWorker1(p, this.RPIP, this));
                         t.start();
                         break;
                     case 5: // Flood message
+                        this.logger.log(new LogEntry("Received flood message from " + s.getInetAddress().getHostAddress()));
                         t = new Thread(new NormalFloodWorker(this, p));
                         t.start();
                         break;
                     default:
-                        System.out.println("Packet type not recognized. Message ignored!");
+                        this.logger.log(new LogEntry("Packet type not recognized. Message ignored!"));
                         c.stopConnection();
                         break;
                 }
-            }catch(Exception e){
-                e.printStackTrace();
             }
+        }
+        catch(Exception e){
+            e.printStackTrace();
         }
     }
 
@@ -142,10 +173,12 @@ class ServerWorker1 implements Runnable{
     private Packet receivedPacket;
     private String RPIP;
     private DatagramSocket RTPsocket;
+    private Node node;
 
-    public ServerWorker1(Packet p, String RPIP){
+    public ServerWorker1(Packet p, String RPIP, Node node){
         this.receivedPacket = p;
         this.RPIP = RPIP;
+        this.node = node;
         try {
             this.RTPsocket = new DatagramSocket();
         } catch (Exception e) {
@@ -169,8 +202,8 @@ class ServerWorker1 implements Runnable{
         
 
         // Start the UDP video streaming. (Send directly to the RP)
-        System.out.println("Streaming '" + videoPath + "' through UDP!");
         try {
+            this.node.log(new LogEntry("Streaming '" + videoPath + "' through UDP!"));
             // VideoStream video = new VideoStream(videoPath);
             // byte[] videoBuffer = new byte[15000]; //allocate memory for the sending buffer
             // for (int frameNumber = 0; frameNumber < videoLength; frameNumber++) {

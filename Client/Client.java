@@ -205,6 +205,10 @@ class TCP_Worker implements Runnable
                         this.client.log(new LogEntry("Received flood response from RP: " + s.getInetAddress().getHostAddress()));
                         client.receivePath(p);
                         break;
+                    default:
+                        this.client.log(new LogEntry("Packet type not recognized. Message ignored!"));
+                        c.stopConnection();
+                        break;
                 }
             }
             

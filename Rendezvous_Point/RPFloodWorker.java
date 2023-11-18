@@ -1,8 +1,8 @@
 package Rendezvous_Point;
 
 import java.net.Socket;
-import java.util.Map.Entry;
 
+import Common.LogEntry;
 import Common.Node;
 import Common.Path;
 import Common.PathNode;
@@ -29,9 +29,11 @@ public class RPFloodWorker implements Runnable
             byte[] serializedPath = this.path.serialize();
             try 
             {
-                Socket s = new Socket(path.getClient().getNodeIPAddress().toString(), 333);
+                PathNode client = path.getClient();
+                Socket s = new Socket(client.getNodeIPAddress().toString(), 333);
                 TCPConnection c = new TCPConnection(s);
                 c.send(new Packet(6, serializedPath));
+                this.node.log(new LogEntry("Sent flood response to client: " + client));
             } 
             catch (Exception e) 
             {

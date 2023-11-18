@@ -15,10 +15,6 @@ public abstract class Node {
     public Node(int id, NeighbourReader nr, boolean debugMode)
     {
         this.id = id;
-        this.neighbours = nr.readNeighbours();
-        this.RPIP = nr.getRPString();
-        this.ip = this.neighbours.get(id);
-        
         this.logFile = "~/ESRproj/logs/node" + this.id + ".log"; 
         this.logger = new Logger(this.logFile, debugMode);
         
@@ -32,6 +28,13 @@ public abstract class Node {
                 else
                     this.logger.log(new LogEntry("Couldn't create Log File"));
             }
+
+            this.neighbours = nr.readNeighbours();
+            this.logger.log(new LogEntry("Read Neighbours"));
+            this.RPIP = nr.getRPString();
+            this.logger.log(new LogEntry("Read Rendezvous Point IP Address"));
+            this.ip = this.neighbours.get(id);
+            this.logger.log(new LogEntry("Read own Address"));
         } 
         catch (Exception e) 
         {
@@ -42,12 +45,31 @@ public abstract class Node {
     public Node(int id, NeighbourReader nr, String logFile, boolean debugMode)
     {
         this.id = id;
-        this.neighbours = nr.readNeighbours();
-        this.RPIP = nr.getRPString();
-        this.ip = this.neighbours.get(id);
-    
         this.logFile = logFile;
         this.logger = new Logger(this.logFile, debugMode);
+        
+        try 
+        {
+            File log = new File(this.logFile);
+            if (!log.exists())
+            {
+                if (log.createNewFile())
+                    this.logger.log(new LogEntry("Log File created"));
+                else
+                    this.logger.log(new LogEntry("Couldn't create Log File"));
+            }
+
+            this.neighbours = nr.readNeighbours();
+            this.logger.log(new LogEntry("Read Neighbours"));
+            this.RPIP = nr.getRPString();
+            this.logger.log(new LogEntry("Read Rendezvous Point IP Address"));
+            this.ip = this.neighbours.get(id);
+            this.logger.log(new LogEntry("Read own Address"));
+        } 
+        catch (Exception e) 
+        {
+            e.printStackTrace();
+        }
     }
 
     public int getId() {

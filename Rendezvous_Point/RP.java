@@ -1,5 +1,6 @@
 package Rendezvous_Point;
 
+import Common.LogEntry;
 import Common.NeighbourReader;
 import Common.Node;
 //import Common.RTPpacket;
@@ -40,7 +41,7 @@ public class RP extends Node{
             e.printStackTrace();
         }
 
-        Timer udpTimer = new Timer(20, new handlerUDP(this.ds));
+        Timer udpTimer = new Timer(20, new handlerUDP(this.ds, this));
         udpTimer.setInitialDelay(0);
         udpTimer.setCoalesce(true);
         udpTimer.start();
@@ -50,9 +51,9 @@ public class RP extends Node{
 
     // Listens to new requests sent to the RP
     public void listen(){
-        while(true){
-            try{
-                System.out.println("RP waiting for new requests!");
+        try{
+            this.logger.log(new LogEntry("Now Listening to TCP requests"));
+            while(true){
                 Socket s = this.ss.accept();
                 TCPConnection c = new TCPConnection(s);
                 Packet p = c.receive();
@@ -61,36 +62,53 @@ public class RP extends Node{
                 // Creates different types of workers based on the type of packet received
                 switch (p.type) {
                     case 1: // New available stream in a server
+                        this.logger.log(new LogEntry("Received available streams warning from server " + s.getInetAddress().getHostAddress()));
                         t = new Thread(new RPWorker1(c, p, this));
                         t.start();
                         break;
                     case 2: // Video stream request
+                        this.logger.log(new LogEntry("Received video stream request from " + s.getInetAddress().getHostAddress()));
                         t = new Thread(new RPWorker2(c, p, this));
                         t.start();
                         break;
                     case 3: // Client requests the available streams
-                        t = new Thread(new RPWorker3(c, p, this));
+                        this.logger.log(new LogEntry("Received available stream request from " + s.getInetAddress().getHostAddress()));
+                        t = new Thread(new RPWorker3(c, p, this, s.getInetAddress().getHostAddress()));
                         t.start();
                         break;
                     case 4: // Server starts streaming
+                        this.logger.log(new LogEntry("Received stream from server " + s.getInetAddress().getHostAddress()));
                         t = new Thread(new RPWorker4(c, p, this));
                         t.start();
                         break;
                     case 5: // Client Flood Message
+                        this.logger.log(new LogEntry("Received flood message from " + s.getInetAddress().getHostAddress()));
                         t = new Thread(new RPFloodWorker(this, p));
                         t.start();
                     default:
-                        System.out.println("Packet type not recognized. Message ignored!");
+                        this.logger.log(new LogEntry("Packet type not recognized. Message ignored!"));
                         c.stopConnection();
                         break;
                 }
-            }catch(Exception e){
-                e.printStackTrace();
             }
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
         }
     }
 
     public synchronized void addServerStreams(int serverID, String serverIP, List<String> streams){
+
+        try 
+        {
+            this.logger.log(new LogEntry("Adding available streams from server " + serverIP));
+        } 
+        catch (IOException e) 
+        {
+            e.printStackTrace();
+        }
+
         for (String stream : streams)
         {
             List<Integer> servers;
@@ -102,7 +120,6 @@ public class RP extends Node{
             this.streamServers.put(stream, servers);
             this.servers.put(serverID, serverIP);
         }
-        System.out.println(this.streamServers);
     }
 
     // Get the server that has a certain stream 
@@ -130,19 +147,22 @@ public class RP extends Node{
 
     class handlerUDP implements ActionListener {
         private DatagramSocket ds;
+        private Node node;
 
-        public handlerUDP(DatagramSocket ds) {
+        public handlerUDP(DatagramSocket ds, Node node) {
             super();
             this.ds = ds;
+            this.node = node;
         }
 
         public void actionPerformed(ActionEvent e) {
             //Construct a DatagramPacket to receive data from the UDP socket
             DatagramPacket rcvdp = new DatagramPacket(udpBuffer, udpBuffer.length);
 
-            // try{
+            try{
 	        //     //receive the DP from the socket:
 	        //     this.ds.receive(rcvdp);
+                this.node.log(new LogEntry("Received UDP request from " + "xxx.xxx.xxx.xxx"));
 	        //     //create an RTPpacket object from the DP
 	        //     RTPpacket rtp_packet = new RTPpacket(rcvdp.getData(), rcvdp.getLength());
 
@@ -155,9 +175,9 @@ public class RP extends Node{
 	        //     rtp_packet.getpayload(payload);
             // } catch (InterruptedIOException iioe){
 	        //     System.out.println("Nothing to read");
-            // } catch (IOException ioe) {
-	        //     System.out.println("Exception caught: "+ioe);
-            // }
+            } catch (IOException ioe) {
+	            System.out.println("Exception caught: "+ioe);
+            }
         }
     }
 }
@@ -189,6 +209,7 @@ class RPWorker1 implements Runnable{
             out.writeUTF("Ok!");
             out.flush();
             this.connection.send(1, baos.toByteArray());
+            this.rp.log(new LogEntry("Answer sent to server " + sstreams.getIP()));
         }catch(Exception e){
             e.printStackTrace();
         }
@@ -233,7 +254,14 @@ class RPWorker2 implements Runnable{
         DataInputStream in = new DataInputStream(bais);
         StreamRequest sr = StreamRequest.deserialize(in);
 
-        System.out.println("A client wants me to stream: " + sr.getStreamName() + "!");
+        try 
+        {
+            this.rp.log(new LogEntry("A client wants the stream: " + sr.getStreamName() + "!"));
+        } 
+        catch (IOException e) 
+        {
+            e.printStackTrace();
+        }
         // Now we have to request to a server to stream this video
         this.requestStreamToServer(sr);
 
@@ -249,11 +277,13 @@ class RPWorker3 implements Runnable{
     private RP rp;
     private TCPConnection connection;
     private Packet receivedPacket;
+    private String clientIP;
 
-    public RPWorker3(TCPConnection c, Packet p, RP rp){
+    public RPWorker3(TCPConnection c, Packet p, RP rp, String clientIP){
         this.rp = rp;
         this.connection = c;
         this.receivedPacket = p;
+        this.clientIP = clientIP;
     }
 
     public void run(){
@@ -273,6 +303,7 @@ class RPWorker3 implements Runnable{
             }
             out.flush();
             this.connection.send(3, baos.toByteArray());
+            this.rp.log(new LogEntry("Sent available streams to client " + this.clientIP));
         }catch(Exception e){
             e.printStackTrace();
         }

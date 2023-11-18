@@ -5,6 +5,7 @@ import java.net.Socket;
 import java.util.Arrays;
 import java.util.Map;
 
+import Common.LogEntry;
 import Common.NeighbourReader;
 import Common.Node;
 import Common.TCPConnection;
@@ -68,6 +69,7 @@ class TCP_Worker implements Runnable
     {
         try
         {
+            this.node.log(new LogEntry("Now Listening to TCP requests"));
             while(true)
             {
                 Socket s = this.ss.accept();
@@ -76,9 +78,14 @@ class TCP_Worker implements Runnable
                 
                 switch(p.type)
                 {
-                    case 5: // Flood Message from client
+                    case 5: // Flood Message 
+                        this.node.log(new LogEntry("Received flood message from " + s.getInetAddress().getHostAddress()));
                         Thread t = new Thread(new NormalFloodWorker(node, p));    
                         t.start();
+                    default:
+                        this.node.log(new LogEntry("Packet type not recognized. Message ignored!"));
+                        c.stopConnection();
+                        break;
                 }
             }
             
