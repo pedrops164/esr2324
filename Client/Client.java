@@ -107,20 +107,36 @@ public class Client extends Node {
     {
         Path path = new Path(new PathNode(this.id, 333, this.ip));
         byte[] serializedPath = path.serialize();
-        try
+        for (String neighbour : this.neighbours.values())
         {
-            for (String neighbour : this.neighbours.values())
+            if (neighbour.equals(this.ip))
+                continue;
+            try
             {
                 Socket s = new Socket(neighbour, 333);
                 TCPConnection c = new TCPConnection(s);
                 Packet p = new Packet(5, serializedPath);
                 c.send(p);
-                this.logger.log(new LogEntry("Sent flood message to " + neighbour + ":" + 333));
+                try 
+                {
+                    this.logger.log(new LogEntry("Sent flood message to " + neighbour + ":" + 333));
+                }
+                catch(IOException e)
+                {
+                    e.printStackTrace();
+                }
             }
-        }
-        catch(Exception e)
-        {
-            e.printStackTrace();
+            catch (Exception eFromSocket)
+            {
+                try
+                {
+                    this.logger.log(new LogEntry("Error sending flood message to " + neighbour + ". Retrying later"));
+                }
+                catch(IOException e)
+                {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 

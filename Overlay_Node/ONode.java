@@ -82,8 +82,9 @@ class TCP_Worker implements Runnable
                         this.node.log(new LogEntry("Received flood message from " + s.getInetAddress().getHostAddress()));
                         Thread t = new Thread(new NormalFloodWorker(node, p));    
                         t.start();
+                        break;
                     default:
-                        this.node.log(new LogEntry("Packet type not recognized. Message ignored!"));
+                        this.node.log(new LogEntry("Packet type < " + p.type + " > not recognized. Message ignored!"));
                         c.stopConnection();
                         break;
                 }

@@ -15,7 +15,7 @@ public abstract class Node {
     public Node(int id, NeighbourReader nr, boolean debugMode)
     {
         this.id = id;
-        this.logFile = "~/ESRproj/logs/node" + this.id + ".log"; 
+        this.logFile = "/home/ESRproj/logs/node" + this.id + ".log"; 
         this.logger = new Logger(this.logFile, debugMode);
         
         try 
@@ -23,10 +23,9 @@ public abstract class Node {
             File log = new File(this.logFile);
             if (!log.exists())
             {
-                File dir = new File("~/ESRproj/logs/");
+                File dir = new File("/home/ESRproj/logs/");
                 if (!dir.exists())
                     dir.mkdirs();
-
                 if (log.createNewFile())
                     this.logger.log(new LogEntry("Log File created"));
                 else

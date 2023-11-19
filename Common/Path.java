@@ -87,6 +87,11 @@ public class Path {
         return this.nodeList.contains(pathNode);
     }
 
+    public boolean inPath(int id)
+    {
+        return this.nodeList.stream().anyMatch(pn -> (pn.getNodeId() == id));
+    }
+
     @Override
     public String toString()
     {

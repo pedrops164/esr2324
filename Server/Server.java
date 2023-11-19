@@ -158,6 +158,7 @@ public class Server extends Node {
     public static void main(String args[]){
         NeighbourReader nr = new NeighbourReader(Integer.parseInt(args[0]), args[1]);
         boolean debugMode = Arrays.stream(args).anyMatch(s -> s.equals("-g"));
+
         Server server = new Server(args, nr, debugMode);
 
         // Tell the available streams to the RP 

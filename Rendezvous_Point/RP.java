@@ -85,8 +85,9 @@ public class RP extends Node{
                         this.logger.log(new LogEntry("Received flood message from " + s.getInetAddress().getHostAddress()));
                         t = new Thread(new RPFloodWorker(this, p));
                         t.start();
+                        break;
                     default:
-                        this.logger.log(new LogEntry("Packet type not recognized. Message ignored!"));
+                        this.logger.log(new LogEntry("Packet type not recognized. Message ignored! Type: " + p.type ));
                         c.stopConnection();
                         break;
                 }
@@ -161,7 +162,7 @@ public class RP extends Node{
 
             try{
 	        //     //receive the DP from the socket:
-	        //     this.ds.receive(rcvdp);
+                this.ds.receive(rcvdp);
                 this.node.log(new LogEntry("Received UDP request from " + "xxx.xxx.xxx.xxx"));
 	        //     //create an RTPpacket object from the DP
 	        //     RTPpacket rtp_packet = new RTPpacket(rcvdp.getData(), rcvdp.getLength());
