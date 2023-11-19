@@ -23,6 +23,10 @@ public abstract class Node {
             File log = new File(this.logFile);
             if (!log.exists())
             {
+                File dir = new File("~/ESRproj/logs/");
+                if (!dir.exists())
+                    dir.mkdirs();
+
                 if (log.createNewFile())
                     this.logger.log(new LogEntry("Log File created"));
                 else
