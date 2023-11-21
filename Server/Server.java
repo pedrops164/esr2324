@@ -18,6 +18,7 @@ import java.util.*;
 
 public class Server extends Node {
     private ServerSocket ss;
+    public static int SERVER_PORT = 1234;
 
     private List<String> streams;
 
@@ -26,7 +27,7 @@ public class Server extends Node {
         this.streams = new ArrayList<>();
 
         try{
-            this.ss = new ServerSocket(333);
+            this.ss = new ServerSocket(SERVER_PORT);
         }catch(Exception e){
             e.printStackTrace();
         }
@@ -40,13 +41,11 @@ public class Server extends Node {
             e.printStackTrace();
         }
 
-        for(int i=2; i<args.length; i++){
-            File path = new File(args[i]);
-            File [] listOfFiles = path.listFiles();
-            for(File f : listOfFiles){
-                if(f.isFile()){
-                    this.streams.add(f.getName());
-                }
+        File path = new File(args[2]);
+        File [] listOfFiles = path.listFiles();
+        for(File f : listOfFiles){
+            if(f.isFile()){
+                this.streams.add(f.getName());
             }
         }
     }

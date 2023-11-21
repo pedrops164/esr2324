@@ -8,6 +8,7 @@ import Common.ServerStreams;
 import Common.StreamRequest;
 import Common.TCPConnection;
 import Common.TCPConnection.Packet;
+import Server.Server;
 
 import java.awt.event.*;
 
@@ -224,18 +225,25 @@ class RPWorker1 implements Runnable{
 class RPWorker2 implements Runnable{
     private RP rp;
     private TCPConnection connection;
+    private DatagramSocket ss;
     private Packet receivedPacket;
 
     public RPWorker2(TCPConnection c, Packet p, RP rp){
         this.rp = rp;
         this.connection = c;
         this.receivedPacket = p;
+        //try {
+        //    // open a socket for receiving UDP packets on RP's port
+        //    this.ss = new DatagramSocket(RP.RP_PORT);
+        //} catch(Exception e){
+        //    e.printStackTrace();
+        //}
     }
 
     public void requestStreamToServer(StreamRequest sr){
         try{
             String serverIP = this.rp.getServer(sr.getStreamName());
-            Socket s = new Socket(serverIP, 1234);
+            Socket s = new Socket(serverIP, Server.SERVER_PORT);
             TCPConnection c = new TCPConnection(s);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             DataOutputStream out = new DataOutputStream(baos);
@@ -245,6 +253,30 @@ class RPWorker2 implements Runnable{
             c.send(2, data); // Send the video stream request to the Server
         }catch(Exception e){
             e.printStackTrace();
+        }
+    }
+
+    public void receiveUDPpackets() {
+        try {
+            // set the buffer size
+            int buffersize = 15000;
+            // create the buffer to receive the packets
+            byte[] receiveData = new byte[buffersize];
+    
+            System.out.println("Listening on UDP in Port " + RP.RP_PORT);
+            // Create the packet which will receive the data
+            DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+    
+            while(true) {
+                // Receive the packet
+                this.ss.receive(receivePacket);
+                this.rp.log(new LogEntry("Received UDP packet"));
+                // Send UDP packet to ONode in the path of the client
+            }
+        } catch (IOException e) {
+            System.out.println(e);
+        } finally {
+            this.ss.close();
         }
     }
 
@@ -265,6 +297,8 @@ class RPWorker2 implements Runnable{
         }
         // Now we have to request to a server to stream this video
         this.requestStreamToServer(sr);
+
+        //this.receiveUDPpackets();
 
         // Now we receive the UDP video stream
 
