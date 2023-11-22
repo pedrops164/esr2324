@@ -13,7 +13,7 @@ import java.util.List;
 public class Logger 
 {
     /**
-     * Strings containing the name of the log file
+     * String containing the name of the log file
      */
     private String logFile;
     /**

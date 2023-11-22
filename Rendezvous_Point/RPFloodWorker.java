@@ -3,12 +3,10 @@ package Rendezvous_Point;
 import java.net.Socket;
 
 import Common.LogEntry;
-import Common.Node;
 import Common.Path;
 import Common.PathNode;
 import Common.TCPConnection;
 import Common.TCPConnection.Packet;
-import Rendezvous_Point.RP;
 
 public class RPFloodWorker implements Runnable 
 {

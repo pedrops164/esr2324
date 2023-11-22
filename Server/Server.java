@@ -215,7 +215,5 @@ class ServerWorker1 implements Runnable{
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
-
     }    
 }

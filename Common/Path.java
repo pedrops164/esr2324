@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 public class Path {
     private List<PathNode> nodeList;
     
-    
     public Path()
     {
         this.nodeList = new ArrayList<>();    

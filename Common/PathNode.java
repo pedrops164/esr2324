@@ -6,7 +6,7 @@ import java.util.Arrays;
 
 public class PathNode {
     private int nodeId, nodePort;
-    private IPAddress nodeIPAddress;    
+    private IPAddress nodeIPAddress;
     private LocalDateTime timeStamp;
     
     public PathNode (int nodeID, int nodePort, String nodeIPAddress)
