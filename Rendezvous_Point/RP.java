@@ -3,6 +3,7 @@ package Rendezvous_Point;
 import Common.LogEntry;
 import Common.NeighbourReader;
 import Common.Node;
+import Common.Path;
 //import Common.RTPpacket;
 import Common.ServerStreams;
 import Common.StreamRequest;
@@ -28,26 +29,20 @@ public class RP extends Node{
     // Map that associates each server id to it's available streams
     private Map<String, List<Integer>> streamServers;
     private Map<Integer, String> servers; // serverID to serverIP
+    public Map<Integer, Path> paths; // maps clients to their respective paths (paths from RP to each client)
     private int streamCounter;
 
     public RP(String args[], NeighbourReader nr, boolean debugMode){
         super(Integer.parseInt(args[0]), nr, debugMode);
         this.streamServers = new HashMap<>();
         this.servers = new HashMap<>();
+        this.paths = new HashMap<>();
 
         try{
             this.ss = new ServerSocket(RP_PORT); // socket that receives TCP packets
-            this.ds = new DatagramSocket(RP_PORT); // socket that receives UDP packets
         }catch(Exception e){
             e.printStackTrace();
         }
-
-        Timer udpTimer = new Timer(20, new handlerUDP(this.ds, this));
-        udpTimer.setInitialDelay(0);
-        udpTimer.setCoalesce(true);
-        udpTimer.start();
-
-        udpBuffer = new byte[15000];
     }
 
     // Listens to new requests sent to the RP
@@ -100,6 +95,13 @@ public class RP extends Node{
         }
     }
 
+    /*
+    Associates client id to its path
+    */
+    public void addPathToClient(int clientId, Path path) {
+        this.paths.put(clientId, path);
+    }
+
     public synchronized void addServerStreams(int serverID, String serverIP, List<String> streams){
 
         try 
@@ -147,41 +149,6 @@ public class RP extends Node{
         rp.listen(); 
     }
 
-    class handlerUDP implements ActionListener {
-        private DatagramSocket ds;
-        private Node node;
-
-        public handlerUDP(DatagramSocket ds, Node node) {
-            super();
-            this.ds = ds;
-            this.node = node;
-        }
-
-        public void actionPerformed(ActionEvent e) {
-            //Construct a DatagramPacket to receive data from the UDP socket
-            DatagramPacket rcvdp = new DatagramPacket(udpBuffer, udpBuffer.length);
-
-            try{
-	        //     //receive the DP from the socket:
-                this.ds.receive(rcvdp);
-                this.node.log(new LogEntry("Received UDP request from " + "xxx.xxx.xxx.xxx"));
-	        //     //create an RTPpacket object from the DP
-	        //     RTPpacket rtp_packet = new RTPpacket(rcvdp.getData(), rcvdp.getLength());
-
-	        //     //print important header fields of the RTP packet received: 
-	        //     //System.out.println("Got RTP packet with SeqNum # "+rtp_packet.getsequencenumber()+" TimeStamp "+rtp_packet.gettimestamp()+" ms, of type "+rtp_packet.getpayloadtype());
-	            
-            //     //get the payload bitstream from the RTPpacket object
-	        //     int payload_length = rtp_packet.getpayload_length();
-	        //     byte [] payload = new byte[payload_length];
-	        //     rtp_packet.getpayload(payload);
-            // } catch (InterruptedIOException iioe){
-	        //     System.out.println("Nothing to read");
-            } catch (IOException ioe) {
-	            System.out.println("Exception caught: "+ioe);
-            }
-        }
-    }
 }
 
 // Responsible to handle new requests from new streams of servers
@@ -204,18 +171,6 @@ class RPWorker1 implements Runnable{
         ServerStreams sstreams = ServerStreams.deserialize(in);
         rp.addServerStreams(sstreams.getID(), sstreams.getIP(), sstreams.getStreams());
 
-        // Answer
-        try{
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            DataOutputStream out = new DataOutputStream(baos);
-            out.writeUTF("Ok!");
-            out.flush();
-            this.connection.send(1, baos.toByteArray());
-            this.rp.log(new LogEntry("Answer sent to server " + sstreams.getIP()));
-        }catch(Exception e){
-            e.printStackTrace();
-        }
-
         // End TCP connection
         this.connection.stopConnection();
     }    
@@ -225,19 +180,20 @@ class RPWorker1 implements Runnable{
 class RPWorker2 implements Runnable{
     private RP rp;
     private TCPConnection connection;
-    private DatagramSocket ss;
+    private DatagramSocket ds;
     private Packet receivedPacket;
+    private int clientId;
 
     public RPWorker2(TCPConnection c, Packet p, RP rp){
         this.rp = rp;
         this.connection = c;
         this.receivedPacket = p;
-        //try {
-        //    // open a socket for receiving UDP packets on RP's port
-        //    this.ss = new DatagramSocket(RP.RP_PORT);
-        //} catch(Exception e){
-        //    e.printStackTrace();
-        //}
+        try {
+            // open a socket for receiving UDP packets on RP's port
+            this.ds = new DatagramSocket(RP.RP_PORT);
+        } catch(Exception e){
+            e.printStackTrace();
+        }
     }
 
     public void requestStreamToServer(StreamRequest sr){
@@ -263,20 +219,21 @@ class RPWorker2 implements Runnable{
             // create the buffer to receive the packets
             byte[] receiveData = new byte[buffersize];
     
-            System.out.println("Listening on UDP in Port " + RP.RP_PORT);
+            this.rp.log(new LogEntry("Listening on UDP in Port " + RP.RP_PORT));
             // Create the packet which will receive the data
             DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
     
             while(true) {
                 // Receive the packet
-                this.ss.receive(receivePacket);
+                this.ds.receive(receivePacket);
+                Path bestPath = rp.paths.get(this.clientId);
                 this.rp.log(new LogEntry("Received UDP packet"));
                 // Send UDP packet to ONode in the path of the client
             }
         } catch (IOException e) {
             System.out.println(e);
         } finally {
-            this.ss.close();
+            this.ds.close();
         }
     }
 
@@ -286,6 +243,7 @@ class RPWorker2 implements Runnable{
         ByteArrayInputStream bais = new ByteArrayInputStream(data);
         DataInputStream in = new DataInputStream(bais);
         StreamRequest sr = StreamRequest.deserialize(in);
+        this.clientId = sr.getClientID();
 
         try 
         {
@@ -298,7 +256,7 @@ class RPWorker2 implements Runnable{
         // Now we have to request to a server to stream this video
         this.requestStreamToServer(sr);
 
-        //this.receiveUDPpackets();
+        this.receiveUDPpackets();
 
         // Now we receive the UDP video stream
 
