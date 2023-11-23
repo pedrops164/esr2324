@@ -5,6 +5,8 @@ import Common.UDPDatagram;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
 
 public class FramePacket {
     private Path path;
@@ -15,8 +17,11 @@ public class FramePacket {
         this.udpDatagram = packet;
     }
 
-    public void serialize(DataOutputStream out) {
+    public byte[] serialize() {
         try{
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            DataOutputStream out = new DataOutputStream(baos);
+
             // Serialize the Path
             byte[] pathBytes = path.serialize();
             out.writeInt(pathBytes.length);
@@ -24,13 +29,20 @@ public class FramePacket {
 
             // Serialize the UDPDatagram
             this.udpDatagram.serialize(out);
+            out.flush();
+            byte[] fpBytes = baos.toByteArray();
+            return baos.toByteArray();
         }catch (Exception e){
             e.printStackTrace();
         }
+        return null;
     }
 
-    public static FramePacket deserialize(DataInputStream in) {
+    public static FramePacket deserialize(byte[] receivedBytes) {
         try{
+            ByteArrayInputStream bais = new ByteArrayInputStream(receivedBytes);
+            DataInputStream in = new DataInputStream(bais);
+
             // Deserialize the Path
             int pathLength = in.readInt();
             byte[] pathBytes = new byte[pathLength];
@@ -51,5 +63,9 @@ public class FramePacket {
 
     public Path getPath() {
         return this.path;
+    }
+    
+    public UDPDatagram getUDPDatagram() {
+        return this.udpDatagram;
     }
 }

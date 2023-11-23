@@ -139,9 +139,7 @@ class UDP_Worker implements Runnable {
                 byte[] receivedBytes = receivedPacket.getData();
 
                 // Convert the received bytes into a Frame Packet
-                ByteArrayInputStream bais = new ByteArrayInputStream(receivedBytes);
-                DataInputStream in = new DataInputStream(bais);
-                FramePacket fp = FramePacket.deserialize(in);
+                FramePacket fp = FramePacket.deserialize(receivedBytes);
 
                 // get the id of the next node in the Path to the client
                 int nextNodeId = fp.getPath().nextNode(this.node.getId());
@@ -149,11 +147,7 @@ class UDP_Worker implements Runnable {
                 String neighbourIp = this.node.getNeighbourIp(nextNodeId);
 
                 // get the bytes of the FramePacket
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                DataOutputStream out = new DataOutputStream(baos);
-                fp.serialize(out);
-                out.flush();
-                byte[] fpBytes = baos.toByteArray();
+                byte[] fpBytes = fp.serialize();
 
                 // Change the destination address of the packet to send
                 DatagramPacket packetToSend = new DatagramPacket(fpBytes, fpBytes.length, InetAddress.getByName(neighbourIp), ONode.ONODE_PORT);

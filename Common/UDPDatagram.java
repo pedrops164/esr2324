@@ -98,6 +98,19 @@ public class UDPDatagram{
         }
     }
 
+    public static UDPDatagram deserialize(byte[] receivedBytes) {
+        try{
+            ByteArrayInputStream bais = new ByteArrayInputStream(receivedBytes);
+            DataInputStream in = new DataInputStream(bais);
+            
+            return deserialize(in);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
     public static UDPDatagram deserialize(DataInputStream in) {
         try{
             // Deserialize the UDPDatagram

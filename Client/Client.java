@@ -9,10 +9,14 @@ import Common.StreamRequest;
 import Common.TCPConnection;
 import Common.TCPConnection.Packet;
 import Common.LogEntry;
+import Common.UDPDatagram;
+import Common.FramePacket;
+
+
+import Overlay_Node.ONode;
 
 import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 import java.util.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -144,6 +148,8 @@ public class Client extends Node {
         // inicializar a receção por TCP
         Thread tcp = new Thread(new TCP_Worker(this));
         tcp.start();
+        Thread udp = new Thread(new UDP_Worker(this));
+        udp.start();
 
         // executar o flood
         this.flood();
@@ -231,6 +237,58 @@ class TCP_Worker implements Runnable
         catch (Exception e)
         {
             e.printStackTrace();
+        }
+    }
+}
+
+class UDP_Worker implements Runnable {
+    private DatagramSocket ds;
+    private Client client;
+    
+    public UDP_Worker(Client client)
+    {
+        this.client = client;
+        
+        try {
+            // open a socket for receiving UDP packets on the overlay node's port
+            this.ds = new DatagramSocket(ONode.ONODE_PORT);
+    
+        } catch (Exception e) {
+            e.printStackTrace();    
+        }
+    }
+
+    @Override
+    public void run() 
+    {
+        try {
+            // set the buffer size
+            int buffersize = 15000;
+            // create the buffer to receive the packets
+            byte[] receiveData = new byte[buffersize];
+            // Create the packet which will receive the data
+            DatagramPacket receivedPacket = new DatagramPacket(receiveData, receiveData.length);
+
+            this.client.log(new LogEntry("Listening on UDP:" + this.client.getIp() + ":" + ONode.ONODE_PORT));
+            while(true) {
+                // Receive the packet
+                this.ds.receive(receivedPacket);
+                this.client.log(new LogEntry("Received UDP packet"));
+
+                // Get the received bytes from the receivedPacket
+                byte[] receivedBytes = receivedPacket.getData();
+
+                // Convert the received bytes into a Frame Packet
+                FramePacket fp = FramePacket.deserialize(receivedBytes);
+
+                // Get the UDP Datagram
+                UDPDatagram udpDatagram = fp.getUDPDatagram();
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();  
+        } finally {
+            this.ds.close();
         }
     }
 }

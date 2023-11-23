@@ -239,19 +239,13 @@ class RPWorker2 implements Runnable{
 
                 // get the bytes from the UDP packet, and convert them into UDPDatagram
                 byte[] receivedBytes = receivePacket.getData();
-                ByteArrayInputStream bais = new ByteArrayInputStream(receivedBytes);
-                DataInputStream in = new DataInputStream(bais);
                 // build the UDPDatagram from the received bytes (deserialize the bytes)
-                UDPDatagram receivedPacket = UDPDatagram.deserialize(in);
+                UDPDatagram receivedPacket = UDPDatagram.deserialize(receivedBytes);
                 // build the FramePacket to send to the client
                 FramePacket fp = new FramePacket(bestPath, receivedPacket);
 
-                // get the bytes of the FramePacket
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                DataOutputStream out = new DataOutputStream(baos);
-                fp.serialize(out);
-                out.flush();
-                byte[] fpBytes = baos.toByteArray();
+                // Serialize FramePacket
+                byte[] fpBytes = fp.serialize();
 
                 // Get neighbor ip and port (his id is nextNodeId), and send the udp packet to him
                 String neighbourIp = this.rp.getNeighbourIp(nextNodeId);
