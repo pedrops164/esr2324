@@ -6,10 +6,11 @@ import Common.Node;
 import Common.NormalFloodWorker;
 import Common.ServerStreams;
 import Common.StreamRequest;
+import Common.UDPDatagram;
 import Common.TCPConnection;
 import Common.TCPConnection.Packet;
 import Rendezvous_Point.RP;
-import Common.VideoStream;
+import Common.Video;
 import Common.RTPpacket;
 
 import java.io.*;
@@ -197,20 +198,24 @@ class ServerWorker1 implements Runnable{
         // Start the UDP video streaming. (Send directly to the RP)
         try {
             this.node.log(new LogEntry("Streaming '" + videoPath + "' through UDP!"));
-            VideoStream video = new VideoStream(videoPath);
+            Video video = new Video(videoPath);
             for (int frameNumber = 0; frameNumber < videoLength; frameNumber++) {
-	            byte[] videoBuffer = video.getnextframe();
-                //Builds an RTPpacket object containing the frame~
-                System.out.println("Packet length - " + videoBuffer.length);
-	            RTPpacket rtp_packet = new RTPpacket(video_extension, frameNumber, frameNumber*frame_period, videoBuffer, videoBuffer.length);
-	            //get to total length of the full rtp packet to send
-	            int packet_length = rtp_packet.getlength();
-                System.out.println("Rtp Packet length - " + packet_length);
-	            //retrieve the packet bitstream and store it in an array of bytes
-	            byte[] packet_bits = new byte[packet_length];
-	            rtp_packet.getpacket(packet_bits);
-	            //send the packet as a DatagramPacket over the UDP socket 
-	            DatagramPacket senddp = new DatagramPacket(packet_bits, packet_length, InetAddress.getByName(this.RPIP), RP.RP_PORT);
+                // Get the next frame of the video
+	            byte[] videoBuffer = video.getNextVideoFrame();
+                //Builds a UDPDatagram object containing the frame
+	            UDPDatagram udpDatagram = new UDPDatagram(video_extension, frameNumber, frameNumber*frame_period, videoBuffer, videoBuffer.length);
+	            //get to total length of the full udp datagram to send
+	            int datagramLength = udpDatagram.datagramSize();
+                
+                // get the bytes of the UDPDatagram
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                DataOutputStream out = new DataOutputStream(baos);
+                udpDatagram.serialize(out);
+                out.flush();
+                byte[] packetBytes = baos.toByteArray();
+
+	            // Initialize the DatagramPacket and send it over the UDP socket 
+	            DatagramPacket senddp = new DatagramPacket(packetBytes, datagramLength, InetAddress.getByName(this.RPIP), RP.RP_PORT);
 	            this.ds.send(senddp);
             }
         } catch (Exception e) {

@@ -1,18 +1,18 @@
 package Common;
 
 import Common.Path;
-import Common.RTPpacket;
+import Common.UDPDatagram;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 
 public class FramePacket {
     private Path path;
-    private RTPpacket packet;
+    private UDPDatagram udpDatagram;
 
-    public FramePacket(Path path, RTPpacket packet) {
+    public FramePacket(Path path, UDPDatagram packet) {
         this.path = path;
-        this.packet = packet;
+        this.udpDatagram = packet;
     }
 
     public void serialize(DataOutputStream out) {
@@ -22,11 +22,8 @@ public class FramePacket {
             out.writeInt(pathBytes.length);
             out.write(pathBytes);
 
-            // Serialize the RTPpacket
-            byte[] packetBytes = new byte[this.packet.getlength()];
-            int packetLength = this.packet.getpacket(packetBytes);
-            out.writeInt(packetLength);
-            out.write(packetBytes);
+            // Serialize the UDPDatagram
+            this.udpDatagram.serialize(out);
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -36,19 +33,15 @@ public class FramePacket {
         try{
             // Deserialize the Path
             int pathLength = in.readInt();
-            System.out.println("Path length - " + pathLength);
             byte[] pathBytes = new byte[pathLength];
             in.readFully(pathBytes);
             Path path = Path.deserialize(pathBytes);
 
-            // Deserialize the RTPpacket
-            int packetLength = in.readInt();
-            System.out.println("Packet length - " + packetLength);
-            byte[] packetBytes = new byte[packetLength];
-            in.readFully(packetBytes);
-            RTPpacket packet = new RTPpacket(packetBytes, packetLength);
+            // Deserialize the UDPDatagram
+            UDPDatagram datagram = UDPDatagram.deserialize(in);
 
-            return new FramePacket(path, packet);
+            // return the de-serialized FramePacket
+            return new FramePacket(path, datagram);
         }catch (Exception e){
             e.printStackTrace();
         }

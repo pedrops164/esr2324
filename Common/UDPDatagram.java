@@ -1,6 +1,7 @@
 package Common;
 
 import java.util.HashMap;
+import java.io.*;
 
 /*
  * Class that contains all the information present in a UDP Datagram
@@ -85,38 +86,37 @@ public class UDPDatagram{
 
     public void serialize(DataOutputStream out) {
         try{
-            // Serialize the Path
-            byte[] pathBytes = path.serialize();
-            out.writeInt(pathBytes.length);
-            out.write(pathBytes);
+            // Serialize the UDP Datagram
+            out.writeInt(this.payload_size); // write size of the payload
+            out.writeInt(this.payloadType); // write payload type
+            out.writeInt(this.sequenceNumber); // write sequence number
+            out.writeInt(this.timeStamp); // write time stamp
+            out.write(this.payload); // write the payload bytes
 
-            // Serialize the RTPpacket
-            byte[] packetBytes = new byte[this.packet.getlength()];
-            int packetLength = this.packet.getpacket(packetBytes);
-            out.writeInt(packetLength);
-            out.write(packetBytes);
         }catch (Exception e){
             e.printStackTrace();
         }
     }
 
-    public static FramePacket deserialize(DataInputStream in) {
+    public static UDPDatagram deserialize(DataInputStream in) {
         try{
-            // Deserialize the Path
-            int pathLength = in.readInt();
-            System.out.println("Path length - " + pathLength);
-            byte[] pathBytes = new byte[pathLength];
-            in.readFully(pathBytes);
-            Path path = Path.deserialize(pathBytes);
+            // Deserialize the UDPDatagram
 
-            // Deserialize the RTPpacket
-            int packetLength = in.readInt();
-            System.out.println("Packet length - " + packetLength);
-            byte[] packetBytes = new byte[packetLength];
-            in.readFully(packetBytes);
-            RTPpacket packet = new RTPpacket(packetBytes, packetLength);
+            // Get the size of the payload array
+            int payloadSize = in.readInt();
+            // get payload type
+            int payloadType = in.readInt();
+            // get sequence number
+            int sequenceNumber = in.readInt();
+            // get time stamp
+            int timeStamp = in.readInt();
+            // initialize the array which will hold the byte
+            byte[] payloadBytes = new byte[payloadSize];
+            // read the bytes from in and place in payloadBytes array
+            in.readFully(payloadBytes);
 
-            return new FramePacket(path, packet);
+            // return the de-serialized UDP datagram
+            return new UDPDatagram(payloadType, sequenceNumber, timeStamp, payloadBytes, payloadSize);
         }catch (Exception e){
             e.printStackTrace();
         }

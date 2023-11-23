@@ -7,6 +7,7 @@ import Overlay_Node.ONode;
 import Common.Path;
 import Common.RTPpacket;
 import Common.FramePacket;
+import Common.UDPDatagram;
 import Common.ServerStreams;
 import Common.StreamRequest;
 import Common.TCPConnection;
@@ -233,12 +234,15 @@ class RPWorker2 implements Runnable{
                 // get the id of the next node in the path to the client
                 int nextNodeId = bestPath.nextNode(this.rp.getId());
                 this.rp.log(new LogEntry("Received UDP packet"));
-                // Send UDP packet to ONode in the path of the client
 
-                // get the bytes from the UDP packet
+                // Now Send UDP packet to the next Overlay Node in the path of the client
+
+                // get the bytes from the UDP packet, and convert them into UDPDatagram
                 byte[] receivedBytes = receivePacket.getData();
-                // build the RTPpacket from the received bytes
-                RTPpacket receivedPacket = new RTPpacket(receivedBytes, receivedBytes.length);
+                ByteArrayInputStream bais = new ByteArrayInputStream(receivedBytes);
+                DataInputStream in = new DataInputStream(bais);
+                // build the UDPDatagram from the received bytes (deserialize the bytes)
+                UDPDatagram receivedPacket = UDPDatagram.deserialize(in);
                 // build the FramePacket to send to the client
                 FramePacket fp = new FramePacket(bestPath, receivedPacket);
 
@@ -257,8 +261,8 @@ class RPWorker2 implements Runnable{
                 this.ds.send(udpFramePacket);
                 this.rp.log(new LogEntry("Sent UDP packet"));
             }
-        } catch (IOException e) {
-            System.out.println(e);
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
             this.ds.close();
         }
