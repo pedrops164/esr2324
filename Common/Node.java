@@ -103,4 +103,8 @@ public abstract class Node {
     {
         this.logger.log(entry);
     }
+
+    public String getNeighbourIp(int neighbourId) {
+        return this.neighbours.get(neighbourId);
+    }
 }

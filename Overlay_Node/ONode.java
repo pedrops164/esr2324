@@ -7,6 +7,7 @@ import java.io.*;
 
 import Common.LogEntry;
 import Common.NeighbourReader;
+import Common.FramePacket;
 import Common.Node;
 import Common.TCPConnection;
 import Common.TCPConnection.Packet;
@@ -34,8 +35,8 @@ public class ONode extends Node {
     {
         Thread tcp = new Thread(new TCP_Worker(this));
         tcp.start();
-        //Thread udp = new Thread(new UDP_Worker(this));
-        //udp.start();
+        Thread udp = new Thread(new UDP_Worker(this));
+        udp.start();
     }
 
     public static void main(String args[]){
@@ -101,16 +102,16 @@ class TCP_Worker implements Runnable
 }
 
 class UDP_Worker implements Runnable {
-    private DatagramSocket ss;
-    private Node node;
+    private DatagramSocket ds;
+    private ONode node;
     
-    public UDP_Worker(Node node)
+    public UDP_Worker(ONode node)
     {
         this.node = node;
         
         try {
             // open a socket for receiving UDP packets on the overlay node's port
-            this.ss = new DatagramSocket(ONode.ONODE_PORT);
+            this.ds = new DatagramSocket(ONode.ONODE_PORT);
     
         } catch (Exception e) {
             e.printStackTrace();    
@@ -126,19 +127,45 @@ class UDP_Worker implements Runnable {
             // create the buffer to receive the packets
             byte[] receiveData = new byte[buffersize];
             // Create the packet which will receive the data
-            DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+            DatagramPacket receivedPacket = new DatagramPacket(receiveData, receiveData.length);
 
-            this.node.log(new LogEntry("Listening on UDP:" + InetAddress.getLocalHost().getHostAddress() + ":" + ONode.ONODE_PORT));
+            this.node.log(new LogEntry("Listening on UDP:" + this.node.getIp() + ":" + ONode.ONODE_PORT));
             while(true) {
                 // Receive the packet
-                this.ss.receive(receivePacket);
+                this.ds.receive(receivedPacket);
                 this.node.log(new LogEntry("Received UDP packet"));
+
+                // Get the received bytes from the receivedPacket
+                byte[] receivedBytes = receivedPacket.getData();
+
+                // Convert the received bytes into a Frame Packet
+                ByteArrayInputStream bais = new ByteArrayInputStream(receivedBytes);
+                DataInputStream in = new DataInputStream(bais);
+                FramePacket fp = FramePacket.deserialize(in);
+
+                // get the id of the next node in the Path to the client
+                int nextNodeId = fp.getPath().nextNode(this.node.getId());
+                //get next node's ip
+                String neighbourIp = this.node.getNeighbourIp(nextNodeId);
+
+                // get the bytes of the FramePacket
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                DataOutputStream out = new DataOutputStream(baos);
+                fp.serialize(out);
+                out.flush();
+                byte[] fpBytes = baos.toByteArray();
+
+                // Change the destination address of the packet to send
+                DatagramPacket packetToSend = new DatagramPacket(fpBytes, fpBytes.length, InetAddress.getByName(neighbourIp), ONode.ONODE_PORT);
+                // Send the DatagramPacket through the UDP socket
+                this.ds.send(packetToSend);
+                this.node.log(new LogEntry("Sent UDP packet"));
             }
             
-        } catch (IOException e) {
-            System.out.println(e);
+        } catch (Exception e) {
+            e.printStackTrace();  
         } finally {
-            this.ss.close();
+            this.ds.close();
         }
     }
 }

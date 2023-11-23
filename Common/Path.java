@@ -130,4 +130,23 @@ public class Path {
 
     //     System.out.println(deserialize(p.serialize()));
     // }
+
+    public int nextNode(int currentNodeId) {
+        if (this.nodeList == null || this.nodeList.isEmpty()) {
+            System.out.println("Path is empty");
+            return -1;
+        }
+
+        PathNode previousNode = null;
+        for (PathNode node : this.nodeList) {
+            if (node.getNodeId() == currentNodeId) {
+                // If currentNodeId is the first node, there is no previous node
+                return previousNode == null ? -1 : previousNode.getNodeId();
+            }
+            previousNode = node;
+        }
+
+        // currentNodeId not found in the list
+        return -1;
+    }
 }

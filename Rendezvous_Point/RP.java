@@ -3,8 +3,10 @@ package Rendezvous_Point;
 import Common.LogEntry;
 import Common.NeighbourReader;
 import Common.Node;
+import Overlay_Node.ONode;
 import Common.Path;
-//import Common.RTPpacket;
+import Common.RTPpacket;
+import Common.FramePacket;
 import Common.ServerStreams;
 import Common.StreamRequest;
 import Common.TCPConnection;
@@ -226,9 +228,34 @@ class RPWorker2 implements Runnable{
             while(true) {
                 // Receive the packet
                 this.ds.receive(receivePacket);
+                // Get the pest path to the client
                 Path bestPath = rp.paths.get(this.clientId);
+                // get the id of the next node in the path to the client
+                int nextNodeId = bestPath.nextNode(this.rp.getId());
                 this.rp.log(new LogEntry("Received UDP packet"));
                 // Send UDP packet to ONode in the path of the client
+
+                // get the bytes from the UDP packet
+                byte[] receivedBytes = receivePacket.getData();
+                // build the RTPpacket from the received bytes
+                RTPpacket receivedPacket = new RTPpacket(receivedBytes, receivedBytes.length);
+                // build the FramePacket to send to the client
+                FramePacket fp = new FramePacket(bestPath, receivedPacket);
+
+                // get the bytes of the FramePacket
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                DataOutputStream out = new DataOutputStream(baos);
+                fp.serialize(out);
+                out.flush();
+                byte[] fpBytes = baos.toByteArray();
+
+                // Get neighbor ip and port (his id is nextNodeId), and send the udp packet to him
+                String neighbourIp = this.rp.getNeighbourIp(nextNodeId);
+                // Get the UDP packet to send with the bytes from the frame packet
+                DatagramPacket udpFramePacket = new DatagramPacket(fpBytes, fpBytes.length, InetAddress.getByName(neighbourIp), ONode.ONODE_PORT);
+                // Send the DatagramPacket through the UDP socket
+                this.ds.send(udpFramePacket);
+                this.rp.log(new LogEntry("Sent UDP packet"));
             }
         } catch (IOException e) {
             System.out.println(e);

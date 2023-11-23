@@ -198,13 +198,14 @@ class ServerWorker1 implements Runnable{
         try {
             this.node.log(new LogEntry("Streaming '" + videoPath + "' through UDP!"));
             VideoStream video = new VideoStream(videoPath);
-            byte[] videoBuffer = new byte[15000]; //allocate memory for the sending buffer
             for (int frameNumber = 0; frameNumber < videoLength; frameNumber++) {
-	            int image_length = video.getnextframe(videoBuffer);
-                //Builds an RTPpacket object containing the frame
-	            RTPpacket rtp_packet = new RTPpacket(video_extension, frameNumber, frameNumber*frame_period, videoBuffer, image_length);
+	            byte[] videoBuffer = video.getnextframe();
+                //Builds an RTPpacket object containing the frame~
+                System.out.println("Packet length - " + videoBuffer.length);
+	            RTPpacket rtp_packet = new RTPpacket(video_extension, frameNumber, frameNumber*frame_period, videoBuffer, videoBuffer.length);
 	            //get to total length of the full rtp packet to send
 	            int packet_length = rtp_packet.getlength();
+                System.out.println("Rtp Packet length - " + packet_length);
 	            //retrieve the packet bitstream and store it in an array of bytes
 	            byte[] packet_bits = new byte[packet_length];
 	            rtp_packet.getpacket(packet_bits);
