@@ -9,7 +9,6 @@ import Common.StreamRequest;
 import Common.TCPConnection;
 import Common.TCPConnection.Packet;
 import Common.LogEntry;
-import Common.Logger;
 
 import java.io.*;
 import java.net.ServerSocket;

@@ -7,6 +7,7 @@ import Common.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class RoutingTree {
     private List<Path> paths;
@@ -45,6 +46,12 @@ public class RoutingTree {
         Comparator<Path> c = (heuristic == Heuristic.DELAY) ?(new ComparePathDelay()) :(new ComparePathJumps());
 
         return paths.stream().min(c).get();
+    }
+
+    public List<Path> getOrderedPaths()
+    {
+        Comparator<Path> c = (heuristic == Heuristic.DELAY) ?(new ComparePathDelay()) :(new ComparePathJumps());
+        return this.paths.stream().sorted(c).collect(Collectors.toList());
     }
 
     public boolean isAvailable()
