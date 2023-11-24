@@ -12,6 +12,8 @@ import Common.LogEntry;
 import Common.UDPDatagram;
 import Common.FramePacket;
 
+import Client.ClientVideoPlayer;
+
 
 import Overlay_Node.ONode;
 
@@ -28,6 +30,7 @@ public class Client extends Node {
     private RoutingTree routingTree;
     private Lock routingTreeLock;
     private Condition hasPaths;
+    public ClientVideoPlayer cvp;
 
     public Client(String args[], NeighbourReader nr, boolean debugMode){
         super(Integer.parseInt(args[0]), nr, debugMode);
@@ -35,6 +38,7 @@ public class Client extends Node {
         this.routingTree = new RoutingTree();
         this.routingTreeLock = new ReentrantLock();
         this.hasPaths = this.routingTreeLock.newCondition();
+        this.cvp = new ClientVideoPlayer();
     }
 
     public void getAvailableStreams(){
@@ -283,6 +287,7 @@ class UDP_Worker implements Runnable {
 
                 // Get the UDP Datagram
                 UDPDatagram udpDatagram = fp.getUDPDatagram();
+                this.client.cvp.updateFrame(udpDatagram);
             }
             
         } catch (Exception e) {

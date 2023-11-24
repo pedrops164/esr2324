@@ -73,6 +73,18 @@ public class UDPDatagram{
         }
     }
 
+    public byte[] getPayload() {
+        byte[] ret = new byte[this.payload_size];
+        for(int i=0; i<this.payload_size; i++){
+            ret[i] = this.payload[i];
+        }
+        return ret;
+    }
+
+    public int getPayloadLength() {
+        return this.payload_size;
+    }
+
     public void printDatagramHeader(){
         HashMap<Integer, String> types = new HashMap<>();
         types.put(0, "Mjepg");
