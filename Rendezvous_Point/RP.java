@@ -12,6 +12,7 @@ import Common.ServerStreams;
 import Common.StreamRequest;
 import Common.TCPConnection;
 import Common.TCPConnection.Packet;
+import Common.VideoMetadata;
 import Server.Server;
 
 import java.awt.event.*;
@@ -210,6 +211,12 @@ class RPWorker2 implements Runnable{
             out.flush();
             byte [] data = baos.toByteArray();
             c.send(2, data); // Send the video stream request to the Server
+
+            // Receive VideoMetadata through TCP and send to client
+            Packet metadataPacket = c.receive();
+            this.connection.send(metadataPacket);
+            this.rp.log(new LogEntry("Received and sent VideoMetadata packet"));
+
         }catch(Exception e){
             e.printStackTrace();
         }

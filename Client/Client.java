@@ -11,6 +11,7 @@ import Common.TCPConnection.Packet;
 import Common.LogEntry;
 import Common.UDPDatagram;
 import Common.FramePacket;
+import Common.VideoMetadata;
 
 import Client.ClientVideoPlayer;
 
@@ -105,6 +106,14 @@ public class Client extends Node {
             out.flush();
             byte [] data = baos.toByteArray();
             c.send(2, data); // Send the request to the RP
+
+            // Receive VideoMetadata through TCP and send to client
+            Packet metadataPacket = c.receive();
+            this.logger.log(new LogEntry("Received Video Metadata from RP"));
+            byte[] metadata = metadataPacket.data;
+            VideoMetadata vmd = VideoMetadata.deserialize(metadata);
+
+            this.cvp.setVideoPeriod(vmd.getFramePeriod());
         }catch(Exception e){
             e.printStackTrace();
         }
@@ -287,7 +296,7 @@ class UDP_Worker implements Runnable {
 
                 // Get the UDP Datagram
                 UDPDatagram udpDatagram = fp.getUDPDatagram();
-                this.client.cvp.updateFrame(udpDatagram);
+                this.client.cvp.updateLastFrame(udpDatagram);
             }
             
         } catch (Exception e) {

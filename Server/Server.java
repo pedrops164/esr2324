@@ -12,6 +12,7 @@ import Common.TCPConnection.Packet;
 import Rendezvous_Point.RP;
 import Common.Video;
 import Common.RTPpacket;
+import Common.VideoMetadata;
 
 import java.io.*;
 import java.net.*;
@@ -121,7 +122,7 @@ public class Server extends Node {
                 switch (p.type) {
                     case 2: // New video stream request
                         this.logger.log(new LogEntry("Received Video Stream Request from " + s.getInetAddress().getHostAddress()));
-                        t = new Thread(new ServerWorker1(p, this.RPIP, this));
+                        t = new Thread(new ServerWorker1(c, p, this.RPIP, this));
                         t.start();
                         break;
                     case 5: // Flood message
@@ -164,12 +165,14 @@ public class Server extends Node {
 
 // Responsible to handle new resquests of video streaming!
 class ServerWorker1 implements Runnable{
+    private TCPConnection connection;
     private Packet receivedPacket;
     private String RPIP;
     private DatagramSocket ds;
     private Node node;
 
-    public ServerWorker1(Packet p, String RPIP, Node node){
+    public ServerWorker1(TCPConnection connection, Packet p, String RPIP, Node node){
+        this.connection = connection;
         this.receivedPacket = p;
         this.RPIP = RPIP;
         this.node = node;
@@ -193,10 +196,17 @@ class ServerWorker1 implements Runnable{
         int videoLength = 100; // number of frames
         int frame_period = 100; // time between frames in ms.
         int video_extension = 26; //26 is Mjpeg type
-        
+
+        VideoMetadata vmd = new VideoMetadata(frame_period);
+        // Convert VideoMetadata to bytes (serialize) and send the packet to RP (type 6 represents video metadata)
+        Packet packetMetadata = new Packet(6, vmd.serialize());
+        this.connection.send(packetMetadata);
+
+        this.connection.stopConnection();
 
         // Start the UDP video streaming. (Send directly to the RP)
         try {
+            this.node.log(new LogEntry("Sent VideoMetadata packet to RP"));
             this.node.log(new LogEntry("Streaming '" + videoPath + "' through UDP!"));
             Video video = new Video(videoPath);
             for (int frameNumber = 0; frameNumber < videoLength; frameNumber++) {

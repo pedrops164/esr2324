@@ -4,12 +4,16 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
+import javax.swing.Timer;
+
 import Common.UDPDatagram;
 
 class ClientVideoPlayer {
     private JFrame jframe;
-    private JLabel iconLabel;
-    private ImageIcon icon;
+    JLabel iconLabel;
+    ImageIcon icon;
+    JButton playButton;
+    Timer updateFrame;
 
     public ClientVideoPlayer() {
         System.out.println(java.awt.GraphicsEnvironment.isHeadless());
@@ -17,12 +21,12 @@ class ClientVideoPlayer {
         //----
         this.jframe = new JFrame("Cliente de Testes");
         JButton setupButton = new JButton("Setup");
-        JButton playButton = new JButton("Play");
+        playButton = new JButton("Play");
         JButton pauseButton = new JButton("Pause");
         JButton tearButton = new JButton("Teardown");
         JPanel mainPanel = new JPanel();
         JPanel buttonPanel = new JPanel();
-        this.iconLabel = new JLabel();
+        iconLabel = new JLabel();
 
         //Frame
         this.jframe.addWindowListener(new WindowAdapter() {
@@ -38,8 +42,8 @@ class ClientVideoPlayer {
         buttonPanel.add(pauseButton);
         buttonPanel.add(tearButton);
     
-        // handlers... (so dois)
-        //playButton.addActionListener(new playButtonListener());
+        // handlers
+        playButton.addActionListener(new playButtonListener());
         //tearButton.addActionListener(new tearButtonListener());
     
         //Image display label
@@ -57,7 +61,7 @@ class ClientVideoPlayer {
         this.jframe.setVisible(true);
     }
 
-    public void updateFrame(UDPDatagram datagram) {
+    public void updateLastFrame(UDPDatagram datagram) {
         byte[] payload = datagram.getPayload();
         int payload_length = payload.length;
 
@@ -65,7 +69,36 @@ class ClientVideoPlayer {
 	    Toolkit toolkit = Toolkit.getDefaultToolkit();
 	    Image image = toolkit.createImage(payload, 0, payload_length);
 	    //display the image as an ImageIcon object
-	    this.icon = new ImageIcon(image);
-	    this.iconLabel.setIcon(this.icon);
+        System.out.println("Updated this.icon");
+	    icon = new ImageIcon(image);
     }
+
+    public void setVideoPeriod(int framePeriod) {
+        updateFrame = new Timer(framePeriod, new updateFrameListener(this));
+        updateFrame.setInitialDelay(0);
+        updateFrame.setCoalesce(true);
+        System.out.println("Set video period");
+    }
+
+    
+    class updateFrameListener implements ActionListener {
+        private ClientVideoPlayer cvp;
+
+        public updateFrameListener(ClientVideoPlayer cvp) {
+            this.cvp = cvp;
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            System.out.println("Action performed!");
+            iconLabel.setIcon(icon);
+        }
+    }
+
+    class playButtonListener implements ActionListener {
+        public void actionPerformed(ActionEvent e){
+            System.out.println("Play Button pressed !"); 
+            //start the timers ... 
+            updateFrame.start();
+        }
+      }
 }
