@@ -8,7 +8,7 @@ import Common.LogEntry;
 import java.io.*;
 import java.util.*;
 
-// Responsible to answer the client with the available streams
+// Responsible to notify the client of the available streams
 // RPWorker3
 class HandleNotifyStreams implements Runnable{
     private RP rp;
