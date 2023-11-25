@@ -8,15 +8,18 @@ import javax.swing.Timer;
 
 import Common.UDPDatagram;
 
+import Client.FrameQueue;
+
 class ClientVideoPlayer {
     private JFrame jframe;
     JLabel iconLabel;
     ImageIcon icon;
     JButton playButton;
     Timer updateFrame;
+    private FrameQueue frameQueue;
 
     public ClientVideoPlayer() {
-        System.out.println(java.awt.GraphicsEnvironment.isHeadless());
+        this.frameQueue = new FrameQueue();
         //GUI
         //----
         this.jframe = new JFrame("Cliente de Testes");
@@ -43,8 +46,9 @@ class ClientVideoPlayer {
         buttonPanel.add(tearButton);
     
         // handlers
-        playButton.addActionListener(new playButtonListener());
+        //playButton.addActionListener(new playButtonListener());
         //tearButton.addActionListener(new tearButtonListener());
+
     
         //Image display label
         iconLabel.setIcon(null);
@@ -61,36 +65,45 @@ class ClientVideoPlayer {
         this.jframe.setVisible(true);
     }
 
-    public void updateLastFrame(UDPDatagram datagram) {
-        byte[] payload = datagram.getPayload();
-        int payload_length = payload.length;
-
-        //get an Image object from the payload bitstream
-	    Toolkit toolkit = Toolkit.getDefaultToolkit();
-	    Image image = toolkit.createImage(payload, 0, payload_length);
-	    //display the image as an ImageIcon object
-        System.out.println("Updated this.icon");
-	    icon = new ImageIcon(image);
+    public void addFrame(UDPDatagram datagram) {
+        this.frameQueue.addPacket(datagram);
     }
 
     public void setVideoPeriod(int framePeriod) {
         updateFrame = new Timer(framePeriod, new updateFrameListener(this));
         updateFrame.setInitialDelay(0);
         updateFrame.setCoalesce(true);
-        System.out.println("Set video period");
+        updateFrame.start();
+        System.out.println("Set video period and started the timer");
     }
-
     
     class updateFrameListener implements ActionListener {
         private ClientVideoPlayer cvp;
+        private Toolkit toolkit;
 
         public updateFrameListener(ClientVideoPlayer cvp) {
             this.cvp = cvp;
+            this.toolkit = Toolkit.getDefaultToolkit();
         }
 
         public void actionPerformed(ActionEvent e) {
-            System.out.println("Action performed!");
-            iconLabel.setIcon(icon);
+            System.out.println("Updating Frame!");
+            try {
+                UDPDatagram nextFrame = frameQueue.getNextFrame();
+                byte[] payload = nextFrame.getPayload();
+                int payload_length = payload.length;
+                //get an Image object from the payload bitstream
+                Image image = toolkit.createImage(payload, 0, payload_length);
+                //display the image as an ImageIcon object
+                icon = new ImageIcon(image);
+                iconLabel.setIcon(icon);
+            } catch (NoNextFrameException exception) {
+                // There are no frames in the queue, so we don't update the frame
+                System.out.println("No new frames have arrived!");
+            } catch (Exception exception) {
+                exception.printStackTrace();
+            }
+            
         }
     }
 

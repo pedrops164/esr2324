@@ -15,7 +15,6 @@ import Common.VideoMetadata;
 
 import Client.ClientVideoPlayer;
 
-
 import Overlay_Node.ONode;
 
 import java.io.*;
@@ -296,7 +295,8 @@ class UDP_Worker implements Runnable {
 
                 // Get the UDP Datagram
                 UDPDatagram udpDatagram = fp.getUDPDatagram();
-                this.client.cvp.updateLastFrame(udpDatagram);
+                this.client.cvp.addFrame(udpDatagram);
+                //this.client.cvp.updateLastFrame(udpDatagram);
             }
             
         } catch (Exception e) {

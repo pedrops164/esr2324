@@ -16,7 +16,7 @@ import java.io.*;
  *  Mov: 2  
  */
 
-public class UDPDatagram{
+public class UDPDatagram implements Comparable<UDPDatagram> {
 
     private static int header_size = 3; // Header size -> 3 integers
     // Header fields
@@ -147,5 +147,14 @@ public class UDPDatagram{
         }
 
         return null;
+    }
+
+    public int getTimeStamp() {
+        return this.timeStamp;
+    }
+
+    @Override
+    public int compareTo(UDPDatagram other) {
+        return Integer.compare(this.timeStamp, other.timeStamp);
     }
 }
