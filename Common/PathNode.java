@@ -4,7 +4,9 @@ import java.nio.ByteBuffer;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 
-public class PathNode {
+import java.io.Serializable;
+
+public class PathNode implements Serializable {
     private int nodeId, nodePort;
     private IPAddress nodeIPAddress;
     private LocalDateTime timeStamp;

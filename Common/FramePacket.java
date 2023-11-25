@@ -7,8 +7,14 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutputStream;
+import java.io.ObjectOutput;
 
-public class FramePacket {
+import java.io.Serializable;
+
+public class FramePacket implements Serializable {
     private Path path;
     private UDPDatagram udpDatagram;
 
@@ -20,18 +26,12 @@ public class FramePacket {
     public byte[] serialize() {
         try{
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            DataOutputStream out = new DataOutputStream(baos);
-
-            // Serialize the Path
-            byte[] pathBytes = path.serialize();
-            out.writeInt(pathBytes.length);
-            out.write(pathBytes);
-
-            // Serialize the UDPDatagram
-            this.udpDatagram.serialize(out);
-            out.flush();
-            byte[] fpBytes = baos.toByteArray();
-            return baos.toByteArray();
+            ObjectOutput out = new ObjectOutputStream(baos);
+            out.writeObject(this);
+            byte b[] = baos.toByteArray();
+            out.close();
+            baos.close();
+            return b;
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -41,19 +41,10 @@ public class FramePacket {
     public static FramePacket deserialize(byte[] receivedBytes) {
         try{
             ByteArrayInputStream bais = new ByteArrayInputStream(receivedBytes);
-            DataInputStream in = new DataInputStream(bais);
+            ObjectInput in = new ObjectInputStream(bais);
 
-            // Deserialize the Path
-            int pathLength = in.readInt();
-            byte[] pathBytes = new byte[pathLength];
-            in.readFully(pathBytes);
-            Path path = Path.deserialize(pathBytes);
-
-            // Deserialize the UDPDatagram
-            UDPDatagram datagram = UDPDatagram.deserialize(in);
-
-            // return the de-serialized FramePacket
-            return new FramePacket(path, datagram);
+            FramePacket ret = (FramePacket) in.readObject();
+            return ret;
         }catch (Exception e){
             e.printStackTrace();
         }

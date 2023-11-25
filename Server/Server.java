@@ -218,11 +218,7 @@ class ServerWorker1 implements Runnable{
 	            int datagramLength = udpDatagram.datagramSize();
                 
                 // get the bytes of the UDPDatagram
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                DataOutputStream out = new DataOutputStream(baos);
-                udpDatagram.serialize(out);
-                out.flush();
-                byte[] packetBytes = baos.toByteArray();
+                byte[] packetBytes = udpDatagram.serialize();
 
 	            // Initialize the DatagramPacket and send it over the UDP socket 
 	            DatagramPacket senddp = new DatagramPacket(packetBytes, datagramLength, InetAddress.getByName(this.RPIP), RP.RP_PORT);

@@ -16,7 +16,7 @@ import java.io.*;
  *  Mov: 2  
  */
 
-public class UDPDatagram implements Comparable<UDPDatagram> {
+public class UDPDatagram implements Comparable<UDPDatagram>, Serializable {
 
     private static int header_size = 3; // Header size -> 3 integers
     // Header fields
@@ -96,52 +96,28 @@ public class UDPDatagram implements Comparable<UDPDatagram> {
         System.out.println("Time Stamp: " + this.timeStamp);
     }
 
-    public void serialize(DataOutputStream out) {
+    public byte[] serialize() {
         try{
-            // Serialize the UDP Datagram
-            out.writeInt(this.payload_size); // write size of the payload
-            out.writeInt(this.payloadType); // write payload type
-            out.writeInt(this.sequenceNumber); // write sequence number
-            out.writeInt(this.timeStamp); // write time stamp
-            out.write(this.payload); // write the payload bytes
-
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutput out = new ObjectOutputStream(baos);
+            out.writeObject(this);
+            byte b[] = baos.toByteArray();
+            out.close();
+            baos.close();
+            return b;
         }catch (Exception e){
             e.printStackTrace();
         }
+        return null;
     }
 
     public static UDPDatagram deserialize(byte[] receivedBytes) {
         try{
             ByteArrayInputStream bais = new ByteArrayInputStream(receivedBytes);
-            DataInputStream in = new DataInputStream(bais);
-            
-            return deserialize(in);
-        }catch (Exception e){
-            e.printStackTrace();
-        }
+            ObjectInput in = new ObjectInputStream(bais);
 
-        return null;
-    }
-
-    public static UDPDatagram deserialize(DataInputStream in) {
-        try{
-            // Deserialize the UDPDatagram
-
-            // Get the size of the payload array
-            int payloadSize = in.readInt();
-            // get payload type
-            int payloadType = in.readInt();
-            // get sequence number
-            int sequenceNumber = in.readInt();
-            // get time stamp
-            int timeStamp = in.readInt();
-            // initialize the array which will hold the byte
-            byte[] payloadBytes = new byte[payloadSize];
-            // read the bytes from in and place in payloadBytes array
-            in.readFully(payloadBytes);
-
-            // return the de-serialized UDP datagram
-            return new UDPDatagram(payloadType, sequenceNumber, timeStamp, payloadBytes, payloadSize);
+            UDPDatagram ret = (UDPDatagram) in.readObject();
+            return ret;
         }catch (Exception e){
             e.printStackTrace();
         }

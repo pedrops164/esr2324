@@ -8,7 +8,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class Path {
+import java.io.Serializable;
+
+public class Path implements Serializable {
     private List<PathNode> nodeList;
     
     public Path()

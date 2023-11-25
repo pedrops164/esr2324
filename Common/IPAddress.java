@@ -2,11 +2,13 @@ package Common;
 
 import java.nio.ByteBuffer;
 
+import java.io.Serializable;
+
 /**
  * Class used to represent an IPv4 address on a {@link PathNode}, 
  * to make serialization easier
  */
-public class IPAddress {
+public class IPAddress implements Serializable {
     /**
      * int array containing the 4 digits of an ip address
      */
