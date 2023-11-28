@@ -213,15 +213,14 @@ class ServerWorker1 implements Runnable{
                 // Get the next frame of the video
 	            byte[] videoBuffer = video.getNextVideoFrame();
                 //Builds a UDPDatagram object containing the frame
-	            UDPDatagram udpDatagram = new UDPDatagram(video_extension, frameNumber, frameNumber*frame_period, videoBuffer, videoBuffer.length);
-	            //get to total length of the full udp datagram to send
-	            int datagramLength = udpDatagram.datagramSize();
+	            UDPDatagram udpDatagram = new UDPDatagram(video_extension, frameNumber, frameNumber*frame_period,
+                 videoBuffer, videoBuffer.length, videoPath);
                 
                 // get the bytes of the UDPDatagram
                 byte[] packetBytes = udpDatagram.serialize();
 
 	            // Initialize the DatagramPacket and send it over the UDP socket 
-	            DatagramPacket senddp = new DatagramPacket(packetBytes, datagramLength, InetAddress.getByName(this.RPIP), RP.RP_PORT);
+	            DatagramPacket senddp = new DatagramPacket(packetBytes, packetBytes.length, InetAddress.getByName(this.RPIP), RP.RP_PORT);
 	            this.ds.send(senddp);
             }
         } catch (Exception e) {

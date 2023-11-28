@@ -15,6 +15,9 @@ import Common.TCPConnection.Packet;
 import Common.VideoMetadata;
 import Server.Server;
 
+import Rendezvous_Point.RPHandlerTCP;
+import Rendezvous_Point.RPHandlerUDP;
+
 import java.awt.event.*;
 
 import javax.swing.ImageIcon;
@@ -25,15 +28,12 @@ import java.net.*;
 import java.util.*;
 
 public class RP extends Node{
-    private ServerSocket ss;
-    private DatagramSocket ds;
     public static int RP_PORT = 333;
-    private byte[] udpBuffer;
     
-    // Map that associates each server id to it's available streams
-    private Map<String, List<Integer>> streamServers;
+    private Map<String, List<Integer>> streamServers; // stream name to list of available servers
     private Map<Integer, String> servers; // serverID to serverIP
     public Map<Integer, Path> paths; // maps clients to their respective paths (paths from RP to each client)
+    private Map<String, List<Integer>> streamsClients; // stream name to list of clients that want it
     private int streamCounter;
 
     public RP(String args[], NeighbourReader nr, boolean debugMode){
@@ -41,55 +41,22 @@ public class RP extends Node{
         this.streamServers = new HashMap<>();
         this.servers = new HashMap<>();
         this.paths = new HashMap<>();
-
-        try{
-            this.ss = new ServerSocket(RP_PORT); // socket that receives TCP packets
-        }catch(Exception e){
-            e.printStackTrace();
-        }
+        this.streamsClients = new HashMap<>();
     }
 
-    // Listens to new requests sent to the RP
-    public void listen(){
-        try{
-            this.logger.log(new LogEntry("Now Listening to TCP requests"));
-            while(true){
-                Socket s = this.ss.accept();
-                TCPConnection c = new TCPConnection(s);
-                Packet p = c.receive();
-                Thread t;
+    public void run() {
+        try {
+            // Launch tcp worker
+            Thread tcp = new Thread(new RPHandlerTCP(this));
+            tcp.start();
+            // Launch udp worker
+            Thread udp = new Thread(new RPHandlerUDP(this));
+            udp.start();
 
-                // Creates different types of workers based on the type of packet received
-                switch (p.type) {
-                    case 1: // New available stream in a server
-                        this.logger.log(new LogEntry("Received available streams warning from server " + s.getInetAddress().getHostAddress()));
-                        t = new Thread(new HandleServerStreams(c, p, this));
-                        t.start();
-                        break;
-                    case 2: // Video stream request
-                        this.logger.log(new LogEntry("Received video stream request from " + s.getInetAddress().getHostAddress()));
-                        t = new Thread(new HandleStreamRequests(c, p, this));
-                        t.start();
-                        break;
-                    case 3: // Client requests the available streams
-                        this.logger.log(new LogEntry("Received available stream request from " + s.getInetAddress().getHostAddress()));
-                        t = new Thread(new HandleNotifyStreams(c, p, this, s.getInetAddress().getHostAddress()));
-                        t.start();
-                        break;
-                    case 5: // Client Flood Message
-                        this.logger.log(new LogEntry("Received flood message from " + s.getInetAddress().getHostAddress()));
-                        t = new Thread(new RPFloodWorker(this, p));
-                        t.start();
-                        break;
-                    default:
-                        this.logger.log(new LogEntry("Packet type not recognized. Message ignored! Type: " + p.type ));
-                        c.stopConnection();
-                        break;
-                }
-            }
-        }
-        catch(Exception e)
-        {
+            // join threads
+            tcp.join();
+            udp.join();
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -99,6 +66,22 @@ public class RP extends Node{
     */
     public void addPathToClient(int clientId, Path path) {
         this.paths.put(clientId, path);
+    }
+
+    public void addClientToStream(String streamName, int clientId) {
+        // Adds the client to the mapping between streams and the clients watching them
+        if (!this.streamsClients.containsKey(streamName)) {
+            this.streamsClients.put(streamName, new ArrayList<Integer>());
+        }
+        this.streamsClients.get(streamName).add(clientId);
+    }
+
+    public List<Integer> getStreamClients(String streamName) {
+        List<Integer> clients = this.streamsClients.get(streamName);
+        if (clients != null) {
+            return new ArrayList<Integer>(clients);
+        }
+        return clients;
     }
 
     public synchronized void addServerStreams(int serverID, String serverIP, List<String> streams){
@@ -118,7 +101,7 @@ public class RP extends Node{
             if (this.streamServers.containsKey(stream))
                 servers = this.streamServers.get(stream);
             else
-                servers = new ArrayList<>();
+                servers = new ArrayList<Integer>();
             servers.add(serverID);
             this.streamServers.put(stream, servers);
             this.servers.put(serverID, serverIP);
@@ -134,7 +117,7 @@ public class RP extends Node{
     }
 
     public synchronized List<String> getAvailableStreams(){
-        List<String> streams = new ArrayList<>();
+        List<String> streams = new ArrayList<String>();
         for(Map.Entry<String, List<Integer>> entry : this.streamServers.entrySet()){
             streams.add(entry.getKey());
         }
@@ -145,7 +128,7 @@ public class RP extends Node{
         NeighbourReader nr = new NeighbourReader(Integer.parseInt(args[0]), args[1]);
         boolean debugMode = Arrays.stream(args).anyMatch(s -> s.equals("-g"));
         RP rp = new RP(args, nr, debugMode);
-        rp.listen(); 
+        rp.run(); 
     }
 
 }

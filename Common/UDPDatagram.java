@@ -23,15 +23,17 @@ public class UDPDatagram implements Comparable<UDPDatagram>, Serializable {
     private int payloadType; // Type of the content being streamed
     private int sequenceNumber; // Number of the present frame being streamed
     private int timeStamp; // Corresponding timestamp of the video being played (in ms)
+    private String streamName;
     
     // Content of the stream
     private byte[] payload;
     private int payload_size;
 
-    public UDPDatagram(int pt, int sn, int ts, byte[] payload, int payload_size){
+    public UDPDatagram(int pt, int sn, int ts, byte[] payload, int payload_size, String streamName){
         this.payloadType = pt;
         this.sequenceNumber = sn;
         this.timeStamp = ts;
+        this.streamName = streamName;
         this.payload = new byte[payload_size];
 
         // Initialize payload array
@@ -127,6 +129,10 @@ public class UDPDatagram implements Comparable<UDPDatagram>, Serializable {
 
     public int getTimeStamp() {
         return this.timeStamp;
+    }
+
+    public String getStreamName() {
+        return this.streamName;
     }
 
     @Override

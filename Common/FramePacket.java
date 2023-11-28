@@ -11,15 +11,17 @@ import java.io.ObjectInputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutputStream;
 import java.io.ObjectOutput;
-
 import java.io.Serializable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class FramePacket implements Serializable {
-    private Path path;
+    private List<Path> paths;
     private UDPDatagram udpDatagram;
 
-    public FramePacket(Path path, UDPDatagram packet) {
-        this.path = path;
+    public FramePacket(List<Path> paths, UDPDatagram packet) {
+        this.paths = paths;
         this.udpDatagram = packet;
     }
 
@@ -52,8 +54,8 @@ public class FramePacket implements Serializable {
         return null;
     }
 
-    public Path getPath() {
-        return this.path;
+    public List<Path> getPaths() {
+        return this.paths;
     }
     
     public UDPDatagram getUDPDatagram() {

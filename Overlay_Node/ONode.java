@@ -3,12 +3,14 @@ package Overlay_Node;
 import java.util.Arrays;
 import java.util.Map;
 import java.net.*;
+import java.util.*;
 import java.io.*;
 
 import Common.LogEntry;
 import Common.NeighbourReader;
 import Common.FramePacket;
 import Common.Node;
+import Common.Path;
 import Common.TCPConnection;
 import Common.TCPConnection.Packet;
 import Common.NormalFloodWorker;
@@ -33,10 +35,20 @@ public class ONode extends Node {
 
     public void run()
     {
-        Thread tcp = new Thread(new TCP_Worker(this));
-        tcp.start();
-        Thread udp = new Thread(new UDP_Worker(this));
-        udp.start();
+        try {
+            // Launch tcp worker
+            Thread tcp = new Thread(new TCP_Worker(this));
+            tcp.start();
+            // Launch udp worker
+            Thread udp = new Thread(new UDP_Worker(this));
+            udp.start();
+
+            // join threads
+            tcp.join();
+            udp.join();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static void main(String args[]){
@@ -141,19 +153,26 @@ class UDP_Worker implements Runnable {
                 // Convert the received bytes into a Frame Packet
                 FramePacket fp = FramePacket.deserialize(receivedBytes);
 
-                // get the id of the next node in the Path to the client
-                int nextNodeId = fp.getPath().nextNode(this.node.getId());
-                //get next node's ip
-                String neighbourIp = this.node.getNeighbourIp(nextNodeId);
-
+                // get the ids of the next nodes in the Paths to the client
+                Set<Integer> nextNodeIds = new HashSet<>();
+                for (Path path: fp.getPaths()) {
+                    nextNodeIds.add(path.nextNode(this.node.getId()));
+                }
+                
                 // get the bytes of the FramePacket
                 byte[] fpBytes = fp.serialize();
+                for (int nextNodeId: nextNodeIds) {
+                    //get next node's ip
+                    String neighbourIp = this.node.getNeighbourIp(nextNodeId);
 
-                // Change the destination address of the packet to send
-                DatagramPacket packetToSend = new DatagramPacket(fpBytes, fpBytes.length, InetAddress.getByName(neighbourIp), ONode.ONODE_PORT);
-                // Send the DatagramPacket through the UDP socket
-                this.ds.send(packetToSend);
-                this.node.log(new LogEntry("Sent UDP packet"));
+                    // Get the UDP packet to send with the bytes from the frame packet
+                    DatagramPacket packetToSend = new DatagramPacket(fpBytes, fpBytes.length,
+                                        InetAddress.getByName(neighbourIp), ONode.ONODE_PORT);
+                    // Send the DatagramPacket through the UDP socket
+                    this.ds.send(packetToSend);
+                    this.node.log(new LogEntry("Sent UDP packet"));
+                }
+                
             }
             
         } catch (Exception e) {
