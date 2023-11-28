@@ -39,6 +39,13 @@ public class RoutingTree {
         this.paths.add(path);
     }
 
+    public void removePath(Path path)
+    {
+        int idx = this.paths.indexOf(path);
+        if (idx != -1)
+            this.paths.remove(idx);
+    }
+
     public Path getBestPath() throws NoPathsAvailableException
     {
         if (paths.size() == 0)

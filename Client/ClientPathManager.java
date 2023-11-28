@@ -1,6 +1,7 @@
 package Client;
 
 import java.lang.Runnable;
+import java.net.Socket;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.locks.ReentrantLock;
@@ -9,6 +10,8 @@ import Common.InvalidNodeException;
 import Common.LogEntry;
 import Common.Path;
 import Common.PathNode;
+import Common.TCPConnection;
+import Common.TCPConnection.Packet;
 
 public class ClientPathManager implements Runnable {
     private Client client;
@@ -51,7 +54,21 @@ public class ClientPathManager implements Runnable {
                         PathNode pn = p.getNext(clientID);
                         while (true)
                         {
-                            // falar com o nó
+                            String neighbour = pn.getNodeIPAddress().toString();
+                            try 
+                            {
+                                // falar com o nó
+                                Socket s = new Socket(neighbour, 334);
+                                TCPConnection c = new TCPConnection(s);
+                                Packet packet = new Packet(7, "ALIVE?".getBytes());
+                                c.send(packet);
+    
+                                packet = c.receive();                               
+                            } 
+                            catch (Exception e) 
+                            {
+                                this.client.log(new LogEntry("Neighbour " + neighbour + " is no longer active. Ignoring path."));
+                            }
 
                             try 
                             {

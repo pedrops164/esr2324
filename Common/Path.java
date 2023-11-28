@@ -135,7 +135,6 @@ public class Path implements Serializable {
 
     public int nextNode(int currentNodeId) {
         if (this.nodeList == null || this.nodeList.isEmpty()) {
-            System.out.println("Path is empty");
             return -1;
         }
 

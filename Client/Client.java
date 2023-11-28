@@ -81,6 +81,19 @@ public class Client extends Node {
             this.routingTreeLock.unlock();
         }
     }
+
+    public void removePath(Path p)
+    {
+        this.routingTreeLock.lock();
+        try
+        {
+            this.routingTree.removePath(p);
+        }
+        finally
+        {
+
+        }
+    }
     
     public void showAvailableStreams(){
         int i = 1;
