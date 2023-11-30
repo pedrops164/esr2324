@@ -3,28 +3,12 @@ package Rendezvous_Point;
 import Common.LogEntry;
 import Common.NeighbourReader;
 import Common.Node;
-import Overlay_Node.ONode;
 import Common.Path;
-import Common.RTPpacket;
-import Common.FramePacket;
-import Common.UDPDatagram;
 import Common.ServerStreams;
-import Common.StreamRequest;
-import Common.TCPConnection;
-import Common.TCPConnection.Packet;
-import Common.VideoMetadata;
-import Server.Server;
-
-import Rendezvous_Point.RPHandlerTCP;
-import Rendezvous_Point.RPHandlerUDP;
-
-import java.awt.event.*;
-
-import javax.swing.ImageIcon;
-import javax.swing.Timer;
 
 import java.io.*;
-import java.net.*;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 public class RP extends Node{
@@ -32,14 +16,15 @@ public class RP extends Node{
     
     private Map<String, List<Integer>> streamServers; // stream name to list of available servers
     private Map<Integer, String> servers; // serverID to serverIP
+    private List<ServerRanking> rankedServers; // Organized list with the ranking from the best to the worst server 
     public Map<Integer, Path> paths; // maps clients to their respective paths (paths from RP to each client)
     private Map<String, List<Integer>> streamsClients; // stream name to list of clients that want it
-    private int streamCounter;
 
     public RP(String args[], NeighbourReader nr, boolean debugMode){
         super(Integer.parseInt(args[0]), nr, debugMode);
         this.streamServers = new HashMap<>();
         this.servers = new HashMap<>();
+        this.rankedServers = new ArrayList<>();
         this.paths = new HashMap<>();
         this.streamsClients = new HashMap<>();
     }
@@ -108,12 +93,39 @@ public class RP extends Node{
         }
     }
 
-    // Get the server that has a certain stream 
-    // This has to be updated!!! We have to check which is the best server to stream!
-    // For now we only return the first server.
+    public synchronized void rankServer(ServerStreams sstreams, LocalDateTime receivingTimeStamp){
+        long latency = ChronoUnit.NANOS.between(sstreams.getTimeStamp(), receivingTimeStamp);
+        int i = 0;
+        boolean added = false;
+
+        for(ServerRanking sr: this.rankedServers){
+            if(latency < sr.getLatency()){
+                added = true;
+                break;
+            }
+            i++;
+        }
+
+        if(added){
+            this.rankedServers.add(i, new ServerRanking(sstreams.getID(), latency));
+        }else{
+            this.rankedServers.add(new ServerRanking(sstreams.getID(), latency));
+        }
+
+        for(ServerRanking sr: this.rankedServers){
+            System.out.println(sr);
+        }
+    }
+
+    // Get the best server that has a certain stream
     public synchronized String getServer(String streamName){
-        int id = this.streamServers.get(streamName).get(0);
-        return this.servers.get(id);
+        List<Integer> servers = this.streamServers.get(streamName);
+        for(ServerRanking sr: this.rankedServers){
+            if(servers.contains(sr.getServerID())){
+                return this.servers.get(sr.getServerID());  
+            }
+        }
+        return "0.0.0.0";
     }
 
     public synchronized List<String> getAvailableStreams(){

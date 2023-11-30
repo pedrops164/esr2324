@@ -6,6 +6,7 @@ import Common.TCPConnection.Packet;
 import Common.ServerStreams;
 
 import java.io.*;
+import java.time.LocalDateTime;
 
 // Responsible to handle new requests from new streams of servers
 // RPWorker1
@@ -27,7 +28,9 @@ class HandleServerStreams implements Runnable{
         DataInputStream in = new DataInputStream(bais);
         ServerStreams sstreams = ServerStreams.deserialize(in);
         rp.addServerStreams(sstreams.getID(), sstreams.getIP(), sstreams.getStreams());
-
+        LocalDateTime receivingTimeStamp = LocalDateTime.now();
+        // Rank server connection speed
+        this.rp.rankServer(sstreams, receivingTimeStamp);
         // End TCP connection
         this.connection.stopConnection();
     }    

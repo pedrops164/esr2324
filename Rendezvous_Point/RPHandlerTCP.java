@@ -1,7 +1,5 @@
 package Rendezvous_Point;
 
-import Rendezvous_Point.RP;
-
 import Common.*;
 import Common.TCPConnection.Packet;
 
