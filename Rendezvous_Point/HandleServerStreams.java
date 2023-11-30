@@ -1,6 +1,5 @@
 package Rendezvous_Point;
 
-import Rendezvous_Point.RP;
 import Common.TCPConnection;
 import Common.TCPConnection.Packet;
 import Common.ServerStreams;

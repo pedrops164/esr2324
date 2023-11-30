@@ -44,7 +44,7 @@ public class RPHandlerTCP implements Runnable {
                         break;
                     case 3: // Client requests the available streams
                         rp.logger.log(new LogEntry("Received available stream request from " + s.getInetAddress().getHostAddress()));
-                        t = new Thread(new HandleNotifyStreams(c, p, rp, s.getInetAddress().getHostAddress()));
+                        t = new Thread(new HandleNotifyStreams(c, rp, s.getInetAddress().getHostAddress()));
                         t.start();
                         break;
                     case 5: // Client Flood Message

@@ -1,8 +1,6 @@
 package Rendezvous_Point;
 
-import Rendezvous_Point.RP;
 import Common.TCPConnection;
-import Common.TCPConnection.Packet;
 import Common.LogEntry;
 
 import java.io.*;
@@ -13,21 +11,15 @@ import java.util.*;
 class HandleNotifyStreams implements Runnable{
     private RP rp;
     private TCPConnection connection;
-    private Packet receivedPacket;
     private String clientIP;
 
-    public HandleNotifyStreams(TCPConnection c, Packet p, RP rp, String clientIP){
+    public HandleNotifyStreams(TCPConnection c, RP rp, String clientIP){
         this.rp = rp;
         this.connection = c;
-        this.receivedPacket = p;
         this.clientIP = clientIP;
     }
 
     public void run(){
-        // Receive request
-        byte[] data = this.receivedPacket.data;
-        ByteArrayInputStream bais = new ByteArrayInputStream(data);
-        DataInputStream in = new DataInputStream(bais);
         List<String> streams = rp.getAvailableStreams();
 
         // Answer
