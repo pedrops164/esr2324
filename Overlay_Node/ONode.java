@@ -98,6 +98,11 @@ class TCP_Worker implements Runnable
                         Thread t = new Thread(new NormalFloodWorker(node, p));    
                         t.start();
                         break;
+                    case 7: // ALIVE? message
+                        this.node.log(new LogEntry("Received packet: " + p + " from " + s.getInetAddress().getHostAddress()));
+                        Thread t = new Thread(new AliveMessageWorker(node, c));
+                        t.start();
+                        break;
                     default:
                         this.node.log(new LogEntry("Packet type < " + p.type + " > not recognized. Message ignored!"));
                         c.stopConnection();

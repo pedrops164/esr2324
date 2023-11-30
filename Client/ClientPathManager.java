@@ -13,11 +13,8 @@ import Common.PathNode;
 import Common.TCPConnection;
 import Common.TCPConnection.Packet;
 
-public class ClientPathManager implements Runnable {
+class ClientPathWorker implements Runnable {
     private Client client;
-    private RoutingTree clientRoutingTree;
-    private ReentrantLock clientRoutingTreeLock;
-    
     /**
      * Interval in seconds between path verification
      */
@@ -28,14 +25,12 @@ public class ClientPathManager implements Runnable {
      */
     private static long floodInterval = 2048;
 
-    public ClientPathManager(Client client, RoutingTree clientRoutingTree, ReentrantLock clientRoutingTreeLock)
+    public ClientPathManager(Client client)
     {
         this.client = client;
-        this.clientRoutingTree = clientRoutingTree;
-        this.clientRoutingTreeLock = clientRoutingTreeLock;
     }
 
-
+    
     public void run()
     {
         try 
@@ -45,52 +40,48 @@ public class ClientPathManager implements Runnable {
             {
                 Thread.sleep(verificationInterval * 1000);
                 
-                try
+                for (Path p : client.getOrderedPaths())
                 {
-                    this.clientRoutingTreeLock.lock();
-                    for (Path p : clientRoutingTree.getOrderedPaths())
+                    int clientID = client.getId();
+                    PathNode pn = p.getNext(clientID);
+                    while (true)
                     {
-                        int clientID = client.getId();
-                        PathNode pn = p.getNext(clientID);
-                        while (true)
+                        String neighbour = pn.getNodeIPAddress().toString();
+                        try 
                         {
-                            String neighbour = pn.getNodeIPAddress().toString();
-                            try 
-                            {
-                                // falar com o nó
-                                Socket s = new Socket(neighbour, 334);
-                                TCPConnection c = new TCPConnection(s);
-                                Packet packet = new Packet(7, "ALIVE?".getBytes());
-                                c.send(packet);
-    
-                                packet = c.receive();                               
-                            } 
-                            catch (Exception e) 
-                            {
-                                this.client.log(new LogEntry("Neighbour " + neighbour + " is no longer active. Ignoring path."));
-                            }
+                            // falar com o nó
+                            Socket s = new Socket(neighbour, 334);
+                            TCPConnection c = new TCPConnection(s);
+                            Packet packet = new Packet(7, "ALIVE?".getBytes());
+                            c.send(packet);
+                            this.client.log(new LogEntry("Sent packet: " + packet + " to " + neighbour));
 
-                            try 
-                            {
-                                pn = p.getNext(pn.getNodeId());  
-                            } 
-                            catch (InvalidNodeException e) 
-                            {
-                                break;
-                            }
+                            packet = c.receive();
+                            this.client.log(new LogEntry("Received packet " + packet + " from " + neighbour));
+                        }
+                        catch (Exception e)
+                        {
+                            this.client.log(new LogEntry("Neighbour " + neighbour + " is no longer active. Ignoring path."));
+                            this.client.removePath(p);
+                            break;
+                        }
+
+                        try
+                        {
+                            pn = p.getNext(pn.getNodeId());  
+                        } 
+                        catch (InvalidNodeException e) 
+                        {
+                            break;
                         }
                     }
-
-                    if (ChronoUnit.SECONDS.between(start, LocalDateTime.now()) >= floodInterval)
-                    {
-                        client.log(new LogEntry(floodInterval + " seconds have passed, a flood will occur"));
-                        client.flood();
-                        start = LocalDateTime.now();
-                    }
                 }
-                finally
+
+                if (ChronoUnit.SECONDS.between(start, LocalDateTime.now()) >= floodInterval)
                 {
-                    this.clientRoutingTreeLock.unlock();
+                    client.log(new LogEntry(floodInterval + " seconds have passed, a flood will occur"));
+                    client.flood();
+                    start = LocalDateTime.now();
                 }
             }    
         } 

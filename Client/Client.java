@@ -67,6 +67,19 @@ public class Client extends Node {
         }
     }
 
+    public List<Path> getOrderedPaths()
+    {
+        this.routingTreeLock.lock();
+        try
+        {
+            return this.routingTree.getOrderedPaths();
+        }
+        finally
+        {
+            this.routingTreeLock.unlock();
+        }
+    }
+
     public void receivePath(Packet packet)
     {
         this.routingTreeLock.lock();
@@ -91,7 +104,7 @@ public class Client extends Node {
         }
         finally
         {
-
+            this.routingTreeLock.unlock();
         }
     }
     
@@ -107,14 +120,33 @@ public class Client extends Node {
 
     public void requestStreaming(int streamId){
         try{
+            // get the best path
+            Path path;
+            this.routingTreeLock.lock();
+            try
+            {
+                path = this.routingTree.getBestPath();
+            }
+            finally
+            {
+                this.routingTreeLock.unlock();
+            }
+            byte[] serializedPath = path.serialize();
+
             // Send request
             String stream = this.availableStreams.get(streamId-1);
             StreamRequest sr = new StreamRequest(stream, this.id);
+
             Socket s = new Socket(this.RPIP, 333);
             TCPConnection c = new TCPConnection(s);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             DataOutputStream out = new DataOutputStream(baos);
             sr.serialize(out);
+            // size of the serialized path
+            out.writeInt(serializedPath.length);
+            // serialized path
+            out.write(serializedPath);
+
             out.flush();
             byte [] data = baos.toByteArray();
             c.send(2, data); // Send the request to the RP
@@ -191,8 +223,6 @@ public class Client extends Node {
             this.routingTreeLock.unlock();
         }
 
-        // obter o melhor caminho, tem que levar update sempre que receber caminhos novos
-        Path bestPath = this.routingTree.getBestPath();
 
         // TODO : enviar o caminho junto com o pedido de stream
         this.getAvailableStreams();
