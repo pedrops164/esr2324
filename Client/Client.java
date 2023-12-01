@@ -135,21 +135,12 @@ public class Client extends Node {
 
             // Send request
             String stream = this.availableStreams.get(streamId-1);
-            StreamRequest sr = new StreamRequest(stream, this.id);
+            StreamRequest sr = new StreamRequest(stream, this.id, path);
 
             Socket s = new Socket(this.RPIP, 333);
             TCPConnection c = new TCPConnection(s);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            DataOutputStream out = new DataOutputStream(baos);
-            sr.serialize(out);
-            // size of the serialized path
-            out.writeInt(serializedPath.length);
-            // serialized path
-            out.write(serializedPath);
-
-            out.flush();
-            byte [] data = baos.toByteArray();
-            c.send(2, data); // Send the request to the RP
+            byte[] srBytes = sr.serialize();
+            c.send(2, srBytes); // Send the request to the RP
 
             // Receive VideoMetadata through TCP and send to client
             Packet metadataPacket = c.receive();

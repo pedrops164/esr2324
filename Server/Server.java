@@ -185,15 +185,15 @@ class ServerWorker1 implements Runnable{
     public void run(){
         // Receive request
         byte[] data = this.receivedPacket.data;
-        ByteArrayInputStream bais = new ByteArrayInputStream(data);
-        DataInputStream in = new DataInputStream(bais);
-        StreamRequest sr = StreamRequest.deserialize(in);
+        StreamRequest sr = StreamRequest.deserialize(data);
+
+        //Deserialize the Path
 
         String videoPath = sr.getStreamName();
 
         // get video attributes....
         int videoLength = 100; // number of frames
-        int frame_period = 100; // time between frames in ms.
+        int frame_period = 75; // time between frames in ms.
         int video_extension = 26; //26 is Mjpeg type
 
         VideoMetadata vmd = new VideoMetadata(frame_period);

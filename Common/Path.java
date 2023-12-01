@@ -9,6 +9,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import java.io.Serializable;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutputStream;
+import java.io.ObjectOutput;
 
 public class Path implements Serializable {
     private List<PathNode> nodeList;
@@ -102,22 +110,51 @@ public class Path implements Serializable {
         return r + "}";
     }
     
-    public byte[] serialize()
-    {
-        ByteBuffer buffer = ByteBuffer.allocate(nodeList.size() * 13 * 4);
+    //public byte[] serialize()
+    //{
+    //    ByteBuffer buffer = ByteBuffer.allocate(nodeList.size() * 13 * 4);
+//
+    //    for (PathNode node : nodeList)
+    //    {
+    //        byte[] arr = node.serialize();
+    //        buffer.put(arr);
+    //    }
+//
+    //    return buffer.array();
+    //}
+//
+    //public static Path deserialize (byte[] arr)
+    //{
+    //    return new Path(arr);
+    //}
 
-        for (PathNode node : nodeList)
-        {
-            byte[] arr = node.serialize();
-            buffer.put(arr);
+    public byte[] serialize() {
+        try{
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutput out = new ObjectOutputStream(baos);
+            out.writeObject(this);
+            byte b[] = baos.toByteArray();
+            out.close();
+            baos.close();
+            return b;
+        }catch (Exception e){
+            e.printStackTrace();
         }
-
-        return buffer.array();
+        return null;
     }
 
-    public static Path deserialize (byte[] arr)
-    {
-        return new Path(arr);
+    public static Path deserialize(byte[] receivedBytes) {
+        try{
+            ByteArrayInputStream bais = new ByteArrayInputStream(receivedBytes);
+            ObjectInput in = new ObjectInputStream(bais);
+
+            Path ret = (Path) in.readObject();
+            return ret;
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     // Main used to test serialize and deserialize

@@ -29,11 +29,7 @@ class HandleStreamRequests implements Runnable{
             String serverIP = this.rp.getServer(sr.getStreamName());
             Socket s = new Socket(serverIP, Server.SERVER_PORT);
             TCPConnection c = new TCPConnection(s);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            DataOutputStream out = new DataOutputStream(baos);
-            sr.serialize(out);
-            out.flush();
-            byte [] data = baos.toByteArray();
+            byte [] data = sr.serialize();
             c.send(2, data); // Send the video stream request to the Server
 
             // Receive VideoMetadata through TCP and send to client
@@ -49,10 +45,9 @@ class HandleStreamRequests implements Runnable{
     public void run(){
         // Receive request
         byte[] data = this.receivedPacket.data;
-        ByteArrayInputStream bais = new ByteArrayInputStream(data);
-        DataInputStream in = new DataInputStream(bais);
-        StreamRequest sr = StreamRequest.deserialize(in);
+        StreamRequest sr = StreamRequest.deserialize(data);
         this.clientId = sr.getClientID();
+        rp.addPathToClient(clientId, sr.getPath());
 
         // Adds the client to the data structure that maps streams to the clients watching them
         rp.addClientToStream(sr.getStreamName(), this.clientId);

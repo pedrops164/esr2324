@@ -92,17 +92,18 @@ class TCP_Worker implements Runnable
                 TCPConnection c = new TCPConnection(s);
                 Packet p = c.receive();
                 Thread t;
-
+                String address = s.getInetAddress().getHostAddress();
+                
                 switch(p.type)
                 {
                     case 5: // Flood Message 
-                        this.node.log(new LogEntry("Received flood message from " + s.getInetAddress().getHostAddress()));
+                        this.node.log(new LogEntry("Received flood message from " + address));
                         t = new Thread(new NormalFloodWorker(node, p));    
                         t.start();
                         break;
                     case 7: // ALIVE? message
-                        this.node.log(new LogEntry("Received packet: " + p + " from " + s.getInetAddress().getHostAddress()));
-                        t = new Thread(new AliveMessageWorker(node, c));
+                        this.node.log(new LogEntry("Received packet: " + p + " from " + address));
+                        t = new Thread(new AliveMessageWorker(node, c, address));
                         t.start();
                         break;
                     default:
