@@ -168,6 +168,7 @@ public class Client extends Node {
                 TCPConnection c = new TCPConnection(s);
                 Packet p = new Packet(5, serializedPath);
                 c.send(p);
+                c.stopConnection();
                 try 
                 {
                     this.logger.log(new LogEntry("Sent flood message to " + neighbour + ":" + 333));

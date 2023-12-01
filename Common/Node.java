@@ -9,7 +9,7 @@ public abstract class Node {
     protected String ip;
     protected String RPIP;
     protected String logFile;
-    public Logger logger;
+    protected Logger logger;
     protected Map<Integer, String> neighbours;
     
     public Node(int id, NeighbourReader nr, boolean debugMode)

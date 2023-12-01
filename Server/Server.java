@@ -1,5 +1,6 @@
 package Server;
 
+import Common.LivenessCheckWorker;
 import Common.LogEntry;
 import Common.NeighbourReader;
 import Common.Node;
@@ -127,6 +128,11 @@ public class Server extends Node {
                     case 5: // Flood message
                         this.logger.log(new LogEntry("Received flood message from " + s.getInetAddress().getHostAddress()));
                         t = new Thread(new NormalFloodWorker(this, p));
+                        t.start();
+                        break;
+                    case 7: // LIVENESS CHECK message
+                        this.log(new LogEntry("Received liveness check from " + s.getInetAddress().getHostAddress()));
+                        t = new Thread(new LivenessCheckWorker(this, c, p));
                         t.start();
                         break;
                     default:

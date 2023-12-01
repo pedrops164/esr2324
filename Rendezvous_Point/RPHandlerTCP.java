@@ -23,7 +23,7 @@ public class RPHandlerTCP implements Runnable {
     public void run() {
         // Listens to new requests sent to the RP
         try{
-            rp.logger.log(new LogEntry("Now Listening to TCP requests"));
+            rp.log(new LogEntry("Now Listening to TCP requests"));
             while(true){
                 Socket s = this.ss.accept();
                 TCPConnection c = new TCPConnection(s);
@@ -33,27 +33,32 @@ public class RPHandlerTCP implements Runnable {
                 // Creates different types of workers based on the type of packet received
                 switch (p.type) {
                     case 1: // New available stream in a server
-                        rp.logger.log(new LogEntry("Received available streams warning from server " + s.getInetAddress().getHostAddress()));
+                        rp.log(new LogEntry("Received available streams warning from server " + s.getInetAddress().getHostAddress()));
                         t = new Thread(new HandleServerStreams(c, p, rp));
                         t.start();
                         break;
                     case 2: // Video stream request
-                        rp.logger.log(new LogEntry("Received video stream request from " + s.getInetAddress().getHostAddress()));
+                        rp.log(new LogEntry("Received video stream request from " + s.getInetAddress().getHostAddress()));
                         t = new Thread(new HandleStreamRequests(c, p, rp));
                         t.start();
                         break;
                     case 3: // Client requests the available streams
-                        rp.logger.log(new LogEntry("Received available stream request from " + s.getInetAddress().getHostAddress()));
+                        rp.log(new LogEntry("Received available stream request from " + s.getInetAddress().getHostAddress()));
                         t = new Thread(new HandleNotifyStreams(c, rp, s.getInetAddress().getHostAddress()));
                         t.start();
                         break;
                     case 5: // Client Flood Message
-                        rp.logger.log(new LogEntry("Received flood message from " + s.getInetAddress().getHostAddress()));
+                        rp.log(new LogEntry("Received flood message from " + s.getInetAddress().getHostAddress()));
                         t = new Thread(new RPFloodWorker(rp, p));
                         t.start();
                         break;
+                    case 7: // LIVENESS CHECK message
+                        rp.log(new LogEntry("Received liveness check from " + s.getInetAddress().getHostAddress()));
+                        t = new Thread(new LivenessCheckWorker(rp, c, p));
+                        t.start();
+                        break;
                     default:
-                        rp.logger.log(new LogEntry("Packet type not recognized. Message ignored! Type: " + p.type ));
+                        rp.log(new LogEntry("Packet type not recognized. Message ignored! Type: " + p.type ));
                         c.stopConnection();
                         break;
                 }
