@@ -43,7 +43,7 @@ public class LivenessCheckWorker implements Runnable {
                 connection2.send(7, serializedPath);
 
                 Packet responsePacket = connection2.receive();
-                alive = responsePacket.data[0] == 1;
+                alive = responsePacket.data[0] != 0;
                 this.node.log(new LogEntry("Received liveness check confirmation from " + nextNeighbourIP  + ". Path is " + ((!alive) ?"not " :"") + "alive"));
 
                 sendResponse(alive);
