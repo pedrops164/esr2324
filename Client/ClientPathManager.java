@@ -74,7 +74,6 @@ class ClientPathManager implements Runnable {
         try 
         {
             this.client.log(new LogEntry("Path Manager started.."));
-            System.out.println("CARALHO");
             LocalDateTime start = LocalDateTime.now();
             while (true)
             {

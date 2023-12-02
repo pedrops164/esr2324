@@ -36,7 +36,7 @@ public class Client extends Node {
         this.routingTree = new RoutingTree();
         this.routingTreeLock = new ReentrantLock();
         this.hasPaths = this.routingTreeLock.newCondition();
-        this.cvp = new ClientVideoPlayer(this);
+        this.cvp = null;
     }
 
     public void getAvailableStreams(){
@@ -135,6 +135,9 @@ public class Client extends Node {
             String stream = this.availableStreams.get(streamId-1);
             StreamRequest sr = new StreamRequest(stream, this.id, path);
 
+            // Create the VideoPlayer
+            this.cvp = new ClientVideoPlayer(this);
+
             Socket s = new Socket(this.RPIP, 333);
             TCPConnection c = new TCPConnection(s);
             byte[] srBytes = sr.serialize();
@@ -146,7 +149,9 @@ public class Client extends Node {
             byte[] metadata = metadataPacket.data;
             VideoMetadata vmd = VideoMetadata.deserialize(metadata);
 
+            // Set the frame period of the Video Player
             this.cvp.setVideoPeriod(vmd.getFramePeriod());
+
         }catch(Exception e){
             e.printStackTrace();
         }
@@ -210,6 +215,7 @@ public class Client extends Node {
         this.requestStreaming(streamId);
         in.close();
     }
+
     public static void main(String args[]) throws InterruptedException, NoPathsAvailableException{
         NeighbourReader nr = new NeighbourReader(Integer.parseInt(args[0]), args[1]);
         boolean debugMode = Arrays.stream(args).anyMatch(s -> s.equals("-g"));
@@ -323,9 +329,11 @@ class UDP_Worker implements Runnable {
                     UDPDatagram udpDatagram = fp.getUDPDatagram();
                     this.client.cvp.addFrame(udpDatagram);
                 } catch (SocketTimeoutException e) {
-                    this.client.log(new LogEntry("Timeout reached. No UDP packets received for 5 seconds."));
-                    this.client.cvp.close();
-                    break; // Exit the loop and stop receiving packets
+                    if (this.client.cvp != null) {
+                        this.client.log(new LogEntry("Timeout reached. No UDP packets received for 5 seconds."));
+                        this.client.cvp.close();
+                        break; // Exit the loop and stop receiving packets
+                    }
                 }
             }
             
