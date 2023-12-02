@@ -45,6 +45,8 @@ public class LivenessCheckWorker implements Runnable {
                 Packet responsePacket = connection2.receive();
                 alive = Boolean.parseBoolean(new String(responsePacket.data));
                 this.node.log(new LogEntry("Received liveness check confirmation from " + nextNeighbourIP  + ". Path is " + ((!alive) ?"not " :"") + "alive"));
+
+                sendResponse(alive);
             }
             catch (Exception e)
             {

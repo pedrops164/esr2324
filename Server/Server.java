@@ -64,22 +64,15 @@ public class Server extends Node {
                 
                 return true;
             }catch(ConnectException e) {
-                try 
-                {
-                    this.logger.log(new LogEntry("ConnectException caught!!"));
-                    retryCount++;
-                    this.logger.log(new LogEntry("Unable to connect to RP. Retrying in " + retryInterval / 1000 + " seconds. Attempt " + retryCount));
-                    try {
-                        Thread.sleep(retryInterval); // Wait before retrying
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                        System.out.println("Thread interrupted during retry wait.");
-                        break;
-                    }
-                }
-                catch (IOException e2)
-                {
-                    e.printStackTrace();
+                this.logger.log(new LogEntry("ConnectException caught!!"));
+                retryCount++;
+                this.logger.log(new LogEntry("Unable to connect to RP. Retrying in " + retryInterval / 1000 + " seconds. Attempt " + retryCount));
+                try {
+                    Thread.sleep(retryInterval); // Wait before retrying
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    System.out.println("Thread interrupted during retry wait.");
+                    break;
                 }
             }catch(Exception e){
                 e.printStackTrace();
@@ -87,14 +80,7 @@ public class Server extends Node {
             }
         } while (retryCount < maxRetries);
         
-        try 
-        {
-            this.logger.log(new LogEntry("Server: Couldn't establish connection with RP."));
-        } 
-        catch (IOException e) 
-        {
-            e.printStackTrace();
-        }
+        this.logger.log(new LogEntry("Server: Couldn't establish connection with RP."));
 
         return false;
     }   

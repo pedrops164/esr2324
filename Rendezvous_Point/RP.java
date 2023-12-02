@@ -71,14 +71,7 @@ public class RP extends Node{
 
     public synchronized void addServerStreams(int serverID, String serverIP, List<String> streams){
 
-        try 
-        {
-            this.logger.log(new LogEntry("Adding available streams from server " + serverIP));
-        } 
-        catch (IOException e) 
-        {
-            e.printStackTrace();
-        }
+        this.logger.log(new LogEntry("Adding available streams from server " + serverIP));
 
         for (String stream : streams)
         {

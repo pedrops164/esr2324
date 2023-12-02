@@ -13,8 +13,6 @@ import Common.UDPDatagram;
 import Common.FramePacket;
 import Common.VideoMetadata;
 
-import Client.ClientVideoPlayer;
-
 import Overlay_Node.ONode;
 
 import java.io.*;
@@ -169,25 +167,11 @@ public class Client extends Node {
                 Packet p = new Packet(5, serializedPath);
                 c.send(p);
                 c.stopConnection();
-                try 
-                {
-                    this.logger.log(new LogEntry("Sent flood message to " + neighbour + ":" + 333));
-                }
-                catch(IOException e)
-                {
-                    e.printStackTrace();
-                }
+                this.logger.log(new LogEntry("Sent flood message to " + neighbour + ":" + 333));
             }
             catch (Exception eFromSocket)
             {
-                try
-                {
-                    this.logger.log(new LogEntry("Error sending flood message to " + neighbour + ". Retrying later"));
-                }
-                catch(IOException e)
-                {
-                    e.printStackTrace();
-                }
+                this.logger.log(new LogEntry("Error sending flood message to " + neighbour + ". Retrying later"));
             }
         }
     }
@@ -199,7 +183,7 @@ public class Client extends Node {
         tcp.start();
         Thread udp = new Thread(new UDP_Worker(this));
         udp.start();
-
+        
         // executar o flood
         this.flood();
         
@@ -208,13 +192,15 @@ public class Client extends Node {
         try
         {
             while (!this.routingTree.isAvailable())
-                this.hasPaths.await();
+            this.hasPaths.await();
         }
         finally
         {
             this.routingTreeLock.unlock();
         }
-
+        
+        Thread pathManager = new Thread(new ClientPathManager(this));
+        pathManager.start();
 
         // TODO : enviar o caminho junto com o pedido de stream
         this.getAvailableStreams();

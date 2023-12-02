@@ -68,10 +68,13 @@ class ClientPathManager implements Runnable {
         }
     }
     
+    @Override
     public void run()
     {
         try 
         {
+            this.client.log(new LogEntry("Path Manager started.."));
+            System.out.println("CARALHO");
             LocalDateTime start = LocalDateTime.now();
             while (true)
             {

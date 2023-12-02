@@ -2,7 +2,7 @@ package Overlay_Node;
 
 import Common.LogEntry;
 import Common.NeighbourReader;
-import Common.AliveMessageWorker;
+import Common.LivenessCheckWorker;
 import Common.FramePacket;
 import Common.Node;
 import Common.Path;
@@ -102,8 +102,8 @@ class TCP_Worker implements Runnable
                         t.start();
                         break;
                     case 7: // ALIVE? message
-                        this.node.log(new LogEntry("Received packet: " + p + " from " + address));
-                        t = new Thread(new AliveMessageWorker(node, c, address));
+                        this.node.log(new LogEntry("Received liveness check from " + s.getInetAddress().getHostAddress()));
+                        t = new Thread(new LivenessCheckWorker(this.node, c, p));
                         t.start();
                         break;
                     default:

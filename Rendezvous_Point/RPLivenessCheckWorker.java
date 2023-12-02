@@ -24,7 +24,7 @@ public class RPLivenessCheckWorker implements Runnable {
             msg[0] = (byte)1;
             this.c.send(7, msg);
             this.c.stopConnection();
-            this.node.log(new LogEntry("Sent liveness check answer saying path is alive back."));
+            this.node.log(new LogEntry("Sent liveness check answer saying path is alive back." + (msg)));
         }
         catch (Exception e)
         {

@@ -51,7 +51,7 @@ public class Logger
      * @param log Entry to be logged
      * @throws IOException if there's an error writing to the log file
      */
-    public synchronized void log(LogEntry log) throws IOException
+    public synchronized void log(LogEntry log)
     {
         if (this.debugMode)
             System.out.print(log);
@@ -60,14 +60,21 @@ public class Logger
             this.stagedEntries.add(log);
         else
         {
-            this.stagedEntries.add(log);
-            FileWriter fw = new FileWriter(this.logFile, true);
-            BufferedWriter bw = new BufferedWriter(fw);
-            for (LogEntry entry : stagedEntries)
+            try 
+            {
+                this.stagedEntries.add(log);
+                FileWriter fw = new FileWriter(this.logFile, true);
+                BufferedWriter bw = new BufferedWriter(fw);
+                for (LogEntry entry : stagedEntries)
                 bw.write(entry.toString());
-            bw.close();
-            fw.close();
-            this.stagedEntries.clear();
+                bw.close();
+                fw.close();
+                this.stagedEntries.clear();
+            } 
+            catch (Exception e) 
+            {
+                e.printStackTrace();
+            }
         }
     }
 }

@@ -9,8 +9,6 @@ import javax.swing.Timer;
 import Common.UDPDatagram;
 import Common.LogEntry;
 
-import Client.Client;
-import Client.FrameQueue;
 
 class ClientVideoPlayer {
     private JFrame jframe;
@@ -94,21 +92,25 @@ class ClientVideoPlayer {
         }
 
         public void actionPerformed(ActionEvent e) {
-            client.log(new LogEntry("Updating Frame!"));
             try {
-                UDPDatagram nextFrame = frameQueue.getNextFrame();
-                byte[] payload = nextFrame.getPayload();
-                int payload_length = payload.length;
-                //get an Image object from the payload bitstream
-                Image image = toolkit.createImage(payload, 0, payload_length);
-                //display the image as an ImageIcon object
-                icon = new ImageIcon(image);
-                iconLabel.setIcon(icon);
-            } catch (NoNextFrameException exception) {
-                // There are no frames in the queue, so we don't update the frame
-                client.log(new LogEntry("No new frames have arrived!"));
-        } catch (Exception exception) {
-                exception.printStackTrace();
+                client.log(new LogEntry("Updating Frame!"));
+                try {
+                    UDPDatagram nextFrame = frameQueue.getNextFrame();
+                    byte[] payload = nextFrame.getPayload();
+                    int payload_length = payload.length;
+                    //get an Image object from the payload bitstream
+                    Image image = toolkit.createImage(payload, 0, payload_length);
+                    //display the image as an ImageIcon object
+                    icon = new ImageIcon(image);
+                    iconLabel.setIcon(icon);
+                } catch (NoNextFrameException exception) {
+                    // There are no frames in the queue, so we don't update the frame
+                    client.log(new LogEntry("No new frames have arrived!"));
+                } catch (Exception exception) {
+                    exception.printStackTrace();
+                }
+            } catch (Exception eLogger) {
+                eLogger.printStackTrace();
             }
             
         }
