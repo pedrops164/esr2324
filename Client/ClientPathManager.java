@@ -104,7 +104,7 @@ class ClientPathManager implements Runnable {
 
                 if (ChronoUnit.MILLIS.between(start, LocalDateTime.now()) >= floodInterval)
                 {
-                    client.log(new LogEntry(floodInterval + " seconds have passed, a flood will occur"));
+                    client.log(new LogEntry(floodInterval + " milliseconds have passed, a flood will occur"));
                     client.flood();
                     start = LocalDateTime.now();
                 }

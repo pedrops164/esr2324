@@ -20,7 +20,7 @@ import java.util.*;
 
 public class Server extends Node {
     private ServerSocket ss;
-    public static int SERVER_PORT = 1234;
+    public static int SERVER_PORT = 333;
     private List<String> streams;
 
     public Server(String []args, NeighbourReader nr, boolean debugMode){

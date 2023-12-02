@@ -32,7 +32,7 @@ public class RPFloodWorker implements Runnable
                 Socket s = new Socket(client.getNodeIPAddress().toString(), 333);
                 TCPConnection c = new TCPConnection(s);
                 c.send(new Packet(6, serializedPath));
-                this.rp.log(new LogEntry("Sent flood response to client: " + client));
+                this.rp.log(new LogEntry("Sent flood response to client: " + client.getNodeIPAddress().toString()));
             } catch (Exception e) {
                 e.printStackTrace();
             }
