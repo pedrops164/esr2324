@@ -215,6 +215,9 @@ class ServerWorker1 implements Runnable{
 	            // Initialize the DatagramPacket and send it over the UDP socket 
 	            DatagramPacket senddp = new DatagramPacket(packetBytes, packetBytes.length, InetAddress.getByName(this.RPIP), RP.RP_PORT);
 	            this.ds.send(senddp);
+
+                // Wait for 25 milliseconds before sending the next packet
+                Thread.sleep(25);
             }
             // notify the RP that the stream has ended
             Packet streamEndedNotification = new Packet(7);
