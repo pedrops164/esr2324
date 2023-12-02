@@ -28,14 +28,21 @@ class HandleStreamRequests implements Runnable{
         try{
             String serverIP = this.rp.getServer(sr.getStreamName());
             Socket s = new Socket(serverIP, Server.SERVER_PORT);
-            TCPConnection c = new TCPConnection(s);
+            TCPConnection serverConnection = new TCPConnection(s);
             byte [] data = sr.serialize();
-            c.send(2, data); // Send the video stream request to the Server
+            serverConnection.send(2, data); // Send the video stream request to the Server
 
             // Receive VideoMetadata through TCP and send to client
-            Packet metadataPacket = c.receive();
+            Packet metadataPacket = serverConnection.receive();
             this.connection.send(metadataPacket);
             this.rp.log(new LogEntry("Received and sent VideoMetadata packet"));
+
+            // Receive end of stream notification
+            Packet p = serverConnection.receive();
+            if (p.isEndOfStreamNotification()) {
+                this.rp.log(new LogEntry("Received end of stream notification"));
+            }
+            serverConnection.stopConnection();
 
         }catch(Exception e){
             e.printStackTrace();
@@ -52,18 +59,10 @@ class HandleStreamRequests implements Runnable{
         // Adds the client to the data structure that maps streams to the clients watching them
         rp.addClientToStream(sr.getStreamName(), this.clientId);
 
-        try 
-        {
-            this.rp.log(new LogEntry("A client wants the stream: " + sr.getStreamName() + "!"));
-        } 
-        catch (IOException e) 
-        {
-            e.printStackTrace();
-        }
+        this.rp.log(new LogEntry("A client wants the stream: " + sr.getStreamName() + "!"));
         // Now we have to request to a server to stream this video
         this.requestStreamToServer(sr);
 
         this.connection.stopConnection();
-
     }    
 }

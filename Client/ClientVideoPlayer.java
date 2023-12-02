@@ -7,7 +7,9 @@ import java.awt.event.*;
 import javax.swing.Timer;
 
 import Common.UDPDatagram;
+import Common.LogEntry;
 
+import Client.Client;
 import Client.FrameQueue;
 
 class ClientVideoPlayer {
@@ -17,9 +19,13 @@ class ClientVideoPlayer {
     JButton playButton;
     Timer updateFrame;
     private FrameQueue frameQueue;
+    private int framesReceived;
+    private Client client;
 
-    public ClientVideoPlayer() {
+    public ClientVideoPlayer(Client client) {
         this.frameQueue = new FrameQueue();
+        this.client = client;
+        this.framesReceived = 0;
         //GUI
         //----
         this.jframe = new JFrame("Cliente de Testes");
@@ -67,6 +73,7 @@ class ClientVideoPlayer {
 
     public void addFrame(UDPDatagram datagram) {
         this.frameQueue.addPacket(datagram);
+        this.framesReceived++;
     }
 
     public void setVideoPeriod(int framePeriod) {
@@ -74,7 +81,7 @@ class ClientVideoPlayer {
         updateFrame.setInitialDelay(0);
         updateFrame.setCoalesce(true);
         updateFrame.start();
-        System.out.println("Set video period and started the timer");
+        client.log(new LogEntry("Set video period and started the timer"));
     }
     
     class updateFrameListener implements ActionListener {
@@ -87,7 +94,7 @@ class ClientVideoPlayer {
         }
 
         public void actionPerformed(ActionEvent e) {
-            System.out.println("Updating Frame!");
+            client.log(new LogEntry("Updating Frame!"));
             try {
                 UDPDatagram nextFrame = frameQueue.getNextFrame();
                 byte[] payload = nextFrame.getPayload();
@@ -99,8 +106,8 @@ class ClientVideoPlayer {
                 iconLabel.setIcon(icon);
             } catch (NoNextFrameException exception) {
                 // There are no frames in the queue, so we don't update the frame
-                System.out.println("No new frames have arrived!");
-            } catch (Exception exception) {
+                client.log(new LogEntry("No new frames have arrived!"));
+        } catch (Exception exception) {
                 exception.printStackTrace();
             }
             
@@ -109,9 +116,15 @@ class ClientVideoPlayer {
 
     class playButtonListener implements ActionListener {
         public void actionPerformed(ActionEvent e){
-            System.out.println("Play Button pressed !"); 
-            //start the timers ... 
+            client.log(new LogEntry("Play Button pressed !"));
+            //start the timer
             updateFrame.start();
         }
-      }
+    }
+
+    public void close() {
+        // Stops the timer that updates the frames
+        client.log(new LogEntry("Received " + this.framesReceived + " frame packets!"));
+        this.updateFrame.stop();
+    }
 }

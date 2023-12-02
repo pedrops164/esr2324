@@ -32,25 +32,11 @@ public class NormalFloodWorker implements Runnable
                 Packet p = new Packet(5, serializedPath);
                 c.send(p);
                 c.stopConnection();
-                try 
-                {
-                    this.node.log(new LogEntry("Sent flood message to " + neighbour + ":" + 333));
-                }
-                catch(IOException e)
-                {
-                    e.printStackTrace();
-                }
+                this.node.log(new LogEntry("Sent flood message to " + neighbour + ":" + 333));
             }
             catch (Exception eFromSocket)
             {
-                try
-                {
-                    this.node.log(new LogEntry("Error sending flood message to " + neighbour + ". Retrying later"));
-                }
-                catch(IOException e)
-                {
-                    e.printStackTrace();
-                }
+                this.node.log(new LogEntry("Error sending flood message to " + neighbour + ". Retrying later"));
             }
         }
     }

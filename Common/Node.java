@@ -99,9 +99,12 @@ public abstract class Node {
         this.neighbours = neighbours;
     }
 
-    public void log(LogEntry entry) throws IOException
-    {
-        this.logger.log(entry);
+    public void log(LogEntry entry) {
+        try {
+            this.logger.log(entry);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public String getNeighbourIp(int neighbourId) {

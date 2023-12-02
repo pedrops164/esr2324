@@ -38,7 +38,7 @@ public class Client extends Node {
         this.routingTree = new RoutingTree();
         this.routingTreeLock = new ReentrantLock();
         this.hasPaths = this.routingTreeLock.newCondition();
-        this.cvp = new ClientVideoPlayer();
+        this.cvp = new ClientVideoPlayer(this);
     }
 
     public void getAvailableStreams(){
@@ -317,21 +317,30 @@ class UDP_Worker implements Runnable {
             DatagramPacket receivedPacket = new DatagramPacket(receiveData, receiveData.length);
 
             this.client.log(new LogEntry("Listening on UDP:" + this.client.getIp() + ":" + ONode.ONODE_PORT));
+
+            // Set the timeout to 5000 milliseconds (5 seconds)
+            // If packets aren't received for 5 seconds, it stops receiving.
+            this.ds.setSoTimeout(5000);
             while(true) {
-                // Receive the packet
-                this.ds.receive(receivedPacket);
-                this.client.log(new LogEntry("Received UDP packet"));
+                try {
+                    // Receive the packet
+                    this.ds.receive(receivedPacket);
+                    this.client.log(new LogEntry("Received UDP packet"));
 
-                // Get the received bytes from the receivedPacket
-                byte[] receivedBytes = receivedPacket.getData();
+                    // Get the received bytes from the receivedPacket
+                    byte[] receivedBytes = receivedPacket.getData();
 
-                // Convert the received bytes into a Frame Packet
-                FramePacket fp = FramePacket.deserialize(receivedBytes);
+                    // Convert the received bytes into a Frame Packet
+                    FramePacket fp = FramePacket.deserialize(receivedBytes);
 
-                // Get the UDP Datagram
-                UDPDatagram udpDatagram = fp.getUDPDatagram();
-                this.client.cvp.addFrame(udpDatagram);
-                //this.client.cvp.updateLastFrame(udpDatagram);
+                    // Get the UDP Datagram
+                    UDPDatagram udpDatagram = fp.getUDPDatagram();
+                    this.client.cvp.addFrame(udpDatagram);
+                } catch (SocketTimeoutException e) {
+                    this.client.log(new LogEntry("Timeout reached. No UDP packets received for 5 seconds."));
+                    this.client.cvp.close();
+                    break; // Exit the loop and stop receiving packets
+                }
             }
             
         } catch (Exception e) {

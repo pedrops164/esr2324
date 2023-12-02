@@ -14,7 +14,7 @@ import java.net.*;
 
 public class TCPConnection {
     // Communication
-    private Socket s; 
+    private Socket s;
     private DataInputStream in;
     private DataOutputStream out;
 
@@ -25,6 +25,16 @@ public class TCPConnection {
         public Packet(int type, byte[] data){
             this.type = type;
             this.data = data;
+        }
+
+        public Packet(int type){
+            // empty packet, only the type matters
+            this.type = type;
+            this.data = new byte[0];
+        }
+
+        public boolean isEndOfStreamNotification() {
+            return this.type == 7;
         }
     }
 

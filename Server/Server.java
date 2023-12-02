@@ -21,7 +21,6 @@ import java.util.*;
 public class Server extends Node {
     private ServerSocket ss;
     public static int SERVER_PORT = 1234;
-
     private List<String> streams;
 
     public Server(String []args, NeighbourReader nr, boolean debugMode){
@@ -30,16 +29,8 @@ public class Server extends Node {
 
         try{
             this.ss = new ServerSocket(SERVER_PORT);
-        }catch(Exception e){
-            e.printStackTrace();
-        }
-
-        try 
-        {
             this.logger.log(new LogEntry("Getting availabe Streams"));
-        } 
-        catch (IOException e) 
-        {
+        } catch(Exception e){
             e.printStackTrace();
         }
 
@@ -62,13 +53,13 @@ public class Server extends Node {
                 // Send request
                 ServerStreams sstreams = new ServerStreams(this.streams, this.id, this.ip);
                 Socket s = new Socket(this.RPIP, RP.RP_PORT);
-                TCPConnection c = new TCPConnection(s);
+                TCPConnection tcpConnection = new TCPConnection(s);
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 DataOutputStream out = new DataOutputStream(baos);
                 sstreams.serialize(out);
                 out.flush();
                 byte [] data = baos.toByteArray();
-                c.send(1, data); // Send the request to the RP
+                tcpConnection.send(1, data); // Send the request to the RP
                 this.logger.log(new LogEntry("Notifying Rendezvous Point about the available streams"));
                 
                 return true;
@@ -113,31 +104,30 @@ public class Server extends Node {
         try{
             this.logger.log(new LogEntry("Now Listening to TCP requests"));
             while(true){
-                Socket s = this.ss.accept();
-                TCPConnection c = new TCPConnection(s);
-                Packet p = c.receive();
+                Socket socket = this.ss.accept();
+                TCPConnection tcpConnection = new TCPConnection(socket);
+                Packet p = tcpConnection.receive();
                 Thread t;
 
                 // Creates different types of workers based on the type of packet received
                 switch (p.type) {
                     case 2: // New video stream request
-                        this.logger.log(new LogEntry("Received Video Stream Request from " + s.getInetAddress().getHostAddress()));
-                        t = new Thread(new ServerWorker1(c, p, this.RPIP, this));
+                        this.logger.log(new LogEntry("Received Video Stream Request from " + socket.getInetAddress().getHostAddress()));
+                        t = new Thread(new ServerWorker1(tcpConnection, p, this.RPIP, this));
                         t.start();
                         break;
                     case 5: // Flood message
-                        this.logger.log(new LogEntry("Received flood message from " + s.getInetAddress().getHostAddress()));
+                        this.logger.log(new LogEntry("Received flood message from " + socket.getInetAddress().getHostAddress()));
                         t = new Thread(new NormalFloodWorker(this, p));
                         t.start();
                         break;
                     case 7: // LIVENESS CHECK message
-                        this.log(new LogEntry("Received liveness check from " + s.getInetAddress().getHostAddress()));
-                        t = new Thread(new LivenessCheckWorker(this, c, p));
+                        this.log(new LogEntry("Received liveness check from " + socket.getInetAddress().getHostAddress()));
+                        t = new Thread(new LivenessCheckWorker(this, tcpConnection, p));
                         t.start();
                         break;
                     default:
                         this.logger.log(new LogEntry("Packet type not recognized. Message ignored!"));
-                        c.stopConnection();
                         break;
                 }
             }
@@ -207,8 +197,6 @@ class ServerWorker1 implements Runnable{
         Packet packetMetadata = new Packet(6, vmd.serialize());
         this.connection.send(packetMetadata);
 
-        this.connection.stopConnection();
-
         // Start the UDP video streaming. (Send directly to the RP)
         try {
             this.node.log(new LogEntry("Sent VideoMetadata packet to RP"));
@@ -228,6 +216,11 @@ class ServerWorker1 implements Runnable{
 	            DatagramPacket senddp = new DatagramPacket(packetBytes, packetBytes.length, InetAddress.getByName(this.RPIP), RP.RP_PORT);
 	            this.ds.send(senddp);
             }
+            // notify the RP that the stream has ended
+            Packet streamEndedNotification = new Packet(7);
+            // Close the socket
+            this.connection.send(streamEndedNotification);
+            this.connection.stopConnection();
         } catch (Exception e) {
             e.printStackTrace();
         }
