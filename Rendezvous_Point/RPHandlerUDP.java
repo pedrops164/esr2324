@@ -44,6 +44,9 @@ class RPHandlerUDP implements Runnable{
             DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 
             List<DatagramPacket> packetsToPush = new ArrayList<>();
+
+            for (Thread thread : this.threadPool)
+                thread.start();
     
             while(true) {
                 // Receive the packet
