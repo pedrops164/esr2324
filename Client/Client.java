@@ -10,7 +10,6 @@ import Common.TCPConnection;
 import Common.TCPConnection.Packet;
 import Common.LogEntry;
 import Common.UDPDatagram;
-import Common.FramePacket;
 import Common.VideoMetadata;
 
 import Overlay_Node.ONode;
