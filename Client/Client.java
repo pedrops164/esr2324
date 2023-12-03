@@ -28,7 +28,7 @@ public class Client extends Node {
     private RoutingTree routingTree;
     private Lock routingTreeLock;
     private Condition hasPaths;
-    public ClientVideoPlayer cvp;
+    ClientVideoManager cvm;
 
     public Client(String args[], NeighbourReader nr, boolean debugMode){
         super(Integer.parseInt(args[0]), nr, debugMode);
@@ -36,7 +36,7 @@ public class Client extends Node {
         this.routingTree = new RoutingTree();
         this.routingTreeLock = new ReentrantLock();
         this.hasPaths = this.routingTreeLock.newCondition();
-        this.cvp = null;
+        this.cvm = new ClientVideoManager(this);
     }
 
     public void getAvailableStreams(){
@@ -135,9 +135,6 @@ public class Client extends Node {
             String stream = this.availableStreams.get(streamId-1);
             StreamRequest sr = new StreamRequest(stream, this.id, path);
 
-            // Create the VideoPlayer
-            this.cvp = new ClientVideoPlayer(this);
-
             Socket s = new Socket(this.RPIP, 333);
             TCPConnection c = new TCPConnection(s);
             byte[] srBytes = sr.serialize();
@@ -149,8 +146,8 @@ public class Client extends Node {
             byte[] metadata = metadataPacket.data;
             VideoMetadata vmd = VideoMetadata.deserialize(metadata);
 
-            // Set the frame period of the Video Player
-            this.cvp.setVideoPeriod(vmd.getFramePeriod());
+            // Set the frame period of the Video Player respective to the stream of this metadata
+            this.cvm.updateVideoInfo(vmd);
 
         }catch(Exception e){
             e.printStackTrace();
@@ -310,9 +307,6 @@ class UDP_Worker implements Runnable {
 
             this.client.log(new LogEntry("Listening on UDP:" + this.client.getIp() + ":" + ONode.ONODE_PORT));
 
-            // Set the timeout to 5000 milliseconds (5 seconds)
-            // If packets aren't received for 5 seconds, it stops receiving.
-            this.ds.setSoTimeout(5000);
             while(true) {
                 try {
                     // Receive the packet
@@ -327,13 +321,9 @@ class UDP_Worker implements Runnable {
 
                     // Get the UDP Datagram
                     UDPDatagram udpDatagram = fp.getUDPDatagram();
-                    this.client.cvp.addFrame(udpDatagram);
-                } catch (SocketTimeoutException e) {
-                    if (this.client.cvp != null) {
-                        this.client.log(new LogEntry("Timeout reached. No UDP packets received for 5 seconds."));
-                        this.client.cvp.close();
-                        break; // Exit the loop and stop receiving packets
-                    }
+                    this.client.cvm.addFrame(udpDatagram);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
             

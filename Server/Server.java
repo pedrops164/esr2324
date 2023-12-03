@@ -178,7 +178,7 @@ class ServerWorker1 implements Runnable{
         int frame_period = 75; // time between frames in ms.
         int video_extension = 26; //26 is Mjpeg type
 
-        VideoMetadata vmd = new VideoMetadata(frame_period);
+        VideoMetadata vmd = new VideoMetadata(frame_period, videoPath);
         // Convert VideoMetadata to bytes (serialize) and send the packet to RP (type 6 represents video metadata)
         Packet packetMetadata = new Packet(6, vmd.serialize());
         this.connection.send(packetMetadata);
@@ -188,9 +188,11 @@ class ServerWorker1 implements Runnable{
             this.node.log(new LogEntry("Sent VideoMetadata packet to RP"));
             this.node.log(new LogEntry("Streaming '" + videoPath + "' through UDP!"));
             Video video = new Video(videoPath);
-            for (int frameNumber = 0; frameNumber < videoLength; frameNumber++) {
+            byte[] videoBuffer = null;
+            while ((videoBuffer = video.getNextVideoFrame()) != null) {
                 // Get the next frame of the video
-	            byte[] videoBuffer = video.getNextVideoFrame();
+
+                int frameNumber = video.getFrameNumber();
                 //Builds a UDPDatagram object containing the frame
 	            UDPDatagram udpDatagram = new UDPDatagram(video_extension, frameNumber, frameNumber*frame_period,
                  videoBuffer, videoBuffer.length, videoPath);
@@ -205,6 +207,7 @@ class ServerWorker1 implements Runnable{
                 // Wait for 25 milliseconds before sending the next packet
                 Thread.sleep(25);
             }
+            this.node.log(new LogEntry("Sent " + video.getFrameNumber() + " frames!"));
             // notify the RP that the stream has ended
             Packet streamEndedNotification = new Packet(7);
             // Close the socket
@@ -214,4 +217,12 @@ class ServerWorker1 implements Runnable{
             e.printStackTrace();
         }
     }    
+    
+    public static String getExtension(String fileName) {
+        int lastIndexOfDot = fileName.lastIndexOf(".");
+        if (lastIndexOfDot == -1) {
+            return ""; // No extension found
+        }
+        return fileName.substring(lastIndexOfDot + 1);
+    }
 }

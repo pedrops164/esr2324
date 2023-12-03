@@ -10,9 +10,11 @@ import java.io.Serializable;
 
 public class VideoMetadata implements Serializable {
     private int framePeriod;
+    private String streamName;
 
-    public VideoMetadata(int framePeriod) {
+    public VideoMetadata(int framePeriod, String streamName) {
         this.framePeriod = framePeriod;
+        this.streamName = streamName;
     }
 
     public static VideoMetadata deserialize(byte[] receivedBytes) {
@@ -46,5 +48,9 @@ public class VideoMetadata implements Serializable {
 
     public int getFramePeriod() {
         return this.framePeriod;
+    }
+
+    public String getStreamName() {
+        return this.streamName;
     }
 }
