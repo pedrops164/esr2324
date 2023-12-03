@@ -131,7 +131,7 @@ class TCP_Worker implements Runnable
                         t.start();
                         break;
                     case 7: // ALIVE? message
-                        this.oNode.log(new LogEntry("Received liveness check from " + s.getInetAddress().getHostAddress()));
+                        //this.oNode.log(new LogEntry("Received liveness check from " + s.getInetAddress().getHostAddress()));
                         t = new Thread(new LivenessCheckWorker(this.oNode, c, p));
                         t.start();
                         break;

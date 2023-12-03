@@ -47,16 +47,16 @@ class ClientPathManager implements Runnable {
                 TCPConnection c = new TCPConnection(s);
                 Packet packet = new Packet(7, serializedPath);
                 c.send(packet);
-                this.client.log(new LogEntry("Sent liveness check to " + neighbour));
+                //this.client.log(new LogEntry("Sent liveness check to " + neighbour));
 
                 packet = c.receive();
                 alive = packet.data[0] != 0; 
-                this.client.log(new LogEntry("Received liveness check confirmation from " + neighbour + ". Path is " + ((!alive) ?"not " :"") + "alive"));
+                //this.client.log(new LogEntry("Received liveness check confirmation from " + neighbour + ". Path is " + ((!alive) ?"not " :"") + "alive"));
                 c.stopConnection();
             }
             catch (Exception e)
             {
-                this.client.log(new LogEntry("Neighbour " + neighbour + " is no longer active. Ignoring path."));
+                //this.client.log(new LogEntry("Neighbour " + neighbour + " is no longer active. Ignoring path."));
             }
 
             return alive;
@@ -87,7 +87,7 @@ class ClientPathManager implements Runnable {
                     boolean alive = this.doLivenessCheck(p);
                     if (!alive)
                     {
-                        this.client.log(new LogEntry("Path " + p.toString() + " is not alive, removing from routing tree."));
+                        //this.client.log(new LogEntry("Path " + p.toString() + " is not alive, removing from routing tree."));
                         this.client.removePath(p);
                     }
                     else

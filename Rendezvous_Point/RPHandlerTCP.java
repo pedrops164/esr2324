@@ -53,7 +53,7 @@ public class RPHandlerTCP implements Runnable {
                         t.start();
                         break;
                     case 7: // LIVENESS CHECK message
-                        rp.log(new LogEntry("Received liveness check from " + s.getInetAddress().getHostAddress()));
+                        //rp.log(new LogEntry("Received liveness check from " + s.getInetAddress().getHostAddress()));
                         t = new Thread(new RPLivenessCheckWorker(rp, c));
                         t.start();
                         break;

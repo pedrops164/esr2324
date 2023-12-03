@@ -114,7 +114,7 @@ public class Server extends Node {
                         t.start();
                         break;
                     case 7: // LIVENESS CHECK message
-                        this.log(new LogEntry("Received liveness check from " + socket.getInetAddress().getHostAddress()));
+                        //this.log(new LogEntry("Received liveness check from " + socket.getInetAddress().getHostAddress()));
                         t = new Thread(new LivenessCheckWorker(this, tcpConnection, p));
                         t.start();
                         break;
