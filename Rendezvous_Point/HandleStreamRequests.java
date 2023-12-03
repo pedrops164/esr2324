@@ -37,7 +37,7 @@ class HandleStreamRequests implements Runnable{
 
             // Receive end of stream notification
             Packet p = serverConnection.receive();
-            if (p.isEndOfStreamNotification()) {
+            if (p.type == 8) {
                 this.rp.log(new LogEntry("Received end of stream notification"));
             }
             serverConnection.stopConnection();

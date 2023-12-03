@@ -219,7 +219,7 @@ class ServerWorker1 implements Runnable{
             }
             this.s.log(new LogEntry("Sent " + video.getFrameNumber() + " frames!"));
             // notify the RP that the stream has ended
-            Packet streamEndedNotification = new Packet(7);
+            Packet streamEndedNotification = new Packet(8);
             // Close the socket
             this.connection.send(streamEndedNotification);
             this.connection.stopConnection();
