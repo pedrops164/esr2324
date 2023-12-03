@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 public class RPDatagramPacketQueue {
     private List<List<DatagramPacket>> packets;
@@ -24,7 +25,7 @@ public class RPDatagramPacketQueue {
         this.packetsLock.lock();
 
         try {
-            this.packets.add(datagramPackets);
+            this.packets.add(datagramPackets.stream().collect(Collectors.toList()));
             this.packetsAvailable.signal();
         } finally {
             this.packetsLock.unlock();
