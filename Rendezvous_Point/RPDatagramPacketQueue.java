@@ -32,7 +32,7 @@ public class RPDatagramPacketQueue {
 
     }
 
-    public DatagramPacket popPackets() {
+    public DatagramPacket popPacket() {
         DatagramPacket returnPacket = null;
         this.packetsLock.lock();
 
