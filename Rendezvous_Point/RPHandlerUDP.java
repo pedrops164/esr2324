@@ -19,6 +19,7 @@ class RPHandlerUDP implements Runnable{
         try {
             // open a socket for receiving UDP packets on RP's port
             this.ds = new DatagramSocket(RP.RP_PORT);
+            this.ds.setSoTimeout(5000);
         } catch(Exception e){
             e.printStackTrace();
         }
@@ -33,6 +34,7 @@ class RPHandlerUDP implements Runnable{
     }
     
     public void run(){
+        List<DatagramPacket> packetsToPush = new ArrayList<>();
         try {
             // set the buffer size
             int buffersize = 15000;
@@ -43,27 +45,36 @@ class RPHandlerUDP implements Runnable{
             // Create the packet which will receive the data
             DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 
-            List<DatagramPacket> packetsToPush = new ArrayList<>();
 
             for (Thread thread : this.threadPool)
                 thread.start();
     
             while(true) {
-                // Receive the packet
-                this.ds.receive(receivePacket);
+                try {
+                    // Receive the packet
+                    this.ds.receive(receivePacket);
 
-                DatagramPacket copy = new DatagramPacket(receivePacket.getData(), receivePacket.getLength());
-                packetsToPush.add(copy);
-                this.rp.log(new LogEntry("Received UDP packet"));
+                    DatagramPacket copy = new DatagramPacket(receivePacket.getData(), receivePacket.getLength());
+                    packetsToPush.add(copy);
+                    this.rp.log(new LogEntry("Received UDP packet"));
 
-                if (packetsToPush.size() >= this.pushQuantity)
-                {
-                    this.datagramPacketQueue.pushPackets(packetsToPush);
-                    packetsToPush.clear();
-                    this.rp.log(new LogEntry("Sent " + this.pushQuantity + " UDP packets to Thread pool queue"));
+                    if (packetsToPush.size() >= this.pushQuantity)
+                    {
+                        this.datagramPacketQueue.pushPackets(packetsToPush);
+                        packetsToPush.clear();
+                        this.rp.log(new LogEntry("Sent " + this.pushQuantity + " UDP packets to Thread pool queue"));
+                    }
+                } catch (SocketTimeoutException e) {
+                    if (packetsToPush.size() > 0){
+                        this.datagramPacketQueue.pushPackets(packetsToPush);
+                        packetsToPush.clear();
+                        this.rp.log(new LogEntry("Sent " + this.pushQuantity + " UDP packets to Thread pool queue"));
+                        this.rp.log(new LogEntry("Timeout reached. No UDP packets received for 5 seconds. Sent remaining packets"));
+                    }
+                    
                 }
             }
-        } catch (Exception e) {
+        }  catch (Exception e) {
             e.printStackTrace();
         } finally {
             this.ds.close();

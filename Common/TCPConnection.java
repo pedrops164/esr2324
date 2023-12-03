@@ -32,10 +32,6 @@ public class TCPConnection {
             this.type = type;
             this.data = new byte[0];
         }
-
-        public boolean isEndOfStreamNotification() {
-            return this.type == 7;
-        }
     }
 
     public TCPConnection(Socket s){

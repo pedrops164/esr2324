@@ -156,6 +156,9 @@ public class Client extends Node {
         }
     }
 
+    public void requestStopStreaming(int streamId){
+    }
+
     public void flood()
     {
         Path path = new Path(new PathNode(this.id, 333, this.ip));
