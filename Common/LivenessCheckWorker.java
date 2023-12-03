@@ -22,7 +22,7 @@ public class LivenessCheckWorker implements Runnable {
         byte[] msg = new byte[1];
         msg[0] = (byte) ((alive) ?1 :0);
         this.c.send(7, msg);
-        this.node.log(new LogEntry("Sent liveness check answer saying path is " + ((!alive) ?"not " :"") + "alive back."));
+        //this.node.log(new LogEntry("Sent liveness check answer saying path is " + ((!alive) ?"not " :"") + "alive back."));
     }
 
     @Override
