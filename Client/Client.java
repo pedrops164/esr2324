@@ -133,7 +133,6 @@ public class Client extends Node {
 
             // Send request
             String stream = this.availableStreams.get(streamId-1);
-            System.out.println("Cliente a fazer pedido para a stream: " + stream);
             this.logger.log(new LogEntry("Client requesting stream: " + stream));
             StreamRequest sr = new StreamRequest(stream, this.id, path);
 
@@ -150,8 +149,6 @@ public class Client extends Node {
             byte[] metadata = metadataPacket.data;
             VideoMetadata vmd = VideoMetadata.deserialize(metadata);
             
-            System.out.println("Cliente recebeu o pacote de meta dados do video da stream!");
-            System.out.println(vmd.toString());
             // Set the frame period of the Video Player respective to the stream of this metadata
             this.cvm.updateVideoInfo(vmd);
 

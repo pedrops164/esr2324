@@ -193,7 +193,7 @@ class ServerWorker1 implements Runnable{
         try {
             this.s.log(new LogEntry("Sent VideoMetadata packet to RP"));
             this.s.log(new LogEntry("Streaming '" + videoName + "' through UDP!"));
-            Video video = new Video(this.s.getStreamsDir() + videoName);
+            Video video = new Video(this.s.getStreamsDir() + "/" + videoName);
             byte[] videoBuffer = null;
             while ((videoBuffer = video.getNextVideoFrame()) != null) {
                 // Get the next frame of the video

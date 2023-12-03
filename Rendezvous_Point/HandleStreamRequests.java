@@ -24,7 +24,6 @@ class HandleStreamRequests implements Runnable{
 
     public void requestStreamToServer(StreamRequest sr){
         try{
-            System.out.println("RP recebeu um novo pedido de stream");
             String serverIP = this.rp.getServer(sr.getStreamName());
             Socket s = new Socket(serverIP, Server.SERVER_PORT);
             TCPConnection serverConnection = new TCPConnection(s);
