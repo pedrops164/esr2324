@@ -9,9 +9,6 @@ import javax.swing.Timer;
 import Common.UDPDatagram;
 import Common.LogEntry;
 
-import Client.ClientVideoManager;
-
-
 class ClientVideoPlayer {
     private JFrame jframe;
     JLabel iconLabel;

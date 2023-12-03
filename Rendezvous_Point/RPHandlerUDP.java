@@ -46,7 +46,6 @@ class RPHandlerUDP implements Runnable{
                 byte[] receivedBytes = receivePacket.getData();
                 // build the UDPDatagram from the received bytes (deserialize the bytes)
                 UDPDatagram receivedPacket = UDPDatagram.deserialize(receivedBytes);
-                System.out.println("Recebi pacote UDP da stream: " + receivedPacket.getStreamName());
                 
                 List<String> neighbourIps = this.rp.getNeighbourIpsStream(receivedPacket.getStreamName());
                 for (String neighbourIp: neighbourIps) {

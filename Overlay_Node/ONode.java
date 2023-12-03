@@ -172,12 +172,10 @@ class HandleStreamingRequest implements Runnable{
     }
 
     public void run(){
-        System.out.println("ONode recebeu um novo pedido de stream!");
 
         // This overlay node is not streaming is stream at the moment
         if(!this.oNode.alreadyStreaming(this.sr.getStreamName())){
             addFlux();
-            System.out.println("ONode ainda não está a fazer o streaming deste video!");
             this.oNode.log(new LogEntry("This Overlay Node isn't streaming: " + this.sr.getStreamName()));
             // Send the streaming request to the next node in the path
             try{
@@ -198,7 +196,6 @@ class HandleStreamingRequest implements Runnable{
             }   
         }else{
             addFlux();
-            System.out.println("ONode já está a fazer o streaming deste video!");
             this.oNode.log(new LogEntry("This Overlay Node is already streaming: " + this.sr.getStreamName()));;
             // Tenho que enviar o video metadata daqui? Onde vou buscar o frame_period?
             try{
@@ -253,7 +250,7 @@ class UDP_Worker implements Runnable {
 
                 // Convert the received bytes into a Frame Packet
                 UDPDatagram datagram = UDPDatagram.deserialize(receivedBytes);
-                System.out.print("Recebi pacote UDP da stream: " + datagram.getStreamName());
+                
                 // Get this of IP's of neighbours that want this stream
                 List<String> neighbourIps = this.oNode.getNeighbourIpsStream(datagram.getStreamName()); 
                 // For each neighbour send the UDPDatagram
