@@ -8,7 +8,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class RPDatagramPacketQueue {
-    private List<DatagramPacket> packets;
+    private List<List<DatagramPacket>> packets;
     private ReentrantLock packetsLock;
     private Condition packetsAvailable;
 
@@ -24,7 +24,7 @@ public class RPDatagramPacketQueue {
         this.packetsLock.lock();
 
         try {
-            this.packets.addAll(datagramPackets);
+            this.packets.add(datagramPackets);
             this.packetsAvailable.signal();
         } finally {
             this.packetsLock.unlock();
@@ -32,8 +32,8 @@ public class RPDatagramPacketQueue {
 
     }
 
-    public DatagramPacket popPacket() {
-        DatagramPacket returnPacket = null;
+    public List<DatagramPacket> popPackets() {
+        List<DatagramPacket> returnPackets = null;
         this.packetsLock.lock();
 
         try {
@@ -41,13 +41,13 @@ public class RPDatagramPacketQueue {
                 this.packetsAvailable.await();
             }
 
-            returnPacket = this.packets.remove(0);
+            returnPackets = this.packets.remove(0);
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
             this.packetsLock.unlock();
         }
 
-        return returnPacket;
+        return returnPackets;
     }
 }
