@@ -48,6 +48,9 @@ public class ClientHandlerUDP implements Runnable {
 
                     UDPDatagram udpDatagram = UDPDatagram.deserialize(receivedBytes);
                     this.client.cvm.addFrame(udpDatagram);
+                } catch (java.awt.HeadlessException e) {
+                    this.client.log(new LogEntry("Must run 'export DISPLAY=:0.0' before running the client"));
+                    break;
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
