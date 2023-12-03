@@ -28,6 +28,10 @@ public class Server extends Node {
         super(Integer.parseInt(args[0]), nr, debugMode);
         this.streams = new ArrayList<>();
         this.streamsDir = args[2];
+        
+        if(this.streamsDir.charAt(this.streamsDir.length() - 1) != '/'){
+            this.streamsDir += "/";
+        }
 
         try{
             this.ss = new ServerSocket(SERVER_PORT);
@@ -193,7 +197,7 @@ class ServerWorker1 implements Runnable{
         try {
             this.s.log(new LogEntry("Sent VideoMetadata packet to RP"));
             this.s.log(new LogEntry("Streaming '" + videoName + "' through UDP!"));
-            Video video = new Video(this.s.getStreamsDir() + "/" + videoName);
+            Video video = new Video(this.s.getStreamsDir() + videoName);
             byte[] videoBuffer = null;
             while ((videoBuffer = video.getNextVideoFrame()) != null) {
                 // Get the next frame of the video
