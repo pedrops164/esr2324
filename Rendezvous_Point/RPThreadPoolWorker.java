@@ -31,7 +31,7 @@ public class RPThreadPoolWorker implements Runnable{
         while (true)
         {
             List<DatagramPacket> packets = this.datagramPacketQueue.popPackets();
-            this.rp.log(new LogEntry("Thread pool worker " + this.workerID + " is handling an UDP packet."));
+            //this.rp.log(new LogEntry("Thread pool worker " + this.workerID + " is handling an UDP packet."));
             
             try
             {
@@ -42,15 +42,18 @@ public class RPThreadPoolWorker implements Runnable{
                     // build the UDPDatagram from the received bytes (deserialize the bytes)
                     UDPDatagram receivedPacket = UDPDatagram.deserialize(receivedBytes);
                     
-                    List<String> neighbourIps = this.rp.getNeighbourIpsStream(receivedPacket.getStreamName());
-                    for (String neighbourIp: neighbourIps) {
-                        DatagramPacket toSend = new DatagramPacket(receivedBytes, receivedBytes.length, 
-                                        InetAddress.getByName(neighbourIp), ONode.ONODE_PORT);
-                        // Send the DatagramPacket through the UDP socket
-                        this.datagramSocket.send(toSend);
-                        this.rp.log(new LogEntry("Thread pool worker " + this.workerID + " sent UDP packet to " + neighbourIp));
-                        Thread.sleep(25);
+                    if (rp.isStreaming(receivedPacket.getStreamName())) {
+                        List<String> neighbourIps = this.rp.getNeighbourIpsStream(receivedPacket.getStreamName());
+                        for (String neighbourIp: neighbourIps) {
+                            DatagramPacket toSend = new DatagramPacket(receivedBytes, receivedBytes.length, 
+                                            InetAddress.getByName(neighbourIp), ONode.ONODE_PORT);
+                            // Send the DatagramPacket through the UDP socket
+                            this.datagramSocket.send(toSend);
+                            //this.rp.log(new LogEntry("Thread pool worker " + this.workerID + " sent UDP packet to " + neighbourIp));
+                            Thread.sleep(25);
+                        }
                     }
+                    
                 }
             }
             catch(Exception e)

@@ -56,7 +56,7 @@ class RPHandlerUDP implements Runnable{
 
                     DatagramPacket copy = new DatagramPacket(receivePacket.getData(), receivePacket.getLength());
                     packetsToPush.add(copy);
-                    this.rp.log(new LogEntry("Received UDP packet"));
+                    //this.rp.log(new LogEntry("Received UDP packet"));
 
                     if (packetsToPush.size() >= this.pushQuantity)
                     {

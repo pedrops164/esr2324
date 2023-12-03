@@ -13,12 +13,12 @@ import java.net.*;
 // Responsible to handle new video stream requests
 class HandleStreamRequests implements Runnable{
     private RP rp;
-    private TCPConnection clientConnection;
+    private TCPConnection neighbourConnection;
     private Packet receivedPacket;
 
-    public HandleStreamRequests(TCPConnection clientConnection, Packet p, RP rp){
+    public HandleStreamRequests(TCPConnection neighbourConnection, Packet p, RP rp){
         this.rp = rp;
-        this.clientConnection = clientConnection;
+        this.neighbourConnection = neighbourConnection;
         this.receivedPacket = p;
     }
 
@@ -32,7 +32,7 @@ class HandleStreamRequests implements Runnable{
 
             // Receive VideoMetadata through TCP and send to client
             Packet metadataPacket = serverConnection.receive();
-            this.clientConnection.send(metadataPacket);
+            this.neighbourConnection.send(metadataPacket);
             this.rp.log(new LogEntry("Received and sent VideoMetadata packet"));
 
             // Receive end of stream notification
@@ -40,7 +40,11 @@ class HandleStreamRequests implements Runnable{
             if (p.type == 8) {
                 this.rp.log(new LogEntry("Received end of stream notification"));
             }
-            this.clientConnection.send(p);
+            this.neighbourConnection.send(p);
+            // Given that the stream has ended, stop streaming it
+            this.rp.stopStreaming(sr.getStreamName());
+
+
             serverConnection.stopConnection();
         }catch(Exception e){
             e.printStackTrace();
@@ -63,6 +67,6 @@ class HandleStreamRequests implements Runnable{
         this.rp.log(new LogEntry("A client wants the stream: " + sr.getStreamName() + "!"));
         // Now we have to request to a server to stream this video
         this.requestStreamToServer(sr);
-        this.clientConnection.stopConnection();
+        this.neighbourConnection.stopConnection();
     }    
 }

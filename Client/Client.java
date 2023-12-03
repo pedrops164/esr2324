@@ -138,12 +138,12 @@ public class Client extends Node {
             // Send the request through TCP to the next node in the path
             PathNode nextNode = path.getNext(this.id);
             Socket s = new Socket(nextNode.getNodeIPAddress().toString(), ONode.ONODE_PORT);
-            TCPConnection c = new TCPConnection(s);
+            TCPConnection neighbourConnection = new TCPConnection(s);
             byte[] srBytes = sr.serialize();
-            c.send(2, srBytes); // Send the request to the next node in the path
+            neighbourConnection.send(2, srBytes); // Send the request to the next node in the path
 
             // Receive VideoMetadata through TCP and send to client
-            Packet metadataPacket = c.receive();
+            Packet metadataPacket = neighbourConnection.receive();
             this.logger.log(new LogEntry("Received Video Metadata!"));
             byte[] metadata = metadataPacket.data;
             VideoMetadata vmd = VideoMetadata.deserialize(metadata);
@@ -152,7 +152,7 @@ public class Client extends Node {
             this.cvm.updateVideoInfo(vmd);
 
             // Receive end of stream packet
-            Packet endOfStreamPacket = c.receive();
+            Packet endOfStreamPacket = neighbourConnection.receive();
             this.logger.log(new LogEntry("Received End of Stream Notification!"));
 
             // Notify the video manager that this stream has ended (no more packets will be received)
@@ -193,9 +193,9 @@ public class Client extends Node {
     public void run() throws InterruptedException, NoPathsAvailableException
     {
         // inicializar a receção por TCP
-        Thread tcp = new Thread(new TCP_Worker(this));
+        Thread tcp = new Thread(new ClientHandlerTCP(this));
         tcp.start();
-        Thread udp = new Thread(new UDP_Worker(this));
+        Thread udp = new Thread(new ClientHandlerUDP(this));
         udp.start();
         
         // executar o flood
@@ -231,113 +231,3 @@ public class Client extends Node {
         c.run();
     }
 }   
-
-class TCP_Worker implements Runnable
-{
-    private ServerSocket ss;
-    private Client client;
-    
-    public TCP_Worker(Client client)
-    {
-        this.client = client;
-        
-        try 
-        {
-            this.ss = new ServerSocket(333);
-        } 
-        catch (Exception e) 
-        {
-            e.printStackTrace();    
-        }
-    }
-    
-    @Override
-    public void run() 
-    {
-        try
-        {
-            while(true)
-            {
-                Socket s = this.ss.accept();
-                TCPConnection c = new TCPConnection(s);
-                Packet p = c.receive();
-                
-                switch(p.type)
-                {
-                    case 5: // Flood Message from client
-                    this.client.log(new LogEntry("Received flood message from " + s.getInetAddress().getHostAddress()));
-                        Thread t = new Thread(new NormalFloodWorker(client, p));    
-                        t.start();
-                        break;
-                    case 6: // Flood Response from RP
-                        this.client.log(new LogEntry("Received flood response from RP: " + s.getInetAddress().getHostAddress()));
-                        client.receivePath(p);
-                        break;
-                    default:
-                        this.client.log(new LogEntry("Packet type not recognized. Message ignored!"));
-                        c.stopConnection();
-                        break;
-                }
-            }
-            
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-    }
-}
-
-class UDP_Worker implements Runnable {
-    private DatagramSocket ds;
-    private Client client;
-    
-    public UDP_Worker(Client client)
-    {
-        this.client = client;
-        
-        try {
-            // open a socket for receiving UDP packets on the overlay node's port
-            this.ds = new DatagramSocket(ONode.ONODE_PORT);
-    
-        } catch (Exception e) {
-            e.printStackTrace();    
-        }
-    }
-
-    @Override
-    public void run() 
-    {
-        try {
-            // set the buffer size
-            int buffersize = 15000;
-            // create the buffer to receive the packets
-            byte[] receiveData = new byte[buffersize];
-            // Create the packet which will receive the data
-            DatagramPacket receivedPacket = new DatagramPacket(receiveData, receiveData.length);
-
-            this.client.log(new LogEntry("Listening on UDP:" + this.client.getIp() + ":" + ONode.ONODE_PORT));
-
-            while(true) {
-                try {
-                    // Receive the packet
-                    this.ds.receive(receivedPacket);
-                    this.client.log(new LogEntry("Received UDP packet"));
-
-                    // Get the received bytes from the receivedPacket
-                    byte[] receivedBytes = receivedPacket.getData();
-
-                    UDPDatagram udpDatagram = UDPDatagram.deserialize(receivedBytes);
-                    this.client.cvm.addFrame(udpDatagram);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            
-        } catch (Exception e) {
-            e.printStackTrace();  
-        } finally {
-            this.ds.close();
-        }
-    }
-}

@@ -123,6 +123,14 @@ public class RP extends Node{
         return streams;
     }
 
+    public void stopStreaming(String streamName) {
+        this.streamNeighbours.remove(streamName);
+    }
+
+    public boolean isStreaming(String streamName) {
+        return this.streamNeighbours.containsKey(streamName);
+    }
+
     public static void main(String args[]){
         NeighbourReader nr = new NeighbourReader(Integer.parseInt(args[0]), args[1]);
         boolean debugMode = Arrays.stream(args).anyMatch(s -> s.equals("-g"));
