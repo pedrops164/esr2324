@@ -1,7 +1,8 @@
 package Common;
 
 import java.io.File;
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public abstract class Node {
@@ -15,7 +16,7 @@ public abstract class Node {
     public Node(int id, NeighbourReader nr, boolean debugMode)
     {
         this.id = id;
-        this.logFile = "/home/ESRproj/logs/node" + this.id + ".log"; 
+        this.logFile = "/home/core/Desktop/ESR_TP2/logs/" + this.id + ".log"; 
         this.logger = new Logger(this.logFile, debugMode);
         
         try 
@@ -23,7 +24,7 @@ public abstract class Node {
             File log = new File(this.logFile);
             if (!log.exists())
             {
-                File dir = new File("/home/ESRproj/logs/");
+                File dir = new File("/home/core/Desktop/ESR_TP2/logs/");
                 if (!dir.exists())
                     dir.mkdirs();
                 if (log.createNewFile())
@@ -109,5 +110,14 @@ public abstract class Node {
 
     public String getNeighbourIp(int neighbourId) {
         return this.neighbours.get(neighbourId);
+    }
+
+    public List<String> getNeighboursIps(List<Integer> neighborIds){
+        List<String> ips = new ArrayList<>();
+        
+        for(Integer id : neighborIds){
+            ips.add(this.neighbours.get(id));
+        }
+        return ips;
     }
 }

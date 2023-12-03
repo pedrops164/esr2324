@@ -53,4 +53,8 @@ public class VideoMetadata implements Serializable {
     public String getStreamName() {
         return this.streamName;
     }
+
+    public String toString(){
+        return "Video Metadata:\nFrame Period- " + this.framePeriod + "\nStreamName- " + this.streamName;
+    }
 }

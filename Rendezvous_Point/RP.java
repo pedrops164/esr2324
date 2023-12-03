@@ -6,7 +6,6 @@ import Common.Node;
 import Common.Path;
 import Common.ServerStreams;
 
-import java.io.*;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -17,8 +16,8 @@ public class RP extends Node{
     private Map<String, List<Integer>> streamServers; // stream name to list of available servers
     private Map<Integer, String> servers; // serverID to serverIP
     private List<ServerRanking> rankedServers; // Organized list with the ranking from the best to the worst server 
+    private Map<String, List<Integer>> streamNeighbours; // Maps each stream to the id's of the neighbours of want it 
     public Map<Integer, Path> paths; // maps clients to their respective paths (paths from RP to each client)
-    private Map<String, List<Integer>> streamsClients; // stream name to list of clients that want it
 
     public RP(String args[], NeighbourReader nr, boolean debugMode){
         super(Integer.parseInt(args[0]), nr, debugMode);
@@ -26,7 +25,7 @@ public class RP extends Node{
         this.servers = new HashMap<>();
         this.rankedServers = new ArrayList<>();
         this.paths = new HashMap<>();
-        this.streamsClients = new HashMap<>();
+        this.streamNeighbours = new HashMap<>();
     }
 
     public void run() {
@@ -53,20 +52,19 @@ public class RP extends Node{
         this.paths.put(clientId, path);
     }
 
-    public void addClientToStream(String streamName, int clientId) {
-        // Adds the client to the mapping between streams and the clients watching them
-        if (!this.streamsClients.containsKey(streamName)) {
-            this.streamsClients.put(streamName, new ArrayList<Integer>());
+    public void addStreamingFlux(String streamName, int neighbour){
+        if(this.streamNeighbours.containsKey(streamName)){
+            this.streamNeighbours.get(streamName).add(neighbour);
+        }else{
+            List<Integer> neighbours = new ArrayList<>();
+            neighbours.add(neighbour);
+            this.streamNeighbours.put(streamName, neighbours);
         }
-        this.streamsClients.get(streamName).add(clientId);
     }
 
-    public List<Integer> getStreamClients(String streamName) {
-        List<Integer> clients = this.streamsClients.get(streamName);
-        if (clients != null) {
-            return new ArrayList<Integer>(clients);
-        }
-        return clients;
+    public List<String> getNeighbourIpsStream(String streamName){
+        List<Integer> neighbours = this.streamNeighbours.get(streamName);
+        return this.getNeighboursIps(neighbours);
     }
 
     public synchronized void addServerStreams(int serverID, String serverIP, List<String> streams){
@@ -103,10 +101,6 @@ public class RP extends Node{
             this.rankedServers.add(i, new ServerRanking(sstreams.getID(), latency));
         }else{
             this.rankedServers.add(new ServerRanking(sstreams.getID(), latency));
-        }
-
-        for(ServerRanking sr: this.rankedServers){
-            System.out.println(sr);
         }
     }
 

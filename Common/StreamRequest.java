@@ -1,25 +1,14 @@
 package Common;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import java.io.*;
 
 /* 
  * This class represents the content of a new video stream request (TCP).
 */
 
-import java.io.Serializable;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutputStream;
-import java.io.ObjectOutput;
-
 public class StreamRequest implements Serializable {
     private String streamName;
-    private int clientID;   
+    private int clientID; // Acho que o clientID não vai ser necessário
     private Path path;
 
     public StreamRequest(String streamName, int id, Path path){

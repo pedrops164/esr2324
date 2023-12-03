@@ -35,19 +35,19 @@ public class UDPStreaming {
     
     // Method responsible for sending the next frame to the destination
     public void sendNextFrame(){
-        this.frame_nb++;
-        int size = this.video.getNextVideoFrame(this.buffer);
-        UDPDatagram datagramObj = new UDPDatagram(this.videoType, this.frame_nb, frame_period * this.frame_nb,this.buffer, size);
-        
-        size = datagramObj.datagramSize();        
-        byte[] datagram = new byte[size]; 
-        datagramObj.getDatagram(datagram);
-        DatagramPacket datapackt = new DatagramPacket(datagram, size, this.destIP, this.port);
-	    try{
-            this.s.send(datapackt);
-        }catch(Exception e){
-            e.printStackTrace();
-        }
+        //this.frame_nb++;
+        //int size = this.video.getNextVideoFrame(this.buffer);
+        //UDPDatagram datagramObj = new UDPDatagram(this.videoType, this.frame_nb, frame_period * this.frame_nb,this.buffer, size);
+        //
+        //size = datagramObj.datagramSize();        
+        //byte[] datagram = new byte[size]; 
+        //datagramObj.getDatagram(datagram);
+        //DatagramPacket datapackt = new DatagramPacket(datagram, size, this.destIP, this.port);
+	    //try{
+        //    this.s.send(datapackt);
+        //}catch(Exception e){
+        //    e.printStackTrace();
+        //}
     }
 
     // Method responsible to receive a frame of video (UDPDatagram)

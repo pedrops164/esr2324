@@ -22,10 +22,12 @@ public class Server extends Node {
     private ServerSocket ss;
     public static int SERVER_PORT = 333;
     private List<String> streams;
+    private String streamsDir;
 
     public Server(String []args, NeighbourReader nr, boolean debugMode){
         super(Integer.parseInt(args[0]), nr, debugMode);
         this.streams = new ArrayList<>();
+        this.streamsDir = args[2];
 
         try{
             this.ss = new ServerSocket(SERVER_PORT);
@@ -130,6 +132,10 @@ public class Server extends Node {
         }
     }
 
+    public String getStreamsDir(){
+        return this.streamsDir;
+    }
+
     public static void main(String args[]){
         NeighbourReader nr = new NeighbourReader(Integer.parseInt(args[0]), args[1]);
         boolean debugMode = Arrays.stream(args).anyMatch(s -> s.equals("-g"));
@@ -150,13 +156,13 @@ class ServerWorker1 implements Runnable{
     private Packet receivedPacket;
     private String RPIP;
     private DatagramSocket ds;
-    private Node node;
+    private Server s;
 
-    public ServerWorker1(TCPConnection connection, Packet p, String RPIP, Node node){
+    public ServerWorker1(TCPConnection connection, Packet p, String RPIP, Server s){
         this.connection = connection;
         this.receivedPacket = p;
         this.RPIP = RPIP;
-        this.node = node;
+        this.s = s;
         try {
             this.ds = new DatagramSocket();
         } catch (Exception e) {
@@ -171,23 +177,23 @@ class ServerWorker1 implements Runnable{
 
         //Deserialize the Path
 
-        String videoPath = sr.getStreamName();
+        String videoName = sr.getStreamName();
 
         // get video attributes....
         int videoLength = 100; // number of frames
         int frame_period = 75; // time between frames in ms.
         int video_extension = 26; //26 is Mjpeg type
 
-        VideoMetadata vmd = new VideoMetadata(frame_period, videoPath);
+        VideoMetadata vmd = new VideoMetadata(frame_period, videoName);
         // Convert VideoMetadata to bytes (serialize) and send the packet to RP (type 6 represents video metadata)
         Packet packetMetadata = new Packet(6, vmd.serialize());
         this.connection.send(packetMetadata);
 
         // Start the UDP video streaming. (Send directly to the RP)
         try {
-            this.node.log(new LogEntry("Sent VideoMetadata packet to RP"));
-            this.node.log(new LogEntry("Streaming '" + videoPath + "' through UDP!"));
-            Video video = new Video(videoPath);
+            this.s.log(new LogEntry("Sent VideoMetadata packet to RP"));
+            this.s.log(new LogEntry("Streaming '" + videoName + "' through UDP!"));
+            Video video = new Video(this.s.getStreamsDir() + videoName);
             byte[] videoBuffer = null;
             while ((videoBuffer = video.getNextVideoFrame()) != null) {
                 // Get the next frame of the video
@@ -195,7 +201,7 @@ class ServerWorker1 implements Runnable{
                 int frameNumber = video.getFrameNumber();
                 //Builds a UDPDatagram object containing the frame
 	            UDPDatagram udpDatagram = new UDPDatagram(video_extension, frameNumber, frameNumber*frame_period,
-                 videoBuffer, videoBuffer.length, videoPath);
+                 videoBuffer, videoBuffer.length, videoName);
                 
                 // get the bytes of the UDPDatagram
                 byte[] packetBytes = udpDatagram.serialize();
@@ -207,7 +213,7 @@ class ServerWorker1 implements Runnable{
                 // Wait for 25 milliseconds before sending the next packet
                 Thread.sleep(25);
             }
-            this.node.log(new LogEntry("Sent " + video.getFrameNumber() + " frames!"));
+            this.s.log(new LogEntry("Sent " + video.getFrameNumber() + " frames!"));
             // notify the RP that the stream has ended
             Packet streamEndedNotification = new Packet(7);
             // Close the socket

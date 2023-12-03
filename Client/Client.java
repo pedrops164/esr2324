@@ -23,7 +23,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Client extends Node {
-
     private List<String> availableStreams;
     private RoutingTree routingTree;
     private Lock routingTreeLock;
@@ -116,6 +115,7 @@ public class Client extends Node {
         System.out.println("Select one to watch by inputing it's number:");
     }
 
+    // Method responsible to request the UDP streaming 
     public void requestStreaming(int streamId){
         try{
             // get the best path
@@ -129,23 +129,29 @@ public class Client extends Node {
             {
                 this.routingTreeLock.unlock();
             }
-            byte[] serializedPath = path.serialize();
+            // byte[] serializedPath = path.serialize();
 
             // Send request
             String stream = this.availableStreams.get(streamId-1);
+            System.out.println("Cliente a fazer pedido para a stream: " + stream);
+            this.logger.log(new LogEntry("Client requesting stream: " + stream));
             StreamRequest sr = new StreamRequest(stream, this.id, path);
 
-            Socket s = new Socket(this.RPIP, 333);
+            // Send the request through TCP to the next node in the path
+            PathNode nextNode = path.getNext(this.id);
+            Socket s = new Socket(nextNode.getNodeIPAddress().toString(), ONode.ONODE_PORT);
             TCPConnection c = new TCPConnection(s);
             byte[] srBytes = sr.serialize();
-            c.send(2, srBytes); // Send the request to the RP
+            c.send(2, srBytes); // Send the request to the next node in the path
 
             // Receive VideoMetadata through TCP and send to client
             Packet metadataPacket = c.receive();
-            this.logger.log(new LogEntry("Received Video Metadata from RP"));
+            this.logger.log(new LogEntry("Received Video Metadata!"));
             byte[] metadata = metadataPacket.data;
             VideoMetadata vmd = VideoMetadata.deserialize(metadata);
-
+            
+            System.out.println("Cliente recebeu o pacote de meta dados do video da stream!");
+            System.out.println(vmd.toString());
             // Set the frame period of the Video Player respective to the stream of this metadata
             this.cvm.updateVideoInfo(vmd);
 
@@ -204,7 +210,6 @@ public class Client extends Node {
         Thread pathManager = new Thread(new ClientPathManager(this));
         pathManager.start();
 
-        // TODO : enviar o caminho junto com o pedido de stream
         this.getAvailableStreams();
         this.showAvailableStreams();
         Scanner in = new Scanner(System.in);
@@ -316,11 +321,7 @@ class UDP_Worker implements Runnable {
                     // Get the received bytes from the receivedPacket
                     byte[] receivedBytes = receivedPacket.getData();
 
-                    // Convert the received bytes into a Frame Packet
-                    FramePacket fp = FramePacket.deserialize(receivedBytes);
-
-                    // Get the UDP Datagram
-                    UDPDatagram udpDatagram = fp.getUDPDatagram();
+                    UDPDatagram udpDatagram = UDPDatagram.deserialize(receivedBytes);
                     this.client.cvm.addFrame(udpDatagram);
                 } catch (Exception e) {
                     e.printStackTrace();

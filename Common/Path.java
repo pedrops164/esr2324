@@ -1,6 +1,5 @@
 package Common;
 
-import java.nio.ByteBuffer;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -9,8 +8,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import java.io.Serializable;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
@@ -79,6 +76,15 @@ public class Path implements Serializable {
             throw new InvalidNodeException("Node with id '" + id + "' is at the end of the path..");
         
         return nodeList.get(index+1);
+    }
+
+    public PathNode getPrevious(int id) throws InvalidNodeException
+    {
+        int index = this.indexOf(id); 
+        if (index == -1)
+            throw new InvalidNodeException("Node with id '" + id + "' not in path...");
+        
+        return nodeList.get(index-1);
     }
 
     public PathNode getClient()
