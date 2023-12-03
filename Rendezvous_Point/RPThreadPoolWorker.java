@@ -30,32 +30,29 @@ public class RPThreadPoolWorker implements Runnable{
         
         while (true)
         {
-            List<DatagramPacket> packets = this.datagramPacketQueue.popPackets();
-            this.rp.log(new LogEntry("Thread pool worker " + this.workerID + " is handling " + packets.size() + " UDP packets."));
+            DatagramPacket packet = this.datagramPacketQueue.popPackets();
+            this.rp.log(new LogEntry("Thread pool worker " + this.workerID + " is handling an UDP packet."));
             
-            for (DatagramPacket packet : packets)
+            try
             {
-                try
-                {
-                    // get the bytes from the UDP packet, and convert them into UDPDatagram
-                    byte[] receivedBytes = packet.getData();
-                    // build the UDPDatagram from the received bytes (deserialize the bytes)
-                    UDPDatagram receivedPacket = UDPDatagram.deserialize(receivedBytes);
-                    System.out.println("Recebi pacote UDP da stream: " + receivedPacket.getStreamName());
-                    
-                    List<String> neighbourIps = this.rp.getNeighbourIpsStream(receivedPacket.getStreamName());
-                    for (String neighbourIp: neighbourIps) {
-                        DatagramPacket toSend = new DatagramPacket(receivedBytes, receivedBytes.length, 
-                                        InetAddress.getByName(neighbourIp), ONode.ONODE_PORT);
-                        // Send the DatagramPacket through the UDP socket
-                        this.datagramSocket.send(toSend);
-                        this.rp.log(new LogEntry("Thread pool worker " + this.workerID + " sent UDP packet to " + neighbourIp));
-                    }
+                // get the bytes from the UDP packet, and convert them into UDPDatagram
+                byte[] receivedBytes = packet.getData();
+                // build the UDPDatagram from the received bytes (deserialize the bytes)
+                UDPDatagram receivedPacket = UDPDatagram.deserialize(receivedBytes);
+                System.out.println("Recebi pacote UDP da stream: " + receivedPacket.getStreamName());
+                
+                List<String> neighbourIps = this.rp.getNeighbourIpsStream(receivedPacket.getStreamName());
+                for (String neighbourIp: neighbourIps) {
+                    DatagramPacket toSend = new DatagramPacket(receivedBytes, receivedBytes.length, 
+                                    InetAddress.getByName(neighbourIp), ONode.ONODE_PORT);
+                    // Send the DatagramPacket through the UDP socket
+                    this.datagramSocket.send(toSend);
+                    this.rp.log(new LogEntry("Thread pool worker " + this.workerID + " sent UDP packet to " + neighbourIp));
                 }
-                catch(Exception e)
-                {
-                    e.printStackTrace();
-                }
+            }
+            catch(Exception e)
+            {
+                e.printStackTrace();
             }
         }
     }

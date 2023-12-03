@@ -15,7 +15,7 @@ import java.util.*;
 class RPHandlerUDP implements Runnable{
     private RP rp;
     private DatagramSocket ds;
-    private int numThreads;
+    private int numThreads, pushQuantity;
     private Thread[] threadPool;
     private RPDatagramPacketQueue datagramPacketQueue;
 
@@ -28,8 +28,9 @@ class RPHandlerUDP implements Runnable{
             e.printStackTrace();
         }
 
-        this.datagramPacketQueue = new RPDatagramPacketQueue(5);
+        this.datagramPacketQueue = new RPDatagramPacketQueue();
         this.numThreads = 4;
+        this.pushQuantity = 5; // mudar isto 
         this.threadPool = new Thread[this.numThreads];
 
         for (int i=0 ; i<this.numThreads ; i++)
@@ -46,14 +47,23 @@ class RPHandlerUDP implements Runnable{
             this.rp.log(new LogEntry("Listening on UDP in Port " + RP.RP_PORT));
             // Create the packet which will receive the data
             DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+
+            List<DatagramPacket> packetsToPush = new ArrayList<>();
     
             while(true) {
                 // Receive the packet
                 this.ds.receive(receivePacket);
 
                 DatagramPacket copy = new DatagramPacket(receivePacket.getData(), receivePacket.getLength());
-                this.datagramPacketQueue.pushPacket(copy);
-                this.rp.log(new LogEntry("Sent DatagramPacket to Thread pool queue"));
+                packetsToPush.add(copy);
+                this.rp.log(new LogEntry("Received UDP packet"));
+
+                if (packetsToPush.size() >= this.pushQuantity)
+                {
+                    this.datagramPacketQueue.pushPackets(packetsToPush);
+                    packetsToPush.clear();
+                    this.rp.log(new LogEntry("Sent " + this.pushQuantity + " UDP packets to Thread pool queue"));
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();

@@ -11,49 +11,43 @@ public class RPDatagramPacketQueue {
     private List<DatagramPacket> packets;
     private ReentrantLock packetsLock;
     private Condition packetsAvailable;
-    private int popQuantity;
 
-    public RPDatagramPacketQueue(int popQuantity) 
+    public RPDatagramPacketQueue() 
     {
         this.packets = new ArrayList<>();
         this.packetsLock = new ReentrantLock();
         this.packetsAvailable = this.packetsLock.newCondition();
-        this.popQuantity = popQuantity;
     }
 
-    public void pushPacket(DatagramPacket datagramPacket) 
+    public void pushPackets(List<DatagramPacket> datagramPackets) 
     {
         this.packetsLock.lock();
 
         try {
-            this.packets.add(datagramPacket);
-            if (this.packets.size() >= this.popQuantity) {
-                this.packetsAvailable.signal();
-            }
+            this.packets.addAll(datagramPackets);
+            this.packetsAvailable.signal();
         } finally {
             this.packetsLock.unlock();
         }
 
     }
 
-    public List<DatagramPacket> popPackets() {
-        ArrayList<DatagramPacket> returnPackets = null;
+    public DatagramPacket popPackets() {
+        DatagramPacket returnPacket = null;
         this.packetsLock.lock();
 
         try {
-            while (this.packets.size() < this.popQuantity) {
+            while (this.packets.size() < 1) {
                 this.packetsAvailable.await();
             }
 
-            returnPackets = new ArrayList<>(this.packets.subList(0, this.popQuantity));
-            this.packets.removeAll(returnPackets);
-
+            returnPacket = this.packets.remove(0);
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
             this.packetsLock.unlock();
         }
 
-        return returnPackets;
+        return returnPacket;
     }
 }
