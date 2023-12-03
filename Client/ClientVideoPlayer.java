@@ -21,6 +21,7 @@ class ClientVideoPlayer {
     private ClientVideoManager cvm;
     private String streamName;
     private long lastFrameUpdate;
+    private boolean streamEnded;
 
     public ClientVideoPlayer(Client client, ClientVideoManager cvm) {
         this.frameQueue = new FrameQueue();
@@ -28,6 +29,7 @@ class ClientVideoPlayer {
         this.cvm = cvm;
         this.framesReceived = 0;
         this.lastFrameUpdate = System.currentTimeMillis();
+        this.streamEnded = false;
         initializeGUI();        
     }
 
@@ -97,12 +99,6 @@ class ClientVideoPlayer {
         private ClientVideoPlayer cvp;
         private Toolkit toolkit;
 
-        // Sets the threshold for missed frame updates for which the video player ends
-        // After 'closeThreshHold' amount of straight attempts to update the frame unsuccessfully, this videoPlayer ends.
-        //private static int closeThreshHold = 25;
-        // counter for the close threshold. When closeCounter is equal to closeThreshHold, the videoplayer ends itself.
-        //private int closeCounter;
-
         public updateFrameListener(ClientVideoPlayer cvp) {
             this.cvp = cvp;
             this.toolkit = Toolkit.getDefaultToolkit();
@@ -118,7 +114,7 @@ class ClientVideoPlayer {
                     //get an Image object from the payload bitstream
                     Image image = toolkit.createImage(payload, 0, payload_length);
                     //display the image as an ImageIcon object
-                    client.log(new LogEntry("Updating Frame!"));
+                    //client.log(new LogEntry("Updating Frame!"));
                     icon = new ImageIcon(image);
                     iconLabel.setIcon(icon);
                     // Updates the time of the last frame update
@@ -126,12 +122,7 @@ class ClientVideoPlayer {
                 //this.closeCounter = 0;
                 } catch (NoNextFrameException exception) {
                     // There are no frames in the queue, so we don't update the frame
-                    client.log(new LogEntry("No new frames have arrived!"));
-                    //this.closeCounter++;
-                    //if (this.closeCounter == closeThreshHold) {
-                    //    // update frames attempt threshold has been reached - terminate video player
-                    //    cvp.close();
-                    //}
+                    //client.log(new LogEntry("No new frames have arrived!"));
                 } catch (Exception exception) {
                     exception.printStackTrace();
                 }
@@ -160,5 +151,21 @@ class ClientVideoPlayer {
     public long getLastFrameUpdateTime() {
         // returns the instant when the last frame was updated
         return lastFrameUpdate;
+    }
+
+    public void setStreamEnded() {
+        // Sets the stream ended flag to true
+        this.streamEnded = true;
+    }
+
+    public boolean streamEnded() {
+        // Returns true if the stream has ended (doesnt mean that all the frames have been transmitted in the GUI)
+        return this.streamEnded;
+    }
+
+    public boolean allFramesRead() {
+        // Returns true if all the frames have been read (transmitted in the GUI).
+        // This means that the queue of frames is empty
+        return this.frameQueue.isEmpty();
     }
 }

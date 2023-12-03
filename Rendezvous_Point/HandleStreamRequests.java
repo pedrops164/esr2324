@@ -13,12 +13,12 @@ import java.net.*;
 // Responsible to handle new video stream requests
 class HandleStreamRequests implements Runnable{
     private RP rp;
-    private TCPConnection connection;
+    private TCPConnection clientConnection;
     private Packet receivedPacket;
 
-    public HandleStreamRequests(TCPConnection c, Packet p, RP rp){
+    public HandleStreamRequests(TCPConnection clientConnection, Packet p, RP rp){
         this.rp = rp;
-        this.connection = c;
+        this.clientConnection = clientConnection;
         this.receivedPacket = p;
     }
 
@@ -32,7 +32,7 @@ class HandleStreamRequests implements Runnable{
 
             // Receive VideoMetadata through TCP and send to client
             Packet metadataPacket = serverConnection.receive();
-            this.connection.send(metadataPacket);
+            this.clientConnection.send(metadataPacket);
             this.rp.log(new LogEntry("Received and sent VideoMetadata packet"));
 
             // Receive end of stream notification
@@ -40,6 +40,7 @@ class HandleStreamRequests implements Runnable{
             if (p.type == 8) {
                 this.rp.log(new LogEntry("Received end of stream notification"));
             }
+            this.clientConnection.send(p);
             serverConnection.stopConnection();
         }catch(Exception e){
             e.printStackTrace();
@@ -62,6 +63,6 @@ class HandleStreamRequests implements Runnable{
         this.rp.log(new LogEntry("A client wants the stream: " + sr.getStreamName() + "!"));
         // Now we have to request to a server to stream this video
         this.requestStreamToServer(sr);
-        this.connection.stopConnection();
+        this.clientConnection.stopConnection();
     }    
 }

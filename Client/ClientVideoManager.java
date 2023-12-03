@@ -41,13 +41,12 @@ public class ClientVideoManager {
      * If the last time the frame was updated was 5 seconds ago, closes the video player
      */
     private void checkAndCloseInactivePlayers() {
-        long currentTime = System.currentTimeMillis();
         // Iterates over the set of <key,value> pairs
         for (Map.Entry<String, ClientVideoPlayer> entry : videoPlayers.entrySet()) {
             String streamName = entry.getKey();
             ClientVideoPlayer cvp = entry.getValue();
-            if (currentTime - cvp.getLastFrameUpdateTime() > 5000) {
-            // Close player if it hasn't updated for more than 5 seconds
+            if ((cvp.streamEnded() && cvp.allFramesRead())) {
+                // Close player if the stream has ended and all frames have been read
                 closePlayer(streamName);
             }
         }
@@ -101,5 +100,11 @@ public class ClientVideoManager {
      */
     public void closeAllPlayers() {
         videoPlayers.clear();
+    }
+
+    public void streamEnded(String streamName) {
+        if (videoPlayers.containsKey(streamName)) {
+            videoPlayers.get(streamName).setStreamEnded();
+        }
     }
 }

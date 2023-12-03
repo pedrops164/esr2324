@@ -36,6 +36,11 @@ class FrameQueue {
             queue.poll();
         }
     }
+
+    public boolean isEmpty() {
+        // Returns if the queue is empty
+        return this.queue.isEmpty();
+    }
 }
 
 class NoNextFrameException extends Exception {
