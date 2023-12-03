@@ -15,6 +15,9 @@ import java.util.*;
 class RPHandlerUDP implements Runnable{
     private RP rp;
     private DatagramSocket ds;
+    private int numThreads;
+    private Thread[] threadPool;
+    private RPDatagramPacketQueue datagramPacketQueue;
 
     public RPHandlerUDP(RP rp){
         this.rp = rp;
@@ -24,6 +27,13 @@ class RPHandlerUDP implements Runnable{
         } catch(Exception e){
             e.printStackTrace();
         }
+
+        this.datagramPacketQueue = new RPDatagramPacketQueue(5);
+        this.numThreads = 4;
+        this.threadPool = new Thread[this.numThreads];
+
+        for (int i=0 ; i<this.numThreads ; i++)
+            this.threadPool[i] = new Thread(new RPThreadPoolWorker(i+1, rp, this.datagramPacketQueue, this.ds));
     }
     
     public void run(){
@@ -40,21 +50,10 @@ class RPHandlerUDP implements Runnable{
             while(true) {
                 // Receive the packet
                 this.ds.receive(receivePacket);
-                this.rp.log(new LogEntry("Received UDP packet"));
 
-                // get the bytes from the UDP packet, and convert them into UDPDatagram
-                byte[] receivedBytes = receivePacket.getData();
-                // build the UDPDatagram from the received bytes (deserialize the bytes)
-                UDPDatagram receivedPacket = UDPDatagram.deserialize(receivedBytes);
-                
-                List<String> neighbourIps = this.rp.getNeighbourIpsStream(receivedPacket.getStreamName());
-                for (String neighbourIp: neighbourIps) {
-                    DatagramPacket toSend = new DatagramPacket(receivedBytes, receivedBytes.length, 
-                                    InetAddress.getByName(neighbourIp), ONode.ONODE_PORT);
-                    // Send the DatagramPacket through the UDP socket
-                    this.ds.send(toSend);
-                    this.rp.log(new LogEntry("Sent UDP packet"));
-                }
+                DatagramPacket copy = new DatagramPacket(receivePacket.getData(), receivePacket.getLength());
+                this.datagramPacketQueue.pushPacket(copy);
+                this.rp.log(new LogEntry("Sent DatagramPacket to Thread pool queue"));
             }
         } catch (Exception e) {
             e.printStackTrace();
