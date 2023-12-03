@@ -30,7 +30,7 @@ public class RPThreadPoolWorker implements Runnable{
         
         while (true)
         {
-            DatagramPacket packet = this.datagramPacketQueue.popPackets();
+            DatagramPacket packet = this.datagramPacketQueue.popPacket();
             this.rp.log(new LogEntry("Thread pool worker " + this.workerID + " is handling an UDP packet."));
             
             try
