@@ -14,6 +14,7 @@ import Common.Util;
 
 /*
 * This class is responsible from time to time to test each server (update the rankings).
+* This class requests for each server a ServerStreams reply each 2 seconds.
 */
 
 public class RPServerTester implements Runnable{
@@ -70,7 +71,7 @@ public class RPServerTester implements Runnable{
                     LocalDateTime receivingTimeStamp = LocalDateTime.now();
                     this.rp.rankServer(sstreams, receivingTimeStamp);
                 }       
-                Thread.sleep(250);
+                Thread.sleep(2000);
             }catch(Exception e){
                 e.printStackTrace();
             }
