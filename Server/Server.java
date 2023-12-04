@@ -106,7 +106,7 @@ public class Server extends Node {
                 switch (p.type) {
                     case 2: // New video stream request
                         this.logger.log(new LogEntry("Received Video Stream Request from " + socket.getInetAddress().getHostAddress()));
-                        t = new Thread(new HandleStreamRequests(tcpConnection, p, this.RPIP, this));
+                        t = new Thread(new HandleStreamRequests(tcpConnection, p, this.RPIPs.get(0), this));
                         t.start();
                         break;
                     case 5: // Flood message
@@ -133,7 +133,7 @@ public class Server extends Node {
     public void notifyEndOfStream(String streamName) {
         // Establishes TCP Connection with RP
         try {
-            Socket socket = new Socket(this.RPIP, Util.PORT);
+            Socket socket = new Socket(this.RPIPs.get(0), Util.PORT);
             TCPConnection rpConnection = new TCPConnection(socket);
 
             NotificationEOS notificationEOS = new NotificationEOS(streamName);
