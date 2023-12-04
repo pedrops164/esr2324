@@ -124,6 +124,7 @@ public class BootstrapperHandler {
             changedNodes.addAll(this.connected);
             return changedNodes;
         }
+        return changedNodes;
 
     }
 
