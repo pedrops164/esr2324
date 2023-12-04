@@ -1,6 +1,5 @@
 package Rendezvous_Point;
 
-import Common.LogEntry;
 import Common.Node;
 import Common.TCPConnection;
 

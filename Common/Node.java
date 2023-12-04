@@ -1,6 +1,5 @@
 package Common;
 
-import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.net.Socket;

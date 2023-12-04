@@ -25,7 +25,7 @@ public class HandleServerStreams implements Runnable{
             try{
                 this.server.log(new LogEntry("Got a new ServerStream request from the RP!"));
                 // Send the ServerStream to the RP
-                ServerStreams sstreams = new ServerStreams(this.server.getStreams(), this.server.getId(), this.server.getIp());  
+                ServerStreams sstreams = new ServerStreams(this.server.getStreams(), this.server.getId(), this.server.getIps().get(0));  
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 DataOutputStream out = new DataOutputStream(baos);
                 sstreams.serialize(out);
