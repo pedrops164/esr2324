@@ -22,7 +22,7 @@ public class RPFloodWorker implements Runnable
 
     public void run ()
     {
-        PathNode pathNode = new PathNode(this.rp.getId(), Util.PORT, rp.getIp());
+        PathNode pathNode = new PathNode(this.rp.getId(), Util.PORT, rp.getIps().get(0));
         if (!this.path.inPath(pathNode))
         {
             this.path.addNode(pathNode);

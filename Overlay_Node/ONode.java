@@ -8,7 +8,6 @@ import Common.PathNode;
 import Common.StreamRequest;
 import Common.TCPConnection;
 import Common.UDPDatagram;
-import Common.Utility;
 import Common.VideoMetadata;
 import Common.TCPConnection.Packet;
 import Common.NormalFloodWorker;
@@ -42,6 +41,7 @@ public class ONode extends Node {
         this.bootstrapperHandler = new BootstrapperHandler(this.bootstrapConfigFile);
         this.neighbours = this.bootstrapperHandler.getNeighboursFromID(id);
         this.RPIPs = this.bootstrapperHandler.getRPIPs();
+        this.ips = this.bootstrapperHandler.getIPsfromID(this.id);
     }
 
     public int getId()
@@ -83,7 +83,10 @@ public class ONode extends Node {
         try {
             if (!this.isBoostrapper())
             {
-                boolean success = this.messageBootstrapper();
+                this.log(new LogEntry("Sending neighbour request to Bootstrapper"));
+                boolean successful = this.messageBootstrapper();
+                if (!successful)
+                    return;
             }
 
             // Launch tcp worker

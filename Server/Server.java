@@ -58,7 +58,7 @@ public class Server extends Node {
         do {
             try{    
                 // Send request
-                ServerStreams sstreams = new ServerStreams(this.streams, this.id, this.ip);
+                ServerStreams sstreams = new ServerStreams(this.streams, this.id, this.ips.get(0));
                 Socket s = new Socket(this.RPIPs.get(0), Util.PORT);
                 TCPConnection tcpConnection = new TCPConnection(s);
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();

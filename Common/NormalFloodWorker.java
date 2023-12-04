@@ -15,7 +15,7 @@ public class NormalFloodWorker implements Runnable
     {
         this.node = node;
         this.path = Path.deserialize(p.data);
-        this.path.addNode(new PathNode(this.node.getId(), Util.PORT, node.getIp()));
+        this.path.addNode(new PathNode(this.node.getId(), Util.PORT, node.getIps().get(0)));
     }
 
     public void run ()

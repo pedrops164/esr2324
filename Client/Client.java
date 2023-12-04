@@ -1,19 +1,13 @@
 package Client;
 
-import Common.NeighbourReader;
 import Common.Node;
-import Common.NormalFloodWorker;
 import Common.Path;
 import Common.PathNode;
 import Common.StreamRequest;
 import Common.TCPConnection;
 import Common.TCPConnection.Packet;
 import Common.LogEntry;
-import Common.UDPDatagram;
-import Common.VideoMetadata;
 import Common.Util;
-
-import Overlay_Node.ONode;
 
 import java.io.*;
 import java.net.*;
@@ -166,11 +160,11 @@ public class Client extends Node {
 
     public void flood()
     {
-        Path path = new Path(new PathNode(this.id, Util.PORT, this.ip));
+        Path path = new Path(new PathNode(this.id, Util.PORT, this.ips.get(0)));
         byte[] serializedPath = path.serialize();
         for (String neighbour : this.neighbours.values())
         {
-            if (neighbour.equals(this.ip))
+            if (this.ips.contains(neighbour))
                 continue;
             try
             {
@@ -190,7 +184,11 @@ public class Client extends Node {
 
     public void run() throws InterruptedException, NoPathsAvailableException
     {
+        this.log(new LogEntry("Sending neighbour request to Bootstrapper"));
         boolean successfull = this.messageBootstrapper();
+
+        if (!successfull)
+            return;
 
         // inicializar a receção por TCP
         Thread tcp = new Thread(new ClientHandlerTCP(this));
