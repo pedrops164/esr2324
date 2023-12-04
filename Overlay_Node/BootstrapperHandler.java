@@ -99,43 +99,88 @@ public class BootstrapperHandler {
         return true;
     }
 
+    private boolean compareNeighbourMaps(Map<Integer,String> m1, Map<Integer,String> m2)
+    {
+        if (m1.size() != m2.size())
+            return false;
+        
+        for (Map.Entry<Integer, String> entry : m1.entrySet())
+            if (!m2.containsKey(entry.getKey()) || !m2.get(entry.getKey()).equals(entry.getValue()))
+                return false;
+
+        return true;
+    }
+
     /**
      * Parse the config file and see what nodes changed
      * @return this list of node ids whose information changed
      */
     public List<Integer> parseChanges()
     {
-        int oldRPID = this.RPID;
-        List<String> oldRPIPs = this.RPIPs;
-        Map<String, Integer> oldipToId = this.ipToId; // Maps node ip to node id
-        Map<Integer, List<String>> oldidToIps = this.idToIps;
-        Map<Integer, Map<Integer, String>> oldidToNeighbours = this.idToNeighbours; // Maps node id to neighbours' ids
-
-        this.ipToId = new HashMap<>();
-        this.idToNeighbours = new HashMap<>();
-        this.idToIps = new HashMap<>();
-
-        this.loadConfig();
-
-        List<Integer> changedNodes = new ArrayList<>();
-
-        if (oldRPID != this.RPID || !compareIPLists(oldRPIPs, this.RPIPs))
+        this.lock.lock();
+        try
         {
-            changedNodes.addAll(this.connected);
+            while(!this.changed)
+                this.verifyChanges.await();
+
+            int oldRPID = this.RPID;
+            List<String> oldRPIPs = this.RPIPs;
+            Map<String, Integer> oldipToId = this.ipToId; // Maps node ip to node id
+            Map<Integer, List<String>> oldidToIps = this.idToIps;
+            Map<Integer, Map<Integer, String>> oldidToNeighbours = this.idToNeighbours; // Maps node id to neighbours' ids
+    
+            this.ipToId = new HashMap<>();
+            this.idToNeighbours = new HashMap<>();
+            this.idToIps = new HashMap<>();
+    
+            this.loadConfig();
+    
+            List<Integer> changedNodes = new ArrayList<>();
+    
+            if (oldRPID != this.RPID || !compareIPLists(oldRPIPs, this.RPIPs))
+            {
+                changedNodes.addAll(this.connected);
+                return changedNodes;
+            }
+            
+            for (Map.Entry<String,Integer> entry : oldipToId.entrySet())
+            {
+                String ip = entry.getKey();
+                int oldID = entry.getValue();
+                if (oldID != this.ipToId.get(ip))
+                {
+                    changedNodes.add(this.ipToId.get(ip));
+                }
+            }
+    
+            for (Map.Entry<Integer,List<String>> entry : oldidToIps.entrySet())
+            {
+                List<String> old = entry.getValue();
+                if (!compareIPLists(old, this.idToIps.get(entry.getKey())))
+                {
+                    changedNodes.add(entry.getKey());
+                }
+            }
+    
+            for (Map.Entry<Integer, Map<Integer, String>> entry : oldidToNeighbours.entrySet())
+            {
+                if (!compareNeighbourMaps(entry.getValue(), this.idToNeighbours.get(entry.getKey())))
+                    changedNodes.add(entry.getKey());
+            }
+
+            this.changes.signalAll();
+    
             return changedNodes;
         }
-        
-        for (Map.Entry<String,Integer> entry : oldipToId.entrySet())
+        catch(Exception e)
         {
-            String ip = entry.getKey();
-            int oldID = entry.getValue();
-            if (oldID != this.ipToId.get(ip))
-            {
-                changedNodes.add(this.ipToId.get(ip));
-            }
+            e.printStackTrace();
         }
-
-        return changedNodes;
+        finally
+        {
+            this.lock.unlock();
+        }
+        return new ArrayList<>();
     }
 
     public void setChanged(boolean status)
