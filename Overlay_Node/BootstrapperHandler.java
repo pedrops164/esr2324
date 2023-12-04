@@ -134,6 +134,8 @@ public class BootstrapperHandler {
                 changedNodes.add(this.ipToId.get(ip));
             }
         }
+
+        return changedNodes;
     }
 
     public void setChanged(boolean status)
