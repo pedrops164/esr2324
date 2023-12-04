@@ -16,7 +16,6 @@ import java.io.*;
  */
 
 public class UDPDatagram implements Comparable<UDPDatagram>, Serializable {
-
     //private static int header_size = 4; // Header size -> 4 integers
     // Header fields
     private int payloadType; // Type of the content being streamed
@@ -102,6 +101,14 @@ public class UDPDatagram implements Comparable<UDPDatagram>, Serializable {
 
     public String getStreamName() {
         return this.streamName;
+    }
+
+    public int getSequenceNumber(){
+        return this.sequenceNumber;
+    }
+
+    public int payloadType(){
+        return this.payloadType;
     }
 
     @Override

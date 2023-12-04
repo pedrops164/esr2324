@@ -3,7 +3,6 @@ package Overlay_Node;
 import java.util.*;
 import java.net.*;
 import Common.*;
-import Common.TCPConnection.Packet;
 
 public class ONodeHandlerUDP implements Runnable {
     private DatagramSocket ds;
@@ -54,7 +53,7 @@ public class ONodeHandlerUDP implements Runnable {
                             DatagramPacket toSend = new DatagramPacket(receivedBytes, receivedBytes.length, 
                                 InetAddress.getByName(neighbourIp), Util.PORT);
                             this.ds.send(toSend);
-                            //this.oNode.log(new LogEntry("Sent UDP packet"));
+                            this.oNode.log(new LogEntry("Sent UDP packet"));
                         }
                     }
                 } catch (java.io.StreamCorruptedException e) {

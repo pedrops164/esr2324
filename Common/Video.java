@@ -7,10 +7,10 @@ public class Video{
     private FileInputStream fis;
     private int currentFrame;
 
-    public Video(String name){
+    public Video(String videoPath){
         try{
-            this.videoName = name;
-            this.fis = new FileInputStream(name);
+            this.videoName = videoPath.substring(videoPath.lastIndexOf("/") + 1);
+            this.fis = new FileInputStream(videoPath);
             this.currentFrame = -1;
         }catch(Exception e){
             e.printStackTrace();
@@ -46,5 +46,9 @@ public class Video{
 
     public int getFrameNumber() {
         return this.currentFrame;
+    }
+
+    public String getVideoName(){
+        return this.videoName;
     }
 }
