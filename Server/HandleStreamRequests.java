@@ -6,6 +6,7 @@ import Common.UDPDatagram;
 import Common.TCPConnection;
 import Common.TCPConnection.Packet;
 import Common.Video;
+import Common.VideoMjpeg;
 import Common.Util;
 
 import java.net.*;
@@ -39,10 +40,6 @@ class HandleStreamRequests implements Runnable{
 
         String streamName = sr.getStreamName();
 
-        // get video attributes....
-        int videoLength = 100; // number of frames
-        int frame_period = 25; // time between frames in ms.
-        int video_extension = 26; //26 is Mjpeg type
 
         //VideoMetadata vmd = new VideoMetadata(frame_period, streamName);
         // Convert VideoMetadata to bytes (serialize) and send the packet to RP (type 6 represents video metadata)
@@ -53,7 +50,12 @@ class HandleStreamRequests implements Runnable{
         try {
             //this.server.log(new LogEntry("Sent VideoMetadata packet to RP"));
             this.server.log(new LogEntry("Streaming '" + streamName + "' through UDP!"));
-            Video video = new Video(this.server.getStreamsDir() + streamName);
+            VideoMjpeg video = new VideoMjpeg(this.server.getStreamsDir() + streamName);
+            
+            // get video attributes....
+            int frame_period = video.getFramePeriod(); // time between frames in ms.
+            int video_extension = 26; //26 is Mjpeg type
+
             byte[] videoBuffer = null;
             while ((videoBuffer = video.getNextVideoFrame()) != null) {
                 // Get the next frame of the video

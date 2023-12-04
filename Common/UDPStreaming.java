@@ -24,7 +24,7 @@ public class UDPStreaming {
             this.s = s;
             this.destIP = InetAddress.getByName(dest);
             this.port = port;
-            this.video = new Video(videoName);
+            this.video = new VideoMjpeg(videoName);
             this.videoType = videoType;
             this.frame_nb = frame_nb;
             this.buffer = new byte[15000];
