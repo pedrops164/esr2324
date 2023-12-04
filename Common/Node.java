@@ -1,6 +1,7 @@
 package Common;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -116,12 +117,18 @@ public abstract class Node {
                     File dir = new File("./logs/");
                     if (!dir.exists())
                     dir.mkdirs();
+                    boolean created = false;
                     if (log.createNewFile())
-                    this.logger.log(new LogEntry("Log File created"));
+                        created = true;    
+                    new FileWriter(log, false).close();
+
+                    if (created)
+                        this.logger.log(new LogEntry("Log File created"));
                     else
-                    this.logger.log(new LogEntry("Couldn't create Log File"));
+                        this.logger.log(new LogEntry("Couldn't create Log File"));
                 }
-                
+                else
+                    new FileWriter(log, false).close();
             } 
             catch (Exception e) 
             {
@@ -137,12 +144,18 @@ public abstract class Node {
             File log = new File(this.logFile);
             if (!log.exists())
             {
+                boolean created = false;
                 if (log.createNewFile())
+                    created = true;    
+                new FileWriter(log, false).close();
+
+                if (created)
                     this.logger.log(new LogEntry("Log File created"));
                 else
                     this.logger.log(new LogEntry("Couldn't create Log File"));
             }
-
+            else
+                new FileWriter(log, false).close();
         } 
         catch (Exception e) 
         {
