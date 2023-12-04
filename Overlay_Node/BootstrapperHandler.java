@@ -13,12 +13,14 @@ public class BootstrapperHandler {
     private int RPID;
     private List<String> RPIPs;
     private Map<String, Integer> ipToId; // Maps node ip to node id
+    private Map<Integer, List<String>> idToIps;
     private Map<Integer, Map<Integer, String>> idToNeighbours; // Maps node id to neighbours' ids
 
     public BootstrapperHandler(String confingFile) {
         this.configFile = confingFile;
         this.ipToId = new HashMap<>();
         this.idToNeighbours = new HashMap<>();
+        this.idToIps = new HashMap<>();
         loadConfig();
     }
 
@@ -57,11 +59,13 @@ public class BootstrapperHandler {
     {
         int id = nodeObject.getInt("id");
         this.idToNeighbours.put(id, new HashMap<>());
+        this.idToIps.put(id, new ArrayList<>());
 
         for (Object o : nodeObject.getJSONArray("ips"))
         {
             String ip = (String)o;
             this.ipToId.put(ip, id);
+            this.idToIps.get(id).add(ip);
         }
 
         for (Object neighbour : nodeObject.getJSONArray("neighbours"))
@@ -89,6 +93,11 @@ public class BootstrapperHandler {
     public List<String> getRPIPs()
     {
         return this.RPIPs.stream().collect(Collectors.toList());
+    }
+
+    public List<String> getIPsfromID(int id)
+    {
+        return this.idToIps.get(id).stream().collect(Collectors.toList());
     }
 
     public Map<Integer,String> getNeighboursFromID(int id)

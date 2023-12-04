@@ -1,17 +1,13 @@
 package Overlay_Node;
 
-import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 
 import Common.LogEntry;
 import Common.TCPConnection;
 import Common.TCPConnection.Packet;
-import Common.Utility;
+import Common.Util;
 
 public class BootsrapperWorker implements Runnable {
 
@@ -38,15 +34,19 @@ public class BootsrapperWorker implements Runnable {
             return;  //TODO acabar isto
         }
 
+        List<String> fromIPs = this.bootstrapperHandler.getIPsfromID(fromID);
+
         List<String> RPIPs = this.bootstrapperHandler.getRPIPs();
 
         Map<Integer,String> neighbours = this.bootstrapperHandler.getNeighboursFromID(fromID);
 
-        byte[]  serFromID = Utility.serializeInt(fromID),
-                serRPIDs = Utility.serializeObject(RPIPs),
-                serNeighbours = Utility.serializeObject(neighbours);
+        byte[]  serFromID = Util.serializeInt(fromID),
+                serFromIPs = Util.serializeObject(fromIPs),
+                serRPIDs = Util.serializeObject(RPIPs),
+                serNeighbours = Util.serializeObject(neighbours);
 
         this.connection.send(8, serFromID);
+        this.connection.send(8, serFromIPs);
         this.connection.send(8, serRPIDs);
         this.connection.send(8, serNeighbours);
 

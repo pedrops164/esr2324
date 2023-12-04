@@ -5,7 +5,6 @@ import java.net.*;
 import Common.*;
 import Common.TCPConnection.Packet;
 
-import Overlay_Node.ONode;
 
 public class ClientHandlerUDP implements Runnable {
     private DatagramSocket ds;
@@ -35,7 +34,7 @@ public class ClientHandlerUDP implements Runnable {
             // Create the packet which will receive the data
             DatagramPacket receivedPacket = new DatagramPacket(receiveData, receiveData.length);
 
-            this.client.log(new LogEntry("Listening on UDP:" + this.client.getIp() + ":" + Util.PORT));
+            this.client.log(new LogEntry("Listening on UDP:" + this.client.getIps().get(0) + ":" + Util.PORT));
 
             while(true) {
                 try {

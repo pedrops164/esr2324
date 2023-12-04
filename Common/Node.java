@@ -13,7 +13,7 @@ import Common.TCPConnection.Packet;
 
 public abstract class Node {
     protected int id;
-    protected String ip;
+    protected List<String> ips;
     protected List<String> RPIPs;
     protected String bootstrapperIP;
     protected String logFile;
@@ -28,7 +28,7 @@ public abstract class Node {
         this.bootstrapperIP = bootstrapperIP;
         this.neighbours = new HashMap<>();
         this.RPIPs = null;
-        this.ip = null;
+        this.ips = new ArrayList<>();
     }
 
     public Node(int id, String logFile, boolean debugMode, String bootstrapperIP)
@@ -40,7 +40,7 @@ public abstract class Node {
         this.bootstrapperIP = bootstrapperIP;
         this.neighbours = new HashMap<>();
         this.RPIPs = null;
-        this.ip = null; 
+        this.ips = new ArrayList<>();
     }
 
     public int getId() {
@@ -57,12 +57,12 @@ public abstract class Node {
         }
     }
 
-    public String getIp() {
-        return ip;
+    public List<String> getIps() {
+        return ips;
     }
     
-    public void setIp(String ip) {
-        this.ip = ip;
+    public void setIp(List<String> ips) {
+        this.ips = ips;
     }
 
     public String getBootstrapperIP() {
@@ -163,15 +163,19 @@ public abstract class Node {
                 tcpConnection.send(4, "getNeighbours".getBytes());
     
                 Packet  pID = tcpConnection.receive(),
+                        pIPs = tcpConnection.receive(),
                         pRPIPs = tcpConnection.receive(),
                         pNeighbours = tcpConnection.receive();
                 
-                this.id = Utility.deserializeInt(pID.data);
+                this.setId(Util.deserializeInt(pID.data));
+
+                List<?> auxIps = (List<?>)Util.deserializeObject(pIPs.data);
+                this.setIp(auxIps.stream().map(s->(String)s).toList());
                 
-                List<?> aux = (List<?>)Utility.deserializeObject(pRPIPs.data);
+                List<?> aux = (List<?>)Util.deserializeObject(pRPIPs.data);
                 this.RPIPs = aux.stream().map(s -> (String)s).toList();
     
-                Map<?,?> auxMap = (Map<?,?>)Utility.deserializeObject(pNeighbours.data);
+                Map<?,?> auxMap = (Map<?,?>)Util.deserializeObject(pNeighbours.data);
                 for (Map.Entry<?,?> entry : auxMap.entrySet())
                 {
                     this.neighbours.put((Integer)entry.getKey(), (String)entry.getValue());
