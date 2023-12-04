@@ -4,6 +4,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -115,13 +116,17 @@ public class BootstrapperHandler {
      * Parse the config file and see what nodes changed
      * @return this list of node ids whose information changed
      */
-    public List<Integer> parseChanges()
+    public List<Integer> parseChanges(long waitTime)
     {
         this.lock.lock();
         try
-        {
-            while(!this.changed)
-                this.verifyChanges.await();
+        { 
+            boolean timePassed;
+            do
+            {
+                timePassed = this.verifyChanges.await(waitTime, TimeUnit.MILLISECONDS);
+            }
+            while(!this.changed && !timePassed); 
 
             int oldRPID = this.RPID;
             List<String> oldRPIPs = this.RPIPs;

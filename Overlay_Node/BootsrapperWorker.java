@@ -30,8 +30,17 @@ public class BootsrapperWorker implements Runnable {
         int fromID = this.bootstrapperHandler.getIdFromIP(fromIp);
         if (fromID == -1)
         {
-            this.node.log(new LogEntry("Couldn't find Node with ip " + fromIp + " on config file.."));
-            return;  //TODO acabar isto
+            this.node.log(new LogEntry("Couldn't find Node with ip " + fromIp + " on config file.. Checking changes."));
+            this.bootstrapperHandler.setChanged(true);
+            this.bootstrapperHandler.verifyChanged();
+
+            fromID = this.bootstrapperHandler.getIdFromIP(fromIp);
+            if (fromID == -1)
+            {
+                this.node.log(new LogEntry("Node with ip " + fromIp + " is not on the overlay network..."));
+                this.connection.stopConnection();
+                return;
+            }
         }
 
         List<String> fromIPs = this.bootstrapperHandler.getIPsfromID(fromID);

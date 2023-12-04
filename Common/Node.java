@@ -80,9 +80,9 @@ public abstract class Node {
         this.neighbours = neighbours;
     }
 
-    public void log(LogEntry entry) {
+    public void log(LogEntry logEntry) {
         try {
-            this.logger.log(entry);
+            this.logger.log(logEntry);
         } catch (Exception e) {
             e.printStackTrace();
         }
