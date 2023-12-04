@@ -8,6 +8,7 @@ import javax.swing.Timer;
 
 import Common.UDPDatagram;
 import Common.LogEntry;
+import Common.VideoMjpeg;
 
 class ClientVideoPlayer {
     private JFrame jframe;
@@ -109,10 +110,11 @@ class ClientVideoPlayer {
             try {
                 try {
                     UDPDatagram nextFrame = frameQueue.getNextFrame();
-                    byte[] payload = nextFrame.getPayload();
-                    int payload_length = payload.length;
-                    //get an Image object from the payload bitstream
-                    Image image = toolkit.createImage(payload, 0, payload_length);
+                    //byte[] payload = nextFrame.getPayload();
+                    //int payload_length = payload.length;
+                    ////get an Image object from the payload bitstream
+                    //Image image = toolkit.createImage(payload, 0, payload_length);
+                    Image image = VideoMjpeg.decode(nextFrame);
                     //display the image as an ImageIcon object
                     //client.log(new LogEntry("Updating Frame!"));
                     icon = new ImageIcon(image);
