@@ -31,9 +31,9 @@ class HandleStreamRequests implements Runnable{
             serverConnection.send(2, data); // Send the video stream request to the Server
 
             // Receive VideoMetadata through TCP and send to client
-            Packet metadataPacket = serverConnection.receive();
-            this.neighbourConnection.send(metadataPacket);
-            this.rp.log(new LogEntry("Received and sent VideoMetadata packet"));
+            //Packet metadataPacket = serverConnection.receive();
+            //this.neighbourConnection.send(metadataPacket);
+            //this.rp.log(new LogEntry("Received and sent VideoMetadata packet"));
 
             // Receive end of stream notification
             Packet p = serverConnection.receive();

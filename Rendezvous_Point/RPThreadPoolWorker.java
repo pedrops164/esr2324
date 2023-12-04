@@ -33,15 +33,13 @@ public class RPThreadPoolWorker implements Runnable{
             List<DatagramPacket> packets = this.datagramPacketQueue.popPackets();
             //this.rp.log(new LogEntry("Thread pool worker " + this.workerID + " is handling an UDP packet."));
             
-            try
+            for (DatagramPacket packet : packets)
             {
-                for (DatagramPacket packet : packets)
-                {
-                    // get the bytes from the UDP packet, and convert them into UDPDatagram
-                    byte[] receivedBytes = packet.getData();
+                // get the bytes from the UDP packet, and convert them into UDPDatagram
+                byte[] receivedBytes = packet.getData();
+                try {
                     // build the UDPDatagram from the received bytes (deserialize the bytes)
                     UDPDatagram receivedPacket = UDPDatagram.deserialize(receivedBytes);
-                    
                     if (rp.isStreaming(receivedPacket.getStreamName())) {
                         List<String> neighbourIps = this.rp.getNeighbourIpsStream(receivedPacket.getStreamName());
                         for (String neighbourIp: neighbourIps) {
@@ -53,12 +51,12 @@ public class RPThreadPoolWorker implements Runnable{
                             Thread.sleep(25);
                         }
                     }
-                    
+                } catch (java.io.IOException e) {
+                    this.rp.log(new LogEntry("Packet lost"));
+                } catch(Exception e) {
+                    this.rp.log(new LogEntry("Exception occurred: " + e.getMessage()));
+                    //e.printStackTrace();
                 }
-            }
-            catch(Exception e)
-            {
-                e.printStackTrace();
             }
         }
     }

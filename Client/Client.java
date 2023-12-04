@@ -143,13 +143,13 @@ public class Client extends Node {
             neighbourConnection.send(2, srBytes); // Send the request to the next node in the path
 
             // Receive VideoMetadata through TCP and send to client
-            Packet metadataPacket = neighbourConnection.receive();
-            this.logger.log(new LogEntry("Received Video Metadata!"));
-            byte[] metadata = metadataPacket.data;
-            VideoMetadata vmd = VideoMetadata.deserialize(metadata);
+            //Packet metadataPacket = neighbourConnection.receive();
+            //this.logger.log(new LogEntry("Received Video Metadata!"));
+            //byte[] metadata = metadataPacket.data;
+            //VideoMetadata vmd = VideoMetadata.deserialize(metadata);
             
             // Set the frame period of the Video Player respective to the stream of this metadata
-            this.cvm.updateVideoInfo(vmd);
+            //this.cvm.updateVideoInfo(vmd);
 
             // Receive end of stream packet
             Packet endOfStreamPacket = neighbourConnection.receive();

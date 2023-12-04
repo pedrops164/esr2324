@@ -18,22 +18,24 @@ import java.io.*;
 
 public class UDPDatagram implements Comparable<UDPDatagram>, Serializable {
 
-    private static int header_size = 3; // Header size -> 3 integers
+    //private static int header_size = 4; // Header size -> 4 integers
     // Header fields
     private int payloadType; // Type of the content being streamed
     private int sequenceNumber; // Number of the present frame being streamed
     private int timeStamp; // Corresponding timestamp of the video being played (in ms)
+    private int framePeriod; // inverse of fps - represents the time between frames being displayed on the client screen
     private String streamName;
     
     // Content of the stream
     private byte[] payload;
     private int payload_size;
 
-    public UDPDatagram(int pt, int sn, int ts, byte[] payload, int payload_size, String streamName){
+    public UDPDatagram(int pt, int sn, int ts, byte[] payload, int payload_size, int framePeriod, String streamName){
         this.payloadType = pt;
         this.sequenceNumber = sn;
         this.timeStamp = ts;
         this.streamName = streamName;
+        this.framePeriod = framePeriod;
         this.payload = new byte[payload_size];
 
         // Initialize payload array
@@ -42,38 +44,6 @@ public class UDPDatagram implements Comparable<UDPDatagram>, Serializable {
         }
         this.payload_size = payload_size;
     } 
-
-    public UDPDatagram(byte[] data, int packet_size){
-        if(packet_size > header_size){
-            // First we have 3 integers of header   
-            this.payloadType = data[0];
-            this.sequenceNumber = data[1];
-            this.timeStamp = data[2];
-
-            // Then we have the payload
-            this.payload = new byte[packet_size - header_size];
-            for(int i=header_size; i<packet_size; i++){
-                this.payload[i- header_size] = data[i];
-            }
-            this.payload_size = packet_size - header_size;
-        }else{
-            System.out.println("Invalid UDP Datagram!");
-        }
-    }
-
-    public int datagramSize(){
-        return(header_size + this.payload_size);
-    }
-
-    public void getDatagram(byte[] data){
-        data[0] = (byte) this.payloadType;
-        data[1] = (byte) this.sequenceNumber;
-        data[2] = (byte) this.timeStamp;
-        
-        for(int i=0; i<this.payload_size; i++){
-            data[i+3] = this.payload[i];
-        }
-    }
 
     public byte[] getPayload() {
         byte[] ret = new byte[this.payload_size];
@@ -85,17 +55,6 @@ public class UDPDatagram implements Comparable<UDPDatagram>, Serializable {
 
     public int getPayloadLength() {
         return this.payload_size;
-    }
-
-    public void printDatagramHeader(){
-        HashMap<Integer, String> types = new HashMap<>();
-        types.put(0, "Mjepg");
-        types.put(1, "MP4");
-        types.put(2, "Mov");
-
-        System.out.println("Payload Type: " + types.get(this.payloadType));
-        System.out.println("Frame Number: " + this.sequenceNumber);
-        System.out.println("Time Stamp: " + this.timeStamp);
     }
 
     public byte[] serialize() {
@@ -113,14 +72,21 @@ public class UDPDatagram implements Comparable<UDPDatagram>, Serializable {
         return null;
     }
 
-    public static UDPDatagram deserialize(byte[] receivedBytes) {
+    public static UDPDatagram deserialize(byte[] receivedBytes) throws IOException {
         try{
             ByteArrayInputStream bais = new ByteArrayInputStream(receivedBytes);
             ObjectInput in = new ObjectInputStream(bais);
 
             UDPDatagram ret = (UDPDatagram) in.readObject();
+            
+            bais.close();
+            in.close();
+            
             return ret;
-        }catch (Exception e){
+
+        } catch (StreamCorruptedException e){
+            throw e;
+        } catch (Exception e){
             e.printStackTrace();
         }
 
@@ -129,6 +95,10 @@ public class UDPDatagram implements Comparable<UDPDatagram>, Serializable {
 
     public int getTimeStamp() {
         return this.timeStamp;
+    }
+    
+    public int getFramePeriod() {
+        return this.framePeriod;
     }
 
     public String getStreamName() {

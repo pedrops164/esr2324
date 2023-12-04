@@ -58,10 +58,22 @@ public class ClientVideoManager {
      */
     public synchronized void addFrame(UDPDatagram udpDatagram) {
         String streamName = udpDatagram.getStreamName();
+        int framePeriod = udpDatagram.getFramePeriod();
+        ClientVideoPlayer cvp = null;
         if (!videoPlayers.containsKey(streamName)) {
-            createVideoPlayer(streamName);
+
+            cvp = createVideoPlayer(streamName);
+
+
+            cvp.setVideoPeriod(framePeriod);
+
+
+            cvp.setStreamName(streamName);
+            
+        } else {
+            cvp = videoPlayers.get(streamName);
         }
-        ClientVideoPlayer cvp = videoPlayers.get(streamName);
+
         cvp.addFrame(udpDatagram);
     }
 
@@ -80,9 +92,11 @@ public class ClientVideoManager {
         cvp.setStreamName(streamName);
     }
 
-    public void createVideoPlayer(String streamName) {
+    public ClientVideoPlayer createVideoPlayer(String streamName) {
         // Creates a new video player
-        videoPlayers.put(streamName, new ClientVideoPlayer(client, this));
+        ClientVideoPlayer cvp = new ClientVideoPlayer(client, this);
+        videoPlayers.put(streamName, cvp);
+        return cvp;
     }
 
     /*

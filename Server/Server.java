@@ -188,14 +188,14 @@ class ServerWorker1 implements Runnable{
         int frame_period = 75; // time between frames in ms.
         int video_extension = 26; //26 is Mjpeg type
 
-        VideoMetadata vmd = new VideoMetadata(frame_period, videoName);
+        //VideoMetadata vmd = new VideoMetadata(frame_period, videoName);
         // Convert VideoMetadata to bytes (serialize) and send the packet to RP (type 6 represents video metadata)
-        Packet packetMetadata = new Packet(6, vmd.serialize());
-        this.connection.send(packetMetadata);
+        //Packet packetMetadata = new Packet(6, vmd.serialize());
+        //this.connection.send(packetMetadata);
 
         // Start the UDP video streaming. (Send directly to the RP)
         try {
-            this.s.log(new LogEntry("Sent VideoMetadata packet to RP"));
+            //this.s.log(new LogEntry("Sent VideoMetadata packet to RP"));
             this.s.log(new LogEntry("Streaming '" + videoName + "' through UDP!"));
             Video video = new Video(this.s.getStreamsDir() + videoName);
             byte[] videoBuffer = null;
@@ -205,7 +205,7 @@ class ServerWorker1 implements Runnable{
                 int frameNumber = video.getFrameNumber();
                 //Builds a UDPDatagram object containing the frame
 	            UDPDatagram udpDatagram = new UDPDatagram(video_extension, frameNumber, frameNumber*frame_period,
-                 videoBuffer, videoBuffer.length, videoName);
+                 videoBuffer, videoBuffer.length, frame_period, videoName);
                 
                 // get the bytes of the UDPDatagram
                 byte[] packetBytes = udpDatagram.serialize();
@@ -214,8 +214,8 @@ class ServerWorker1 implements Runnable{
 	            DatagramPacket senddp = new DatagramPacket(packetBytes, packetBytes.length, InetAddress.getByName(this.RPIP), RP.RP_PORT);
 	            this.ds.send(senddp);
 
-                // Wait for 25 milliseconds before sending the next packet
-                Thread.sleep(25);
+                // Wait for 'frame_period' milliseconds before sending the next packet
+                Thread.sleep(frame_period);
             }
             this.s.log(new LogEntry("Sent " + video.getFrameNumber() + " frames!"));
             // notify the RP that the stream has ended
