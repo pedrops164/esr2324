@@ -1,12 +1,9 @@
 package Client;
 
-import Client.Client;
-import Client.ClientVideoPlayer;
 import Client.ClientVideoManager;
 
 import Common.UDPDatagram;
 import Common.VideoMetadata;
-import Common.LogEntry;
 
 import java.util.HashMap;
 import java.util.Map;
