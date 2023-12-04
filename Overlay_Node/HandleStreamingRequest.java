@@ -7,6 +7,7 @@ import Common.TCPConnection.Packet;
 import Common.PathNode;
 import Common.StreamRequest;
 import Common.VideoMetadata;
+import Common.Util;
 
 import java.net.*;
 import java.util.*;
@@ -42,7 +43,7 @@ class HandleStreamingRequest implements Runnable{
             try{
                 this.oNode.log(new LogEntry("Resending the streaming request along the path!"));
                 PathNode nextNode = this.sr.getPath().getNext(this.oNode.getId());
-                Socket s = new Socket(nextNode.getNodeIPAddress().toString(), ONode.ONODE_PORT);
+                Socket s = new Socket(nextNode.getNodeIPAddress().toString(), Util.PORT);
                 TCPConnection nextC = new TCPConnection(s);
                 byte[] srBytes = sr.serialize();
                 nextC.send(2, srBytes); // Send the request to the next node in the path

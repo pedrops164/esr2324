@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.Map.Entry;
 import Common.TCPConnection.Packet;
+import Common.Util;
 
 public class NormalFloodWorker implements Runnable 
 {
@@ -14,7 +15,7 @@ public class NormalFloodWorker implements Runnable
     {
         this.node = node;
         this.path = Path.deserialize(p.data);
-        this.path.addNode(new PathNode(this.node.getId(), 333, node.getIp()));
+        this.path.addNode(new PathNode(this.node.getId(), Util.PORT, node.getIp()));
     }
 
     public void run ()
@@ -27,12 +28,12 @@ public class NormalFloodWorker implements Runnable
 
             try
             {
-                Socket s = new Socket(neighbour.getValue(), 333);
+                Socket s = new Socket(neighbour.getValue(), Util.PORT);
                 TCPConnection c = new TCPConnection(s);
                 Packet p = new Packet(5, serializedPath);
                 c.send(p);
                 c.stopConnection();
-                this.node.log(new LogEntry("Sent flood message to " + neighbour + ":" + 333));
+                this.node.log(new LogEntry("Sent flood message to " + neighbour + ":" + Util.PORT));
             }
             catch (Exception eFromSocket)
             {

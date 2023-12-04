@@ -11,6 +11,7 @@ import Common.Path;
 import Common.PathNode;
 import Common.TCPConnection;
 import Common.TCPConnection.Packet;
+import Common.Util;
 
 class ClientPathManager implements Runnable {
     private Client client;
@@ -43,7 +44,7 @@ class ClientPathManager implements Runnable {
             try 
             {
                 // falar com o nó
-                Socket s = new Socket(neighbour, 333);
+                Socket s = new Socket(neighbour, Util.PORT);
                 TCPConnection c = new TCPConnection(s);
                 Packet packet = new Packet(7, serializedPath);
                 c.send(packet);

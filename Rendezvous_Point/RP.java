@@ -5,14 +5,13 @@ import Common.NeighbourReader;
 import Common.Node;
 import Common.Path;
 import Common.ServerStreams;
+import Common.Util;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 public class RP extends Node{
-    public static int RP_PORT = 333;
-    
     private Map<String, List<Integer>> streamServers; // stream name to list of available servers
     private Map<Integer, String> servers; // serverID to serverIP
     private List<ServerRanking> rankedServers; // Organized list with the ranking from the best to the worst server 

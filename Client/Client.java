@@ -11,6 +11,7 @@ import Common.TCPConnection.Packet;
 import Common.LogEntry;
 import Common.UDPDatagram;
 import Common.VideoMetadata;
+import Common.Util;
 
 import Overlay_Node.ONode;
 
@@ -40,7 +41,7 @@ public class Client extends Node {
     public void getAvailableStreams(){
         try{
             // Send the request
-            Socket s = new Socket(this.RPIP, 333);
+            Socket s = new Socket(this.RPIP, Util.PORT);
             TCPConnection c = new TCPConnection(s);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             DataOutputStream out = new DataOutputStream(baos);
@@ -137,7 +138,7 @@ public class Client extends Node {
 
             // Send the request through TCP to the next node in the path
             PathNode nextNode = path.getNext(this.id);
-            Socket s = new Socket(nextNode.getNodeIPAddress().toString(), ONode.ONODE_PORT);
+            Socket s = new Socket(nextNode.getNodeIPAddress().toString(), Util.PORT);
             TCPConnection neighbourConnection = new TCPConnection(s);
             byte[] srBytes = sr.serialize();
             neighbourConnection.send(2, srBytes); // Send the request to the next node in the path
@@ -168,7 +169,7 @@ public class Client extends Node {
 
     public void flood()
     {
-        Path path = new Path(new PathNode(this.id, 333, this.ip));
+        Path path = new Path(new PathNode(this.id, Util.PORT, this.ip));
         byte[] serializedPath = path.serialize();
         for (String neighbour : this.neighbours.values())
         {
@@ -176,12 +177,12 @@ public class Client extends Node {
                 continue;
             try
             {
-                Socket s = new Socket(neighbour, 333);
+                Socket s = new Socket(neighbour, Util.PORT);
                 TCPConnection c = new TCPConnection(s);
                 Packet p = new Packet(5, serializedPath);
                 c.send(p);
                 c.stopConnection();
-                this.logger.log(new LogEntry("Sent flood message to " + neighbour + ":" + 333));
+                this.logger.log(new LogEntry("Sent flood message to " + neighbour + ":" + Util.PORT));
             }
             catch (Exception eFromSocket)
             {

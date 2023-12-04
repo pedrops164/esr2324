@@ -7,6 +7,7 @@ import Common.TCPConnection.Packet;
 import Common.StreamRequest;
 import Common.LogEntry;
 import Common.PathNode;
+import Common.Util;
 
 import java.net.*;
 
@@ -25,7 +26,7 @@ class HandleStreamRequests implements Runnable{
     public void requestStreamToServer(StreamRequest sr){
         try{
             String serverIP = this.rp.getServer(sr.getStreamName());
-            Socket s = new Socket(serverIP, Server.SERVER_PORT);
+            Socket s = new Socket(serverIP, Util.PORT);
             TCPConnection serverConnection = new TCPConnection(s);
             byte [] data = sr.serialize();
             serverConnection.send(2, data); // Send the video stream request to the Server

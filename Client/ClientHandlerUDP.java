@@ -17,7 +17,7 @@ public class ClientHandlerUDP implements Runnable {
         
         try {
             // open a socket for receiving UDP packets on the overlay node's port
-            this.ds = new DatagramSocket(ONode.ONODE_PORT);
+            this.ds = new DatagramSocket(Util.PORT);
     
         } catch (Exception e) {
             e.printStackTrace();    
@@ -35,7 +35,7 @@ public class ClientHandlerUDP implements Runnable {
             // Create the packet which will receive the data
             DatagramPacket receivedPacket = new DatagramPacket(receiveData, receiveData.length);
 
-            this.client.log(new LogEntry("Listening on UDP:" + this.client.getIp() + ":" + ONode.ONODE_PORT));
+            this.client.log(new LogEntry("Listening on UDP:" + this.client.getIp() + ":" + Util.PORT));
 
             while(true) {
                 try {

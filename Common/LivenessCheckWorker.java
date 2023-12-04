@@ -38,7 +38,7 @@ public class LivenessCheckWorker implements Runnable {
 
             try
             {
-                Socket socket = new Socket(nextNeighbourIP, 333);
+                Socket socket = new Socket(nextNeighbourIP, Util.PORT);
                 TCPConnection connection2 = new TCPConnection(socket);
                 connection2.send(7, serializedPath);
 

@@ -11,12 +11,12 @@ import Common.UDPDatagram;
 import Common.VideoMetadata;
 import Common.TCPConnection.Packet;
 import Common.NormalFloodWorker;
+import Common.Util;
 
 import java.net.*;
 import java.util.*;
 
 public class ONode extends Node {
-    public static int ONODE_PORT = 333;
     private Map<String, List<Integer>> streamNeighours;
 
     public ONode(int id, NeighbourReader nr, boolean debugMode)
@@ -104,7 +104,7 @@ class TCP_Worker implements Runnable
         
         try 
         {
-            this.ss = new ServerSocket(ONode.ONODE_PORT);
+            this.ss = new ServerSocket(Util.PORT);
         } 
         catch (Exception e) 
         {

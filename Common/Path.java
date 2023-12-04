@@ -15,6 +15,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutputStream;
 import java.io.ObjectOutput;
 
+import Common.Util;
+
 public class Path implements Serializable {
     private List<PathNode> nodeList;
     
@@ -162,19 +164,6 @@ public class Path implements Serializable {
 
         return null;
     }
-
-    // Main used to test serialize and deserialize
-    // public static void main(String[] args) {
-    //     Path p = new Path();
-    //     int[] arr = {192, 168, 56, 100};
-
-    //     for (int i=0 ; i<10 ; arr[3]++, i++)
-    //     {
-    //         p.addNode(new PathNode(i+1, 333, new IPAddress(arr).toString()));
-    //     }
-
-    //     System.out.println(deserialize(p.serialize()));
-    // }
 
     public int nextNode(int currentNodeId) {
         if (this.nodeList == null || this.nodeList.isEmpty()) {

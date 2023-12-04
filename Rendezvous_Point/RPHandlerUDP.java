@@ -4,6 +4,7 @@ import Common.LogEntry;
 
 import java.net.*;
 import java.util.*;
+import Common.Util;
 
 // Responsible to handle new video stream requests
 // RPWorker2
@@ -18,7 +19,7 @@ class RPHandlerUDP implements Runnable{
         this.rp = rp;
         try {
             // open a socket for receiving UDP packets on RP's port
-            this.ds = new DatagramSocket(RP.RP_PORT);
+            this.ds = new DatagramSocket(Util.PORT);
             this.ds.setSoTimeout(5000);
         } catch(Exception e){
             e.printStackTrace();
@@ -41,7 +42,7 @@ class RPHandlerUDP implements Runnable{
             // create the buffer to receive the packets
             byte[] receiveData = new byte[buffersize];
     
-            this.rp.log(new LogEntry("Listening on UDP in Port " + RP.RP_PORT));
+            this.rp.log(new LogEntry("Listening on UDP in Port " + Util.PORT));
             // Create the packet which will receive the data
             DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 

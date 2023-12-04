@@ -13,6 +13,7 @@ import Common.TCPConnection.Packet;
 import Rendezvous_Point.RP;
 import Common.Video;
 import Common.VideoMetadata;
+import Common.Util;
 
 import java.io.*;
 import java.net.*;
@@ -20,7 +21,6 @@ import java.util.*;
 
 public class Server extends Node {
     private ServerSocket ss;
-    public static int SERVER_PORT = 333;
     private List<String> streams;
     private String streamsDir;
 
@@ -34,7 +34,7 @@ public class Server extends Node {
         }
 
         try{
-            this.ss = new ServerSocket(SERVER_PORT);
+            this.ss = new ServerSocket(Util.PORT);
             this.logger.log(new LogEntry("Getting availabe Streams"));
         } catch(Exception e){
             e.printStackTrace();
@@ -58,7 +58,7 @@ public class Server extends Node {
             try{    
                 // Send request
                 ServerStreams sstreams = new ServerStreams(this.streams, this.id, this.ip);
-                Socket s = new Socket(this.RPIP, RP.RP_PORT);
+                Socket s = new Socket(this.RPIP, Util.PORT);
                 TCPConnection tcpConnection = new TCPConnection(s);
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 DataOutputStream out = new DataOutputStream(baos);
@@ -211,7 +211,7 @@ class ServerWorker1 implements Runnable{
                 byte[] packetBytes = udpDatagram.serialize();
 
 	            // Initialize the DatagramPacket and send it over the UDP socket 
-	            DatagramPacket senddp = new DatagramPacket(packetBytes, packetBytes.length, InetAddress.getByName(this.RPIP), RP.RP_PORT);
+	            DatagramPacket senddp = new DatagramPacket(packetBytes, packetBytes.length, InetAddress.getByName(this.RPIP), Util.PORT);
 	            this.ds.send(senddp);
 
                 // Wait for 'frame_period' milliseconds before sending the next packet

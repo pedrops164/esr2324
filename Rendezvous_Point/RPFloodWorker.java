@@ -7,6 +7,7 @@ import Common.Path;
 import Common.PathNode;
 import Common.TCPConnection;
 import Common.TCPConnection.Packet;
+import Common.Util;
 
 public class RPFloodWorker implements Runnable 
 {
@@ -21,7 +22,7 @@ public class RPFloodWorker implements Runnable
 
     public void run ()
     {
-        PathNode pathNode = new PathNode(this.rp.getId(), 333, rp.getIp());
+        PathNode pathNode = new PathNode(this.rp.getId(), Util.PORT, rp.getIp());
         if (!this.path.inPath(pathNode))
         {
             this.path.addNode(pathNode);
@@ -29,7 +30,7 @@ public class RPFloodWorker implements Runnable
             try {
                 PathNode client = path.getClient();
                 this.rp.addPathToClient(client.getNodeId(), this.path);
-                Socket s = new Socket(client.getNodeIPAddress().toString(), 333);
+                Socket s = new Socket(client.getNodeIPAddress().toString(), Util.PORT);
                 TCPConnection c = new TCPConnection(s);
                 c.send(new Packet(6, serializedPath));
                 this.rp.log(new LogEntry("Sent flood response to client: " + client.getNodeIPAddress().toString()));

@@ -2,6 +2,7 @@ package Rendezvous_Point;
 
 import Common.*;
 import Common.TCPConnection.Packet;
+import Common.Util;
 
 import java.net.*;
 
@@ -13,7 +14,7 @@ public class RPHandlerTCP implements Runnable {
         this.rp = rp;
 
         try{
-            this.ss = new ServerSocket(RP.RP_PORT); // socket that receives TCP packets
+            this.ss = new ServerSocket(Util.PORT); // socket that receives TCP packets
         }catch(Exception e){
             e.printStackTrace();
         }

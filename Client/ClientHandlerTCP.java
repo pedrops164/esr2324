@@ -4,6 +4,7 @@ import java.util.*;
 import java.net.*;
 import Common.*;
 import Common.TCPConnection.Packet;
+import Common.Util;
 
 public class ClientHandlerTCP implements Runnable {
     private ServerSocket ss;
@@ -15,7 +16,7 @@ public class ClientHandlerTCP implements Runnable {
         
         try 
         {
-            this.ss = new ServerSocket(333);
+            this.ss = new ServerSocket(Util.PORT);
         } 
         catch (Exception e) 
         {

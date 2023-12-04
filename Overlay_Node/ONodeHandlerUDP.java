@@ -15,7 +15,7 @@ class ONodeHandlerUDP implements Runnable {
         
         try {
             // open a socket for receiving UDP packets on the overlay node's port
-            this.ds = new DatagramSocket(ONode.ONODE_PORT);
+            this.ds = new DatagramSocket(Util.PORT);
     
         } catch (Exception e) {
             e.printStackTrace();    
@@ -33,7 +33,7 @@ class ONodeHandlerUDP implements Runnable {
             // Create the packet which will receive the data
             DatagramPacket receivedPacket = new DatagramPacket(receiveData, receiveData.length);
 
-            this.oNode.log(new LogEntry("Listening on UDP:" + this.oNode.getIp() + ":" + ONode.ONODE_PORT));
+            this.oNode.log(new LogEntry("Listening on UDP:" + this.oNode.getIp() + ":" + Util.PORT));
             while(true) {
                 try {
                     // Receive the packet
@@ -52,7 +52,7 @@ class ONodeHandlerUDP implements Runnable {
                         // For each neighbour send the UDPDatagram
                         for(String neighbourIp: neighbourIps){
                             DatagramPacket toSend = new DatagramPacket(receivedBytes, receivedBytes.length, 
-                                InetAddress.getByName(neighbourIp), ONode.ONODE_PORT);
+                                InetAddress.getByName(neighbourIp), Util.PORT);
                             this.ds.send(toSend);
                             //this.oNode.log(new LogEntry("Sent UDP packet"));
                         }

@@ -7,6 +7,7 @@ import java.util.List;
 
 import Common.LogEntry;
 import Common.UDPDatagram;
+import Common.Util;
 import Overlay_Node.ONode;
 
 public class RPThreadPoolWorker implements Runnable{
@@ -44,7 +45,7 @@ public class RPThreadPoolWorker implements Runnable{
                         List<String> neighbourIps = this.rp.getNeighbourIpsStream(receivedPacket.getStreamName());
                         for (String neighbourIp: neighbourIps) {
                             DatagramPacket toSend = new DatagramPacket(receivedBytes, receivedBytes.length, 
-                                            InetAddress.getByName(neighbourIp), ONode.ONODE_PORT);
+                                            InetAddress.getByName(neighbourIp), Util.PORT);
                             // Send the DatagramPacket through the UDP socket
                             this.datagramSocket.send(toSend);
                             //this.rp.log(new LogEntry("Thread pool worker " + this.workerID + " sent UDP packet to " + neighbourIp));
