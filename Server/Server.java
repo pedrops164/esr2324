@@ -2,17 +2,11 @@ package Server;
 
 import Common.LivenessCheckWorker;
 import Common.LogEntry;
-import Common.NeighbourReader;
 import Common.Node;
 import Common.NormalFloodWorker;
 import Common.ServerStreams;
-import Common.StreamRequest;
-import Common.UDPDatagram;
 import Common.TCPConnection;
 import Common.TCPConnection.Packet;
-import Rendezvous_Point.RP;
-import Common.Video;
-import Common.VideoMetadata;
 import Common.Util;
 import Common.NotificationEOS;
 
@@ -104,6 +98,12 @@ public class Server extends Node {
 
                 // Creates different types of workers based on the type of packet received
                 switch (p.type) {
+                    // A thread is created that listens to the ServerStreams requests from the RP
+                    case 1:
+                        this.logger.log(new LogEntry("Received ServerStream request from the RP!"));
+                        t = new Thread(new HandleServerStreams(this, tcpConnection));
+                        t.start();
+                        break;
                     case 2: // New video stream request
                         this.logger.log(new LogEntry("Received Video Stream Request from " + socket.getInetAddress().getHostAddress()));
                         t = new Thread(new HandleStreamRequests(tcpConnection, p, this.RPIPs.get(0), this));
@@ -142,6 +142,10 @@ public class Server extends Node {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public List<String> getStreams(){
+        return this.streams;
     }
 
     public void availableStreams(){

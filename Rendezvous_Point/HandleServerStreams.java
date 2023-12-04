@@ -28,8 +28,10 @@ class HandleServerStreams implements Runnable{
         ServerStreams sstreams = ServerStreams.deserialize(in);
         rp.addServerStreams(sstreams.getID(), sstreams.getIP(), sstreams.getStreams());
         LocalDateTime receivingTimeStamp = LocalDateTime.now();
+        
         // Rank server connection speed
         this.rp.rankServer(sstreams, receivingTimeStamp);
+        
         // End TCP connection
         this.connection.stopConnection();
     }    

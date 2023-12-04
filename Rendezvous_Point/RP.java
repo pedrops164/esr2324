@@ -1,11 +1,9 @@
 package Rendezvous_Point;
 
 import Common.LogEntry;
-import Common.NeighbourReader;
 import Common.Node;
 import Common.Path;
 import Common.ServerStreams;
-import Common.Util;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -38,10 +36,13 @@ public class RP extends Node{
             // Launch udp worker
             Thread udp = new Thread(new RPHandlerUDP(this));
             udp.start();
+            Thread serverTester = new Thread(new RPServerTester(this));
+            serverTester.start();
 
             // join threads
             tcp.join();
             udp.join();
+            serverTester.join();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -70,7 +71,6 @@ public class RP extends Node{
     }
 
     public synchronized void addServerStreams(int serverID, String serverIP, List<String> streams){
-
         this.logger.log(new LogEntry("Adding available streams from server " + serverIP));
 
         for (String stream : streams)
@@ -91,6 +91,8 @@ public class RP extends Node{
         int i = 0;
         boolean added = false;
 
+        // Remove possible copy of this server in the list
+        this.rankedServers.removeIf(server -> server.getServerID() == sstreams.getID());
         for(ServerRanking sr: this.rankedServers){
             if(latency < sr.getLatency()){
                 added = true;
@@ -100,8 +102,10 @@ public class RP extends Node{
         }
 
         if(added){
+            // Add to a specific index
             this.rankedServers.add(i, new ServerRanking(sstreams.getID(), latency));
         }else{
+            // Append to the list
             this.rankedServers.add(new ServerRanking(sstreams.getID(), latency));
         }
     }
@@ -131,6 +135,10 @@ public class RP extends Node{
 
     public boolean isStreaming(String streamName) {
         return this.streamNeighbours.containsKey(streamName);
+    }
+
+    public synchronized Map<Integer, String> getServers(){
+        return this.servers;
     }
 
     public static void main(String args[]){
