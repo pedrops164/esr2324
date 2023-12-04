@@ -5,6 +5,8 @@ import Common.StreamRequest;
 import Common.UDPStreaming;
 import Common.TCPConnection;
 import Common.TCPConnection.Packet;
+import Common.Video;
+import Common.VideoMjpeg;
 import Common.Util;
 
 import java.net.*;
@@ -43,12 +45,11 @@ class HandleStreamRequests implements Runnable{
         StreamRequest sr = StreamRequest.deserialize(data);
         String streamName = sr.getStreamName();
 
-        // get video attributes....
-        int videoLength = 100; // number of frames
-        int frame_period = 25; // time between frames in ms.
-        int video_extension = 26; //26 is Mjpeg type
+        String extension = getExtension(streamName);
+        System.out.println(extension);
+        UDPStreaming streaming = new UDPStreaming(this.ds, this.RPIP, Util.PORT, this.server.getStreamsDir() + streamName, extension, 0, 100);
+        int frame_period = streaming.getFramePeriod();
 
-        UDPStreaming streaming = new UDPStreaming(this.ds, this.RPIP, Util.PORT, this.server.getStreamsDir() + streamName, video_extension, frame_period, 0, videoLength);
         // Start the UDP video streaming. (Send directly to the RP)
         try {
             this.server.log(new LogEntry("Streaming '" + streamName + "' through UDP!"));

@@ -1,9 +1,7 @@
 package Client;
 
-import java.util.*;
 import java.net.*;
 import Common.*;
-import Common.TCPConnection.Packet;
 
 
 public class ClientHandlerUDP implements Runnable {
@@ -46,6 +44,7 @@ public class ClientHandlerUDP implements Runnable {
                     byte[] receivedBytes = receivedPacket.getData();
 
                     UDPDatagram udpDatagram = UDPDatagram.deserialize(receivedBytes);
+                    this.client.log(new LogEntry("Got an UDP packet!"));
                     this.client.cvm.addFrame(udpDatagram);
                 } catch (java.awt.HeadlessException e) {
                     this.client.log(new LogEntry("Must run 'export DISPLAY=:0.0' before running the client"));

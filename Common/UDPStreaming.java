@@ -15,21 +15,26 @@ public class UDPStreaming {
 
     private Video video;
     private int videoType;
-    public int frame_period; 
     private int frame_nb;
     private int videoLength;
     // private byte[] buffer;
 
     // Sending constructor
     public UDPStreaming(DatagramSocket s, String dest, int port, String videoPath, 
-                        int videoType, int frame_period, int frame_nb, int vl){
+                        String videoExtension, int frame_nb, int vl){
         try{
             this.s = s;
             this.destIP = InetAddress.getByName(dest);
             this.port = port;
-            this.video = new Video(videoPath);
-            this.videoType = videoType;
-            this.frame_period = frame_period;
+            if(videoExtension.equals("Mjpeg")){
+                this.videoType = 26;
+                this.video = new VideoMjpeg(videoPath);
+            }else if(videoExtension.equals("MP4")){
+                this.videoType = 26;
+                this.video = new VideoMP4(videoPath);
+            }else{
+                System.out.println("Extensão de vídeo inválida!");
+            }
             this.frame_nb = frame_nb;
             this.videoLength = vl;
         }catch(Exception e){
@@ -52,7 +57,7 @@ public class UDPStreaming {
             byte[] buffer = this.video.getNextVideoFrame();
 
             // Create UDPDatagram Object
-            UDPDatagram datagramObj = new UDPDatagram(this.videoType, this.frame_nb, this.frame_period * this.frame_nb, buffer, buffer.length, this.frame_period, this.video.getVideoName());
+            UDPDatagram datagramObj = new UDPDatagram(this.videoType, this.frame_nb, this.video.getFramePeriod() * this.frame_nb, buffer, buffer.length, this.video.getFramePeriod(), this.video.getVideoName());
             
             // Get bytes for the datagram
             byte[] bytes = datagramObj.serialize();
@@ -93,5 +98,9 @@ public class UDPStreaming {
 
     public int getFrameNumber(){
         return this.frame_nb;
+    }
+
+    public int getFramePeriod(){
+        return this.video.getFramePeriod();
     }
 }   
