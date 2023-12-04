@@ -124,7 +124,16 @@ public class BootstrapperHandler {
             changedNodes.addAll(this.connected);
             return changedNodes;
         }
-
+        
+        for (Map.Entry<String,Integer> entry : oldipToId.entrySet())
+        {
+            String ip = entry.getKey();
+            int oldID = entry.getValue();
+            if (oldID != this.ipToId.get(ip))
+            {
+                changedNodes.add(this.ipToId.get(ip));
+            }
+        }
     }
 
     public void setChanged(boolean status)
