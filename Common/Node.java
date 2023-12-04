@@ -22,8 +22,8 @@ public abstract class Node {
     public Node(int id, boolean debugMode, String bootstrapperIP)
     {
         this.id = id;
-        this.logger = new Logger(this.logFile, debugMode);
         this.createDefaultLogFile();
+        this.logger = new Logger(this.logFile, debugMode);
         this.bootstrapperIP = bootstrapperIP;
         this.neighbours = new HashMap<>();
         this.RPIPs = null;
