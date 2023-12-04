@@ -29,8 +29,8 @@ public class Client extends Node {
     private Condition hasPaths;
     ClientVideoManager cvm;
 
-    public Client(String args[], NeighbourReader nr, boolean debugMode){
-        super(Integer.parseInt(args[0]), nr, debugMode);
+    public Client(String args[], boolean debugMode, String bootstrapperIP){
+        super(-1, debugMode, bootstrapperIP);
         this.availableStreams = new ArrayList<>();
         this.routingTree = new RoutingTree();
         this.routingTreeLock = new ReentrantLock();
@@ -41,7 +41,7 @@ public class Client extends Node {
     public void getAvailableStreams(){
         try{
             // Send the request
-            Socket s = new Socket(this.RPIP, Util.PORT);
+            Socket s = new Socket(this.RPIPs.get(0), Util.PORT);
             TCPConnection c = new TCPConnection(s);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             DataOutputStream out = new DataOutputStream(baos);
@@ -193,6 +193,8 @@ public class Client extends Node {
 
     public void run() throws InterruptedException, NoPathsAvailableException
     {
+        boolean successfull = this.messageBootstrapper();
+
         // inicializar a receção por TCP
         Thread tcp = new Thread(new ClientHandlerTCP(this));
         tcp.start();
@@ -226,9 +228,20 @@ public class Client extends Node {
     }
 
     public static void main(String args[]) throws InterruptedException, NoPathsAvailableException{
-        NeighbourReader nr = new NeighbourReader(Integer.parseInt(args[0]), args[1]);
-        boolean debugMode = Arrays.stream(args).anyMatch(s -> s.equals("-g"));
-        Client c = new Client(args, nr, debugMode);
+        List<String> argsL = new ArrayList<>();
+        boolean debugMode = false;
+
+        for (int i=0 ; i<args.length ; i++)
+        {
+            String arg = args[i];
+            if (arg.equals("-g"))
+                debugMode = true;
+            else
+                argsL.add(arg);
+        }
+
+        args = argsL.toArray(new String[0]);
+        Client c = new Client(args, debugMode, args[0]);
         c.run();
     }
 }   

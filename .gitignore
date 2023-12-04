@@ -1,2 +1,5 @@
 */*.class
 Streams
+*/logs
+logs
+logs/*

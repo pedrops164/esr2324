@@ -24,10 +24,10 @@ public class Server extends Node {
     private List<String> streams;
     private String streamsDir;
 
-    public Server(String []args, NeighbourReader nr, boolean debugMode){
-        super(Integer.parseInt(args[0]), nr, debugMode);
+    public Server(String []args, boolean debugMode, String bootstrapperIP){
+        super(-1, debugMode, bootstrapperIP);
         this.streams = new ArrayList<>();
-        this.streamsDir = args[2];
+        this.streamsDir = args[1];
         
         if(this.streamsDir.charAt(this.streamsDir.length() - 1) != '/'){
             this.streamsDir += "/";
@@ -35,12 +35,12 @@ public class Server extends Node {
 
         try{
             this.ss = new ServerSocket(Util.PORT);
-            this.logger.log(new LogEntry("Getting availabe Streams"));
         } catch(Exception e){
             e.printStackTrace();
         }
-
-        File path = new File(args[2]);
+        
+        this.logger.log(new LogEntry("Getting availabe Streams"));
+        File path = new File(args[1]);
         File [] listOfFiles = path.listFiles();
         for(File f : listOfFiles){
             if(f.isFile()){
@@ -58,7 +58,7 @@ public class Server extends Node {
             try{    
                 // Send request
                 ServerStreams sstreams = new ServerStreams(this.streams, this.id, this.ip);
-                Socket s = new Socket(this.RPIP, Util.PORT);
+                Socket s = new Socket(this.RPIPs.get(0), Util.PORT);
                 TCPConnection tcpConnection = new TCPConnection(s);
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 DataOutputStream out = new DataOutputStream(baos);
@@ -105,7 +105,7 @@ public class Server extends Node {
                 switch (p.type) {
                     case 2: // New video stream request
                         this.logger.log(new LogEntry("Received Video Stream Request from " + socket.getInetAddress().getHostAddress()));
-                        t = new Thread(new ServerWorker1(tcpConnection, p, this.RPIP, this));
+                        t = new Thread(new ServerWorker1(tcpConnection, p, this.RPIPs.get(0), this));
                         t.start();
                         break;
                     case 5: // Flood message
@@ -141,10 +141,24 @@ public class Server extends Node {
     }
 
     public static void main(String args[]){
-        NeighbourReader nr = new NeighbourReader(Integer.parseInt(args[0]), args[1]);
-        boolean debugMode = Arrays.stream(args).anyMatch(s -> s.equals("-g"));
+        List<String> argsL = new ArrayList<>();
+        boolean debugMode = false;
 
-        Server server = new Server(args, nr, debugMode);
+        for (int i=0 ; i<args.length ; i++)
+        {
+            String arg = args[i];
+            if (arg.equals("-g"))
+                debugMode = true;
+            else
+                argsL.add(arg);
+        }
+
+        args = argsL.toArray(new String[0]);
+
+        Server server = new Server(args, debugMode, args[0]);
+
+        server.log(new LogEntry("Sending message to bootstrapper"));
+        server.messageBootstrapper();
 
         // Tell the available streams to the RP 
         if (server.notifyStreamsRP()) {

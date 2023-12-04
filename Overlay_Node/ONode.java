@@ -8,21 +8,40 @@ import Common.PathNode;
 import Common.StreamRequest;
 import Common.TCPConnection;
 import Common.UDPDatagram;
+import Common.Utility;
 import Common.VideoMetadata;
 import Common.TCPConnection.Packet;
 import Common.NormalFloodWorker;
 import Common.Util;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.net.*;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 public class ONode extends Node {
     private Map<String, List<Integer>> streamNeighours;
+    private BootstrapperHandler bootstrapperHandler;
+    private String bootstrapConfigFile;
 
-    public ONode(int id, NeighbourReader nr, boolean debugMode)
+    public ONode(String bootstrapperIP, boolean debugMode)
     {
-        super(id, nr, debugMode);
+        super(-1, debugMode, bootstrapperIP);
         this.streamNeighours = new HashMap<>();
+        this.bootstrapperHandler = null;
+    }
+
+    public ONode(int id, String bootstrapConfigFile, boolean debugMode)
+    {
+        super(id, debugMode, "localhost");
+        this.streamNeighours = new HashMap<>();
+        this.bootstrapConfigFile = bootstrapConfigFile;
+        this.bootstrapperHandler = new BootstrapperHandler(this.bootstrapConfigFile);
+        this.neighbours = this.bootstrapperHandler.getNeighboursFromID(id);
+        this.RPIPs = this.bootstrapperHandler.getRPIPs();
     }
 
     public int getId()
@@ -58,9 +77,15 @@ public class ONode extends Node {
         return this.getNeighboursIps(neighbours);
     }
 
+
     public void run()
     {
         try {
+            if (!this.isBoostrapper())
+            {
+                boolean success = this.messageBootstrapper();
+            }
+
             // Launch tcp worker
             Thread tcp = new Thread(new TCP_Worker(this));
             tcp.start();
@@ -84,11 +109,41 @@ public class ONode extends Node {
         return this.streamNeighours.containsKey(streamName);
     }
 
+    public BootstrapperHandler getBootstrapperHandler()
+    {
+        return this.bootstrapperHandler;
+    }
+
+    public boolean isBoostrapper()
+    {
+        return this.bootstrapperHandler != null;
+    }
+
     public static void main(String args[]){
-        int id = Integer.parseInt(args[0]);
-        NeighbourReader nr = new NeighbourReader(id, args[1]);
-        boolean debugMode = Arrays.stream(args).anyMatch(s -> s.equals("-g"));
-        ONode onode = new ONode(id, nr, debugMode);
+        List<String> argsL = new ArrayList<>();
+        boolean debugMode = false;
+        boolean bootstrapMode = !args[0].matches("[0-9]+.[0-9]+.[0-9]+.[0-9]+");
+
+        for (int i=0 ; i<args.length ; i++)
+        {
+            String arg = args[i];
+            if (arg.equals("-g"))
+                debugMode = true;
+            else
+                argsL.add(arg);
+        }
+
+        args = argsL.toArray(new String[0]);
+
+        ONode onode;
+        if (bootstrapMode)
+        {
+            onode = new ONode(Integer.parseInt(args[0]), args[1], debugMode);
+        }
+        else
+        {
+            onode = new ONode(args[0], debugMode);
+        }
         onode.run();
     }
 }
@@ -133,12 +188,25 @@ class TCP_Worker implements Runnable
                         t = new Thread(new HandleStreamingRequest(this.oNode, p, c));
                         t.start();
                         break;
+                    case 4: // Message to bootstrapper
+                        if (this.oNode.isBoostrapper())
+                        {
+                            this.oNode.log(new LogEntry("Received get neighbours message from " + address));
+                            t = new Thread(new BootsrapperWorker(this.oNode, this.oNode.getBootstrapperHandler(), c, address));
+                            t.start();
+                        }
+                        else
+                        {
+                            c.send(8, "Not bootstrapper msg".getBytes());
+                            c.stopConnection();
+                        }
+                        break;
                     case 5: // Flood Message 
                         this.oNode.log(new LogEntry("Received flood message from " + address));
                         t = new Thread(new NormalFloodWorker(this.oNode, p));    
                         t.start();
                         break;
-                    case 7: // ALIVE? message
+                    case 7: // Liveness check message
                         //this.oNode.log(new LogEntry("Received liveness check from " + s.getInetAddress().getHostAddress()));
                         t = new Thread(new LivenessCheckWorker(this.oNode, c, p));
                         t.start();

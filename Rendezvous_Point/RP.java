@@ -18,8 +18,8 @@ public class RP extends Node{
     private Map<String, List<Integer>> streamNeighbours; // Maps each stream to the id's of the neighbours of want it 
     public Map<Integer, Path> paths; // maps clients to their respective paths (paths from RP to each client)
 
-    public RP(String args[], NeighbourReader nr, boolean debugMode){
-        super(Integer.parseInt(args[0]), nr, debugMode);
+    public RP(String args[], boolean debugMode, String bootstrapperIP){
+        super(-1, debugMode, bootstrapperIP);
         this.streamServers = new HashMap<>();
         this.servers = new HashMap<>();
         this.rankedServers = new ArrayList<>();
@@ -29,6 +29,9 @@ public class RP extends Node{
 
     public void run() {
         try {
+            this.log(new LogEntry("Sending neighbour request to Bootstrapper"));
+            this.messageBootstrapper();
+
             // Launch tcp worker
             Thread tcp = new Thread(new RPHandlerTCP(this));
             tcp.start();
@@ -131,9 +134,20 @@ public class RP extends Node{
     }
 
     public static void main(String args[]){
-        NeighbourReader nr = new NeighbourReader(Integer.parseInt(args[0]), args[1]);
-        boolean debugMode = Arrays.stream(args).anyMatch(s -> s.equals("-g"));
-        RP rp = new RP(args, nr, debugMode);
+        List<String> argsL = new ArrayList<>();
+        boolean debugMode = false;
+
+        for (int i=0 ; i<args.length ; i++)
+        {
+            String arg = args[i];
+            if (arg.equals("-g"))
+                debugMode = true;
+            else
+                argsL.add(arg);
+        }
+
+        args = argsL.toArray(new String[0]);
+        RP rp = new RP(args, debugMode, args[0]);
         rp.run(); 
     }
 

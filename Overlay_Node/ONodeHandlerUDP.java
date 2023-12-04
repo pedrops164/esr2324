@@ -5,7 +5,7 @@ import java.net.*;
 import Common.*;
 import Common.TCPConnection.Packet;
 
-class ONodeHandlerUDP implements Runnable {
+public class ONodeHandlerUDP implements Runnable {
     private DatagramSocket ds;
     private ONode oNode;
     
