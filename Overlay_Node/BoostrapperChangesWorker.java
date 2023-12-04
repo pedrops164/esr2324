@@ -5,6 +5,7 @@ public class BoostrapperChangesWorker implements Runnable{
     private ONode node;
     private BootstrapperHandler bootstrapperHandler;
     private static long AUTOMATIC_VERIFY_TIME = 10000; 
+    
 
     public BoostrapperChangesWorker(ONode node, BootstrapperHandler bootstrapperHandler)
     {
@@ -14,7 +15,7 @@ public class BoostrapperChangesWorker implements Runnable{
     
     @Override
     public void run() {
-
+        
     }
     
 }
