@@ -47,7 +47,7 @@ class HandleStreamRequests implements Runnable{
 
         String extension = getExtension(streamName);
         System.out.println(extension);
-        UDPStreaming streaming = new UDPStreaming(this.ds, this.RPIP, Util.PORT, this.server.getStreamsDir() + streamName, extension, 0, 100);
+        UDPStreaming streaming = new UDPStreaming(this.ds, this.RPIP, Util.PORT, this.server.getStreamsDir() + streamName, extension, 0);
         int frame_period = streaming.getFramePeriod();
 
         // Start the UDP video streaming. (Send directly to the RP)
