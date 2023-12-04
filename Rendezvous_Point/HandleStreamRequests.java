@@ -37,14 +37,13 @@ class HandleStreamRequests implements Runnable{
             //this.rp.log(new LogEntry("Received and sent VideoMetadata packet"));
 
             // Receive end of stream notification
-            Packet p = serverConnection.receive();
-            if (p.type == 8) {
-                this.rp.log(new LogEntry("Received end of stream notification"));
-            }
-            this.neighbourConnection.send(p);
+            //Packet p = serverConnection.receive();
+            //if (p.type == 8) {
+            //    this.rp.log(new LogEntry("Received end of stream notification"));
+            //}
+            //this.neighbourConnection.send(p);
             // Given that the stream has ended, stop streaming it
-            this.rp.stopStreaming(sr.getStreamName());
-
+            //this.rp.stopStreaming(sr.getStreamName());
 
             serverConnection.stopConnection();
         }catch(Exception e){

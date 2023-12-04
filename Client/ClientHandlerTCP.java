@@ -34,17 +34,22 @@ public class ClientHandlerTCP implements Runnable {
                 Socket s = this.ss.accept();
                 TCPConnection c = new TCPConnection(s);
                 Packet p = c.receive();
+                Thread t = null;
                 
                 switch(p.type)
                 {
                     case 5: // Flood Message from client
                     this.client.log(new LogEntry("Received flood message from " + s.getInetAddress().getHostAddress()));
-                        Thread t = new Thread(new NormalFloodWorker(client, p));    
+                        t = new Thread(new NormalFloodWorker(client, p));    
                         t.start();
                         break;
                     case 6: // Flood Response from RP
                         this.client.log(new LogEntry("Received flood response from RP: " + s.getInetAddress().getHostAddress()));
                         client.receivePath(p);
+                        break;
+                    case 8: // End of stream notification
+                        t = new Thread(new HandleEndOfStream(client, p));
+                        t.start();
                         break;
                     default:
                         this.client.log(new LogEntry("Packet type not recognized. Message ignored!"));

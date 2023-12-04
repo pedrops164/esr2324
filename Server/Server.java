@@ -14,6 +14,7 @@ import Rendezvous_Point.RP;
 import Common.Video;
 import Common.VideoMetadata;
 import Common.Util;
+import Common.NotificationEOS;
 
 import java.io.*;
 import java.net.*;
@@ -91,7 +92,7 @@ public class Server extends Node {
         return false;
     }   
 
-    // Listens to new requests sent to the RP
+    // Listens to new requests sent to the Server
     public void listen(){
         try{
             this.logger.log(new LogEntry("Now Listening to TCP requests"));
@@ -105,7 +106,7 @@ public class Server extends Node {
                 switch (p.type) {
                     case 2: // New video stream request
                         this.logger.log(new LogEntry("Received Video Stream Request from " + socket.getInetAddress().getHostAddress()));
-                        t = new Thread(new ServerWorker1(tcpConnection, p, this.RPIPs.get(0), this));
+                        t = new Thread(new HandleStreamRequests(tcpConnection, p, this.RPIP, this));
                         t.start();
                         break;
                     case 5: // Flood message
@@ -125,6 +126,20 @@ public class Server extends Node {
             }
         }
         catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    public void notifyEndOfStream(String streamName) {
+        // Establishes TCP Connection with RP
+        try {
+            Socket socket = new Socket(this.RPIP, Util.PORT);
+            TCPConnection rpConnection = new TCPConnection(socket);
+
+            NotificationEOS notificationEOS = new NotificationEOS(streamName);
+            Packet packetEOS = new Packet(8, notificationEOS.serialize());
+            rpConnection.send(packetEOS); // Send the end of stream notification to the RP
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -168,85 +183,3 @@ public class Server extends Node {
     }
 }
 
-// Responsible to handle new resquests of video streaming!
-class ServerWorker1 implements Runnable{
-    private TCPConnection connection;
-    private Packet receivedPacket;
-    private String RPIP;
-    private DatagramSocket ds;
-    private Server s;
-
-    public ServerWorker1(TCPConnection connection, Packet p, String RPIP, Server s){
-        this.connection = connection;
-        this.receivedPacket = p;
-        this.RPIP = RPIP;
-        this.s = s;
-        try {
-            this.ds = new DatagramSocket();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void run(){
-        // Receive request
-        byte[] data = this.receivedPacket.data;
-        StreamRequest sr = StreamRequest.deserialize(data);
-
-        //Deserialize the Path
-
-        String videoName = sr.getStreamName();
-
-        // get video attributes....
-        int videoLength = 100; // number of frames
-        int frame_period = 75; // time between frames in ms.
-        int video_extension = 26; //26 is Mjpeg type
-
-        //VideoMetadata vmd = new VideoMetadata(frame_period, videoName);
-        // Convert VideoMetadata to bytes (serialize) and send the packet to RP (type 6 represents video metadata)
-        //Packet packetMetadata = new Packet(6, vmd.serialize());
-        //this.connection.send(packetMetadata);
-
-        // Start the UDP video streaming. (Send directly to the RP)
-        try {
-            //this.s.log(new LogEntry("Sent VideoMetadata packet to RP"));
-            this.s.log(new LogEntry("Streaming '" + videoName + "' through UDP!"));
-            Video video = new Video(this.s.getStreamsDir() + videoName);
-            byte[] videoBuffer = null;
-            while ((videoBuffer = video.getNextVideoFrame()) != null) {
-                // Get the next frame of the video
-
-                int frameNumber = video.getFrameNumber();
-                //Builds a UDPDatagram object containing the frame
-	            UDPDatagram udpDatagram = new UDPDatagram(video_extension, frameNumber, frameNumber*frame_period,
-                 videoBuffer, videoBuffer.length, frame_period, videoName);
-                
-                // get the bytes of the UDPDatagram
-                byte[] packetBytes = udpDatagram.serialize();
-
-	            // Initialize the DatagramPacket and send it over the UDP socket 
-	            DatagramPacket senddp = new DatagramPacket(packetBytes, packetBytes.length, InetAddress.getByName(this.RPIP), Util.PORT);
-	            this.ds.send(senddp);
-
-                // Wait for 'frame_period' milliseconds before sending the next packet
-                Thread.sleep(frame_period);
-            }
-            this.s.log(new LogEntry("Sent " + video.getFrameNumber() + " frames!"));
-            // notify the RP that the stream has ended
-            Packet streamEndedNotification = new Packet(8);
-            // Close the socket
-            this.connection.send(streamEndedNotification);
-            this.connection.stopConnection();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }    
-    
-    public static String getExtension(String fileName) {
-        int lastIndexOfDot = fileName.lastIndexOf(".");
-        if (lastIndexOfDot == -1) {
-            return ""; // No extension found
-        }
-        return fileName.substring(lastIndexOfDot + 1);
-    }
-}

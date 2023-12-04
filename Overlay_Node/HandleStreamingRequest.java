@@ -48,16 +48,11 @@ class HandleStreamingRequest implements Runnable{
                 byte[] srBytes = sr.serialize();
                 nextC.send(2, srBytes); // Send the request to the next node in the path
 
-                // Receive and send the video metadata info
-                //Packet p = nextC.receive();
-                //this.c.send(p);
-                //this.oNode.log(new LogEntry("Received and sent video metadata!"));
-
                 // Receive and send end of stream notification
-                Packet endOfStreamNotification = nextC.receive();
-                this.c.send(endOfStreamNotification);
-                this.oNode.log(new LogEntry("Received end of stream notification!"));
-                this.oNode.stopStreaming(this.sr.getStreamName());
+                //Packet endOfStreamNotification = nextC.receive();
+                //this.c.send(endOfStreamNotification);
+                //this.oNode.log(new LogEntry("Received end of stream notification!"));
+                //this.oNode.stopStreaming(this.sr.getStreamName());
 
                 this.c.stopConnection();
             }catch(Exception e){

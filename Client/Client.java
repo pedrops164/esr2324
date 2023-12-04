@@ -153,18 +153,15 @@ public class Client extends Node {
             //this.cvm.updateVideoInfo(vmd);
 
             // Receive end of stream packet
-            Packet endOfStreamPacket = neighbourConnection.receive();
-            this.logger.log(new LogEntry("Received End of Stream Notification!"));
+            //Packet endOfStreamPacket = neighbourConnection.receive();
+            //this.logger.log(new LogEntry("Received End of Stream Notification!"));
 
             // Notify the video manager that this stream has ended (no more packets will be received)
-            this.cvm.streamEnded(stream);
+            //this.cvm.streamEnded(stream);
 
         }catch(Exception e){
             e.printStackTrace();
         }
-    }
-
-    public void requestStopStreaming(int streamId){
     }
 
     public void flood()

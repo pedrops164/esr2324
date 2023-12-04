@@ -58,6 +58,10 @@ public class RPHandlerTCP implements Runnable {
                         t = new Thread(new RPLivenessCheckWorker(rp, c));
                         t.start();
                         break;
+                    case 8: // EOS notification
+                        t = new Thread(new HandleEndOfStream(rp, p));
+                        t.start();
+                        break;
                     default:
                         rp.log(new LogEntry("Packet type not recognized. Message ignored! Type: " + p.type ));
                         c.stopConnection();

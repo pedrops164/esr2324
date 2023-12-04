@@ -87,7 +87,7 @@ public class ONode extends Node {
             }
 
             // Launch tcp worker
-            Thread tcp = new Thread(new TCP_Worker(this));
+            Thread tcp = new Thread(new ONodeHandlerTCP(this));
             tcp.start();
             // Launch udp worker
             Thread udp = new Thread(new ONodeHandlerUDP(this));
@@ -145,84 +145,6 @@ public class ONode extends Node {
             onode = new ONode(args[0], debugMode);
         }
         onode.run();
-    }
-}
-
-class TCP_Worker implements Runnable
-{
-    private ServerSocket ss;
-    private ONode oNode;
-    
-    public TCP_Worker(ONode node)
-    {
-        this.oNode = node;
-        
-        try 
-        {
-            this.ss = new ServerSocket(Util.PORT);
-        } 
-        catch (Exception e) 
-        {
-            e.printStackTrace();    
-        }
-    }
-    
-    @Override
-    public void run() 
-    {
-        try
-        {
-            this.oNode.log(new LogEntry("Now Listening to TCP requests"));
-            while(true)
-            {
-                Socket s = this.ss.accept();
-                TCPConnection c = new TCPConnection(s);
-                Packet p = c.receive();
-                Thread t;
-                String address = s.getInetAddress().getHostAddress();
-                
-                switch(p.type)
-                {   
-                    case 2: // New stream request from a client
-                        this.oNode.log(new LogEntry("New streaming request!"));
-                        t = new Thread(new HandleStreamingRequest(this.oNode, p, c));
-                        t.start();
-                        break;
-                    case 4: // Message to bootstrapper
-                        if (this.oNode.isBoostrapper())
-                        {
-                            this.oNode.log(new LogEntry("Received get neighbours message from " + address));
-                            t = new Thread(new BootsrapperWorker(this.oNode, this.oNode.getBootstrapperHandler(), c, address));
-                            t.start();
-                        }
-                        else
-                        {
-                            c.send(8, "Not bootstrapper msg".getBytes());
-                            c.stopConnection();
-                        }
-                        break;
-                    case 5: // Flood Message 
-                        this.oNode.log(new LogEntry("Received flood message from " + address));
-                        t = new Thread(new NormalFloodWorker(this.oNode, p));    
-                        t.start();
-                        break;
-                    case 7: // Liveness check message
-                        //this.oNode.log(new LogEntry("Received liveness check from " + s.getInetAddress().getHostAddress()));
-                        t = new Thread(new LivenessCheckWorker(this.oNode, c, p));
-                        t.start();
-                        break;
-                    default:
-                        this.oNode.log(new LogEntry("Packet type < " + p.type + " > not recognized. Message ignored!"));
-                        c.stopConnection();
-                        break;
-                }
-            }
-            
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
     }
 }
 
