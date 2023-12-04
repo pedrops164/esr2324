@@ -33,7 +33,7 @@ public class ONodeHandlerUDP implements Runnable {
             // Create the packet which will receive the data
             DatagramPacket receivedPacket = new DatagramPacket(receiveData, receiveData.length);
 
-            this.oNode.log(new LogEntry("Listening on UDP:" + this.oNode.getIp() + ":" + Util.PORT));
+            this.oNode.log(new LogEntry("Listening on UDP:" + Util.PORT));
             while(true) {
                 try {
                     // Receive the packet

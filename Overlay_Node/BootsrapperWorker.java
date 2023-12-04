@@ -33,7 +33,10 @@ public class BootsrapperWorker implements Runnable {
         // Verificar existencia
         int fromID = this.bootstrapperHandler.getIdFromIP(fromIp);
         if (fromID == -1)
+        {
+            this.node.log(new LogEntry("Couldn't find Node with ip " + fromIp + " on config file.."));
             return;  //TODO acabar isto
+        }
 
         List<String> RPIPs = this.bootstrapperHandler.getRPIPs();
 

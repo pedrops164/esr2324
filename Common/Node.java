@@ -1,8 +1,11 @@
 package Common;
 
+import java.io.EOFException;
 import java.io.File;
+import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -20,59 +23,24 @@ public abstract class Node {
     public Node(int id, boolean debugMode, String bootstrapperIP)
     {
         this.id = id;
-        this.logFile = "./logs/" + this.id + ".log"; 
         this.logger = new Logger(this.logFile, debugMode);
-        try 
-        {
-            File log = new File(this.logFile);
-            if (!log.exists())
-            {
-                File dir = new File("./logs/");
-                if (!dir.exists())
-                dir.mkdirs();
-                if (log.createNewFile())
-                this.logger.log(new LogEntry("Log File created"));
-                else
-                this.logger.log(new LogEntry("Couldn't create Log File"));
-            }
-            
-            this.bootstrapperIP = bootstrapperIP;
-            this.neighbours = null;
-            this.RPIPs = null;
-            this.ip = null;
-        } 
-        catch (Exception e) 
-        {
-            e.printStackTrace();
-        }
+        this.createDefaultLogFile();
+        this.bootstrapperIP = bootstrapperIP;
+        this.neighbours = new HashMap<>();
+        this.RPIPs = null;
+        this.ip = null;
     }
 
     public Node(int id, String logFile, boolean debugMode, String bootstrapperIP)
     {
         this.id = id;
         this.logFile = logFile;
+        this.createGivenLogFile();
         this.logger = new Logger(this.logFile, debugMode);
-        
-        try 
-        {
-            File log = new File(this.logFile);
-            if (!log.exists())
-            {
-                if (log.createNewFile())
-                    this.logger.log(new LogEntry("Log File created"));
-                else
-                    this.logger.log(new LogEntry("Couldn't create Log File"));
-            }
-
-            this.bootstrapperIP = bootstrapperIP;
-            this.neighbours = null;
-            this.RPIPs = null;
-            this.ip = null;
-        } 
-        catch (Exception e) 
-        {
-            e.printStackTrace();
-        }
+        this.bootstrapperIP = bootstrapperIP;
+        this.neighbours = new HashMap<>();
+        this.RPIPs = null;
+        this.ip = null; 
     }
 
     public int getId() {
@@ -80,7 +48,13 @@ public abstract class Node {
     }
     
     public void setId(int id) {
+        int oldID = this.id;
         this.id = id;
+        if (oldID == -1)
+        {
+            this.createDefaultLogFile();
+            this.logger.setLogFile(this.logFile);
+        }
     }
 
     public String getIp() {
@@ -128,30 +102,99 @@ public abstract class Node {
         return ips;
     }
 
-    public boolean messageBootstrapper()
+    public void createDefaultLogFile()
+    {
+        this.logFile = "./logs/" + this.id + ".log"; 
+        if (this.id != -1)
+        {
+            try 
+            {
+                File log = new File(this.logFile);
+                if (!log.exists())
+                {
+                    File dir = new File("./logs/");
+                    if (!dir.exists())
+                    dir.mkdirs();
+                    if (log.createNewFile())
+                    this.logger.log(new LogEntry("Log File created"));
+                    else
+                    this.logger.log(new LogEntry("Couldn't create Log File"));
+                }
+                
+            } 
+            catch (Exception e) 
+            {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void createGivenLogFile()
     {
         try 
         {
-            Socket socket = new Socket(this.bootstrapperIP, 333);
-            TCPConnection tcpConnection = new TCPConnection(socket);
-            tcpConnection.send(4, "getNeighbours".getBytes());
+            File log = new File(this.logFile);
+            if (!log.exists())
+            {
+                if (log.createNewFile())
+                    this.logger.log(new LogEntry("Log File created"));
+                else
+                    this.logger.log(new LogEntry("Couldn't create Log File"));
+            }
 
-            Packet  pID = tcpConnection.receive(),
-                    pRPIPs = tcpConnection.receive(),
-                    pNeighbours = tcpConnection.receive();
-            
-            this.id = Utility.deserializeInt(pID.data);
-            this.RPIPs = (List<String>)Utility.deserializeObject(pRPIPs.data);
-            this.neighbours = (Map<Integer,String>)Utility.deserializeObject(pNeighbours.data);
-
-            tcpConnection.send(8, "OK".getBytes());
-            this.log(new LogEntry("Received ip, RP information and neighbours from Bootstrapper"));
-            return true;
         } 
         catch (Exception e) 
         {
-            this.log(new LogEntry("Error connecting to bootstrapper.."));
+            e.printStackTrace();
         }
-        return false;
+    }
+
+    public boolean messageBootstrapper()
+    {
+        int maxRetry = 10;
+        int iters = 0;
+        boolean successfull = false;
+        do
+        {
+            try 
+            {
+                Socket socket = new Socket(this.bootstrapperIP, 333);
+                TCPConnection tcpConnection = new TCPConnection(socket);
+                tcpConnection.send(4, "getNeighbours".getBytes());
+    
+                Packet  pID = tcpConnection.receive(),
+                        pRPIPs = tcpConnection.receive(),
+                        pNeighbours = tcpConnection.receive();
+                
+                this.id = Utility.deserializeInt(pID.data);
+                
+                List<?> aux = (List<?>)Utility.deserializeObject(pRPIPs.data);
+                this.RPIPs = aux.stream().map(s -> (String)s).toList();
+    
+                Map<?,?> auxMap = (Map<?,?>)Utility.deserializeObject(pNeighbours.data);
+                for (Map.Entry<?,?> entry : auxMap.entrySet())
+                {
+                    this.neighbours.put((Integer)entry.getKey(), (String)entry.getValue());
+                }
+    
+                tcpConnection.send(8, "OK".getBytes());
+                this.log(new LogEntry("Received id, RP information and neighbours from Bootstrapper"));
+                successfull = true;
+            } 
+            catch (IOException e) 
+            {
+                this.log(new LogEntry("Error connecting to bootstrapper. Retrying in 5 seconds."));
+                iters++;
+                try 
+                {
+                    Thread.sleep(5000);
+                } 
+                catch (InterruptedException e1) 
+                {
+                    e1.printStackTrace();
+                }
+            }
+        } while(!successfull && iters<maxRetry);
+        return successfull;
     }
 }
