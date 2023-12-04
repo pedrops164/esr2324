@@ -176,8 +176,10 @@ public class Server extends Node {
 
         Server server = new Server(args, debugMode, args[0]);
 
-        server.log(new LogEntry("Sending message to bootstrapper"));
-        server.messageBootstrapper();
+        server.log(new LogEntry("Sending neighbour request to Bootstrapper"));
+        boolean successful = server.messageBootstrapper();
+        if (!successful)
+            return;
 
         // Tell the available streams to the RP 
         if (server.notifyStreamsRP()) {

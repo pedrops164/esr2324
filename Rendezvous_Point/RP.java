@@ -28,7 +28,9 @@ public class RP extends Node{
     public void run() {
         try {
             this.log(new LogEntry("Sending neighbour request to Bootstrapper"));
-            this.messageBootstrapper();
+            boolean successful = this.messageBootstrapper();
+            if (!successful)
+                return;
 
             // Launch tcp worker
             Thread tcp = new Thread(new RPHandlerTCP(this));

@@ -45,6 +45,14 @@ class ONodeHandlerTCP implements Runnable
                         t = new Thread(new HandleStreamingRequest(this.oNode, p, c));
                         t.start();
                         break;
+                    case 4:
+                        if (this.oNode.isBoostrapper())
+                        {
+                            this.oNode.log(new LogEntry("Received neighbours request from " + address));
+                            t = new Thread(new BootsrapperWorker(oNode, this.oNode.getBootstrapperHandler(), c, address));
+                            t.start();
+                        }
+                        break;
                     case 5: // Flood Message 
                         this.oNode.log(new LogEntry("Received flood message from " + address));
                         t = new Thread(new NormalFloodWorker(this.oNode, p));    
