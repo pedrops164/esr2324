@@ -38,7 +38,7 @@ public class BoostrapperChangesWorker implements Runnable{
                         Socket socket = new Socket(ip, Util.PORT);
                         TCPConnection tcpConnection = new TCPConnection(socket);
 
-                        tcpConnection.send(8, "changedInfo".getBytes());
+                        tcpConnection.send(4, "changedInfo".getBytes());
 
                         Packet p = tcpConnection.receive();
                         if (new String(p.data).equals("OK"))
@@ -54,10 +54,10 @@ public class BoostrapperChangesWorker implements Runnable{
                                     serRPIDs = Util.serializeObject(newRPIPs),
                                     serNeighbours = Util.serializeObject(newNeighbours);
 
-                            tcpConnection.send(8, serFromID);
-                            tcpConnection.send(8, serFromIPs);
-                            tcpConnection.send(8, serRPIDs);
-                            tcpConnection.send(8, serNeighbours);
+                            tcpConnection.send(4, serFromID);
+                            tcpConnection.send(4, serFromIPs);
+                            tcpConnection.send(4, serRPIDs);
+                            tcpConnection.send(4, serNeighbours);
 
                             try 
                             {
@@ -78,8 +78,10 @@ public class BoostrapperChangesWorker implements Runnable{
                                 e.printStackTrace();
                             }
                         }
+                        tcpConnection.stopConnection();
                     } catch (Exception e) {
                         e.printStackTrace();
+                        this.bootstrapperHandler.removeConnected(id);
                     }
                 }
             }    

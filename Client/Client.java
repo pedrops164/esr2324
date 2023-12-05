@@ -170,10 +170,18 @@ public class Client extends Node {
     public void run() throws InterruptedException, NoPathsAvailableException
     {
         this.log(new LogEntry("Sending neighbour request to Bootstrapper"));
-        boolean successfull = this.messageBootstrapper();
+        int successfull = this.messageBootstrapper();
 
-        if (!successfull)
+        if (successfull == 1)
+        {
+            System.out.println("Bootstrapper is not available.. Shutting down");
             return;
+        }
+        else if (successfull == 2)
+        {
+            System.out.println("This node is not on the overlay network.. Shutting down");
+            return;
+        }
 
         // inicializar a receção por TCP
         Thread tcp = new Thread(new ClientHandlerTCP(this));

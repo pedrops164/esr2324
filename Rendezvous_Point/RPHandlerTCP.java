@@ -2,7 +2,6 @@ package Rendezvous_Point;
 
 import Common.*;
 import Common.TCPConnection.Packet;
-import Common.Util;
 
 import java.net.*;
 
@@ -46,6 +45,11 @@ public class RPHandlerTCP implements Runnable {
                     case 3: // Client requests the available streams
                         rp.log(new LogEntry("Received available stream request from " + s.getInetAddress().getHostAddress()));
                         t = new Thread(new HandleNotifyStreams(c, rp, s.getInetAddress().getHostAddress()));
+                        t.start();
+                        break;
+                    case 4: // Topology changes message from Bootstrapper
+                        rp.log(new LogEntry("Received topology changes message from Bootstrapper"));
+                        t = new Thread(new TopologyChangesWorker(rp, c));
                         t.start();
                         break;
                     case 5: // Client Flood Message

@@ -163,11 +163,11 @@ public abstract class Node {
         }
     }
 
-    public boolean messageBootstrapper()
+    public int messageBootstrapper()
     {
         int maxRetry = 10;
         int iters = 0;
-        boolean successfull = false;
+        int successfull = 1;
         do
         {
             try 
@@ -175,6 +175,14 @@ public abstract class Node {
                 Socket socket = new Socket(this.bootstrapperIP, 333);
                 TCPConnection tcpConnection = new TCPConnection(socket);
                 tcpConnection.send(4, "getNeighbours".getBytes());
+
+                Packet validationPacket = tcpConnection.receive();
+                if (new String(validationPacket.data).equals("invalid"))
+                {
+                    return 2;
+                }
+                
+                tcpConnection.send(4, "OK".getBytes());
     
                 Packet  pID = tcpConnection.receive(),
                         pIPs = tcpConnection.receive(),
@@ -195,9 +203,9 @@ public abstract class Node {
                     this.neighbours.put((Integer)entry.getKey(), (String)entry.getValue());
                 }
     
-                tcpConnection.send(8, "OK".getBytes());
+                tcpConnection.send(4, "OK".getBytes());
                 this.log(new LogEntry("Received id, RP information and neighbours from Bootstrapper"));
-                successfull = true;
+                successfull = 0;
             } 
             catch (IOException e) 
             {
@@ -212,7 +220,7 @@ public abstract class Node {
                     e1.printStackTrace();
                 }
             }
-        } while(!successfull && iters<maxRetry);
+        } while(successfull!=0 && iters<maxRetry);
         return successfull;
     }
 }

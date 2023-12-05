@@ -7,6 +7,7 @@ import Common.NormalFloodWorker;
 import Common.ServerStreams;
 import Common.TCPConnection;
 import Common.TCPConnection.Packet;
+import Common.TopologyChangesWorker;
 import Common.Util;
 import Common.NotificationEOS;
 
@@ -109,6 +110,11 @@ public class Server extends Node {
                         t = new Thread(new HandleStreamRequests(tcpConnection, p, this.RPIPs.get(0), this));
                         t.start();
                         break;
+                    case 4: // Topology changes message from Bootstrapper
+                        this.log(new LogEntry("Received topology changes message from Bootstrapper"));
+                        t = new Thread(new TopologyChangesWorker(this, tcpConnection));
+                        t.start();
+                        break;
                     case 5: // Flood message
                         this.logger.log(new LogEntry("Received flood message from " + socket.getInetAddress().getHostAddress()));
                         t = new Thread(new NormalFloodWorker(this, p));
@@ -177,9 +183,18 @@ public class Server extends Node {
         Server server = new Server(args, debugMode, args[0]);
 
         server.log(new LogEntry("Sending neighbour request to Bootstrapper"));
-        boolean successful = server.messageBootstrapper();
-        if (!successful)
+        int successfull = server.messageBootstrapper();
+
+        if (successfull == 1)
+        {
+            System.out.println("Bootstrapper is not available.. Shutting down");
             return;
+        }
+        else if (successfull == 2)
+        {
+            System.out.println("This node is not on the overlay network.. Shutting down");
+            return;
+        }
 
         // Tell the available streams to the RP 
         if (server.notifyStreamsRP()) {

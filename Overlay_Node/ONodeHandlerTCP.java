@@ -48,8 +48,14 @@ class ONodeHandlerTCP implements Runnable
                     case 4:
                         if (this.oNode.isBoostrapper())
                         {
-                            this.oNode.log(new LogEntry("Received neighbours request from " + address));
+                            this.oNode.log(new LogEntry("Bootstrapper : Received neighbours request from " + address));
                             t = new Thread(new BootsrapperWorker(oNode, this.oNode.getBootstrapperHandler(), c, address));
+                            t.start();
+                        }
+                        else
+                        {
+                            this.oNode.log(new LogEntry("Received topology changes message from Bootstrapper"));
+                            t = new Thread(new TopologyChangesWorker(this.oNode, c));
                             t.start();
                         }
                         break;

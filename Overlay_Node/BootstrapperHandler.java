@@ -173,6 +173,7 @@ public class BootstrapperHandler {
                     changedNodes.add(entry.getKey());
             }
 
+            this.changed = false;
             this.changes.signalAll();
     
             return changedNodes;
@@ -254,6 +255,11 @@ public class BootstrapperHandler {
     }
 
     public void addConnected(int id)
+    {
+        this.connected.add(id);
+    }
+
+    public void removeConnected(int id)
     {
         this.connected.add(id);
     }
