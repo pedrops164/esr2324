@@ -34,6 +34,9 @@ public class Client extends Node {
 
     public void getAvailableStreams(){
         try{
+            // Reset the array of available streams
+            this.availableStreams = new ArrayList<>();
+
             // Send the request
             Socket s = new Socket(this.RPIPs.get(0), Util.PORT);
             TCPConnection c = new TCPConnection(s);
@@ -43,7 +46,6 @@ public class Client extends Node {
             out.flush();
             byte [] data = baos.toByteArray();
             c.send(3, data); // Send the request to the RP
-
 
             // Answer to the request
             Packet p = c.receive();
@@ -106,7 +108,9 @@ public class Client extends Node {
             System.out.println("Stream " + Integer.toString(i) + ": " + stream);
             i++;
         }
-        System.out.println("Select one to watch by inputing it's number:");
+        int exit = this.availableStreams.size() + 1;
+        System.out.println("Press " + exit + " to exit.");
+        System.out.println("Select one to watch by inputing it's number or exit:");
     }
 
     // Method responsible to request the UDP streaming 
@@ -123,8 +127,6 @@ public class Client extends Node {
             {
                 this.routingTreeLock.unlock();
             }
-            // byte[] serializedPath = path.serialize();
-
             // Send request
             String stream = this.availableStreams.get(streamId-1);
             this.logger.log(new LogEntry("Client requesting stream: " + stream));
@@ -136,23 +138,6 @@ public class Client extends Node {
             TCPConnection neighbourConnection = new TCPConnection(s);
             byte[] srBytes = sr.serialize();
             neighbourConnection.send(2, srBytes); // Send the request to the next node in the path
-
-            // Receive VideoMetadata through TCP and send to client
-            //Packet metadataPacket = neighbourConnection.receive();
-            //this.logger.log(new LogEntry("Received Video Metadata!"));
-            //byte[] metadata = metadataPacket.data;
-            //VideoMetadata vmd = VideoMetadata.deserialize(metadata);
-            
-            // Set the frame period of the Video Player respective to the stream of this metadata
-            //this.cvm.updateVideoInfo(vmd);
-
-            // Receive end of stream packet
-            //Packet endOfStreamPacket = neighbourConnection.receive();
-            //this.logger.log(new LogEntry("Received End of Stream Notification!"));
-
-            // Notify the video manager that this stream has ended (no more packets will be received)
-            //this.cvm.streamEnded(stream);
-
         }catch(Exception e){
             e.printStackTrace();
         }
@@ -214,12 +199,20 @@ public class Client extends Node {
         Thread pathManager = new Thread(new ClientPathManager(this));
         pathManager.start();
 
-        this.getAvailableStreams();
-        this.showAvailableStreams();
         Scanner in = new Scanner(System.in);
-        int streamId = in.nextInt();
-        this.requestStreaming(streamId);
-        in.close();
+        boolean b = true;
+        while(b){
+            this.getAvailableStreams();
+            this.showAvailableStreams();
+            int streamId = in.nextInt();
+            
+            if(streamId >= 1 && streamId <= this.availableStreams.size()){
+                this.requestStreaming(streamId);
+            }else{
+                in.close();
+                b = false;
+            }
+        }   
     }
 
     public static void main(String args[]) throws InterruptedException, NoPathsAvailableException{
