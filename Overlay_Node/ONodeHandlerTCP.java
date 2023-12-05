@@ -1,6 +1,7 @@
 package Overlay_Node;
 
 import java.util.*;
+import java.io.IOException;
 import java.net.*;
 import Common.*;
 import Common.TCPConnection.Packet;
@@ -9,6 +10,7 @@ class ONodeHandlerTCP implements Runnable
 {
     private ServerSocket ss;
     private ONode oNode;
+    private boolean running;
     
     public ONodeHandlerTCP(ONode node)
     {
@@ -29,8 +31,9 @@ class ONodeHandlerTCP implements Runnable
     {
         try
         {
+            this.running = true;
             this.oNode.log(new LogEntry("Now Listening to TCP requests"));
-            while(true)
+            while(this.running)
             {
                 Socket s = this.ss.accept();
                 TCPConnection c = new TCPConnection(s);
@@ -54,9 +57,19 @@ class ONodeHandlerTCP implements Runnable
                         }
                         else
                         {
-                            this.oNode.log(new LogEntry("Received topology changes message from Bootstrapper"));
-                            t = new Thread(new TopologyChangesWorker(this.oNode, c));
-                            t.start();
+                            String msg = new String(p.data);
+                            if (msg.equals("REMOVED"))
+                            {
+                                c.send(4, "OK".getBytes());
+                                this.oNode.turnOff();
+                            }
+                            else
+                            {
+                                this.oNode.log(new LogEntry("Received topology changes message from Bootstrapper"));
+                                t = new Thread(new TopologyChangesWorker(this.oNode, c));
+                                t.start();
+                            }
+                            break;
                         }
                         break;
                     case 5: // Flood Message 
@@ -81,8 +94,22 @@ class ONodeHandlerTCP implements Runnable
             }
             
         }
+        catch (SocketException e){
+            this.oNode.log(new LogEntry("Turning off TCP handler"));
+            return;
+        }
         catch (Exception e)
         {
+            e.printStackTrace();
+        }
+    }
+
+    public void turnOff()
+    {
+        this.running = false;
+        try {
+            this.ss.close();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

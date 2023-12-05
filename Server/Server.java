@@ -19,6 +19,8 @@ public class Server extends Node {
     private ServerSocket ss;
     private List<String> streams;
     private String streamsDir;
+    private HandleServerStreams sHandleServerStreams;
+    private boolean running;
 
     public Server(String []args, boolean debugMode, String bootstrapperIP){
         super(-1, debugMode, bootstrapperIP);
@@ -43,6 +45,7 @@ public class Server extends Node {
                 this.streams.add(f.getName());
             }
         }
+        this.sHandleServerStreams = null;
     }
 
     // Notify the RP about the available streams in this Server
@@ -90,8 +93,9 @@ public class Server extends Node {
     // Listens to new requests sent to the Server
     public void listen(){
         try{
+            this.running = true;
             this.logger.log(new LogEntry("Now Listening to TCP requests"));
-            while(true){
+            while(this.running){
                 Socket socket = this.ss.accept();
                 TCPConnection tcpConnection = new TCPConnection(socket);
                 Packet p = tcpConnection.receive();
@@ -102,7 +106,10 @@ public class Server extends Node {
                     // A thread is created that listens to the ServerStreams requests from the RP
                     case 1:
                         this.logger.log(new LogEntry("Received ServerStream request from the RP!"));
-                        t = new Thread(new HandleServerStreams(this, tcpConnection));
+                        if (this.sHandleServerStreams != null)
+                            this.sHandleServerStreams.turnOff();
+                        this.sHandleServerStreams = new HandleServerStreams(this, tcpConnection);
+                        t = new Thread(this.sHandleServerStreams);
                         t.start();
                         break;
                     case 2: // New video stream request
@@ -110,10 +117,19 @@ public class Server extends Node {
                         t = new Thread(new HandleStreamRequests(tcpConnection, p, this.RPIPs.get(0), this));
                         t.start();
                         break;
-                    case 4: // Topology changes message from Bootstrapper
-                        this.log(new LogEntry("Received topology changes message from Bootstrapper"));
-                        t = new Thread(new TopologyChangesWorker(this, tcpConnection));
-                        t.start();
+                    case 4: // Topology changes or removed message  from Bootstrapper 
+                        String msg = new String(p.data);
+                        if (msg.equals("REMOVED"))
+                        {
+                            tcpConnection.send(4, "OK".getBytes());
+                            this.turnOff();
+                        }
+                        else
+                        {
+                            this.log(new LogEntry("Received topology changes message from Bootstrapper"));
+                            t = new Thread(new TopologyChangesWorker(this, tcpConnection));
+                            t.start();
+                        }
                         break;
                     case 5: // Flood message
                         this.logger.log(new LogEntry("Received flood message from " + socket.getInetAddress().getHostAddress()));
@@ -163,6 +179,13 @@ public class Server extends Node {
 
     public String getStreamsDir(){
         return this.streamsDir;
+    }
+
+    public void turnOff()
+    {
+        if (sHandleServerStreams != null)
+            this.sHandleServerStreams.turnOff();
+        this.running = false;
     }
 
     public static void main(String args[]){

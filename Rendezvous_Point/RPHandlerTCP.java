@@ -3,11 +3,13 @@ package Rendezvous_Point;
 import Common.*;
 import Common.TCPConnection.Packet;
 
+import java.io.IOException;
 import java.net.*;
 
 public class RPHandlerTCP implements Runnable {
     private RP rp;
     private ServerSocket ss;
+    private boolean running;
 
     public RPHandlerTCP(RP rp) {
         this.rp = rp;
@@ -23,8 +25,9 @@ public class RPHandlerTCP implements Runnable {
     public void run() {
         // Listens to new requests sent to the RP
         try{
+            this.running = true;
             rp.log(new LogEntry("Now Listening to TCP requests"));
-            while(true){
+            while(this.running){
                 Socket s = this.ss.accept();
                 TCPConnection c = new TCPConnection(s);
                 Packet p = c.receive();
@@ -47,10 +50,19 @@ public class RPHandlerTCP implements Runnable {
                         t = new Thread(new HandleNotifyStreams(c, rp, s.getInetAddress().getHostAddress()));
                         t.start();
                         break;
-                    case 4: // Topology changes message from Bootstrapper
-                        rp.log(new LogEntry("Received topology changes message from Bootstrapper"));
-                        t = new Thread(new TopologyChangesWorker(rp, c));
-                        t.start();
+                    case 4: // Topology changes or removed message  from Bootstrapper 
+                        String msg = new String(p.data);
+                        if (msg.equals("REMOVED"))
+                        {
+                            c.send(4, "OK".getBytes());
+                            this.rp.turnOff();
+                        }
+                        else
+                        {
+                            this.rp.log(new LogEntry("Received topology changes message from Bootstrapper"));
+                            t = new Thread(new TopologyChangesWorker(this.rp, c));
+                            t.start();
+                        }
                         break;
                     case 5: // Client Flood Message
                         rp.log(new LogEntry("Received flood message from " + s.getInetAddress().getHostAddress()));
@@ -73,8 +85,23 @@ public class RPHandlerTCP implements Runnable {
                 }
             }
         }
+        catch (SocketException e)
+        {
+            this.rp.log(new LogEntry("Turning off TCP handler"));
+            return;
+        }
         catch(Exception e)
         {
+            e.printStackTrace();
+        }
+    }
+
+    public void turnOff()
+    {
+        this.running = false;
+        try {
+            this.ss.close();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

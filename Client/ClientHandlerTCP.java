@@ -1,6 +1,7 @@
 package Client;
 
 import java.util.*;
+import java.io.IOException;
 import java.net.*;
 import Common.*;
 import Common.TCPConnection.Packet;
@@ -8,6 +9,7 @@ import Common.TCPConnection.Packet;
 public class ClientHandlerTCP implements Runnable {
     private ServerSocket ss;
     private Client client;
+    private boolean running;
     
     public ClientHandlerTCP(Client client)
     {
@@ -27,8 +29,10 @@ public class ClientHandlerTCP implements Runnable {
     public void run() 
     {
         try
-        {
-            while(true)
+        {   
+            this.client.log(new LogEntry("Now Listening to TCP messages"));
+            this.running = true;
+            while(this.running)
             {
                 Socket s = this.ss.accept();
                 TCPConnection c = new TCPConnection(s);
@@ -37,10 +41,19 @@ public class ClientHandlerTCP implements Runnable {
                 
                 switch(p.type)
                 {
-                    case 4: // Topology changes message from Bootstrapper
-                        this.client.log(new LogEntry("Received topology changes message from Bootstrapper"));
-                        t = new Thread(new TopologyChangesWorker(this.client, c));
-                        t.start();
+                    case 4: // Topology changes or removed message  from Bootstrapper 
+                        String msg = new String(p.data);
+                        if (msg.equals("REMOVED"))
+                        {
+                            c.send(4, "OK".getBytes());
+                            this.client.turnOff();
+                        }
+                        else
+                        {
+                            this.client.log(new LogEntry("Received topology changes message from Bootstrapper"));
+                            t = new Thread(new TopologyChangesWorker(this.client, c));
+                            t.start();
+                        }
                         break;
                     case 5: // Flood Message from client
                     this.client.log(new LogEntry("Received flood message from " + s.getInetAddress().getHostAddress()));
@@ -62,9 +75,22 @@ public class ClientHandlerTCP implements Runnable {
                 }
             }
             
+        } catch (SocketException e){
+            this.client.log(new LogEntry("Turning off TCP handler"));
+            return;
         }
         catch (Exception e)
         {
+            e.printStackTrace();
+        }
+    }
+
+    public void turnOff()
+    {
+        this.running = false;
+        try {
+            this.ss.close();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

@@ -14,7 +14,10 @@ public class RP extends Node{
     private Map<Integer, String> servers; // serverID to serverIP
     private List<ServerRanking> rankedServers; // Organized list with the ranking from the best to the worst server 
     private Map<String, List<Integer>> streamNeighbours; // Maps each stream to the id's of the neighbours of want it 
-    public Map<Integer, Path> paths; // maps clients to their respective paths (paths from RP to each client)
+    private Map<Integer, Path> paths; // maps clients to their respective paths (paths from RP to each client)
+    private RPHandlerTCP rpHandlerTCP;
+    private RPHandlerUDP rpHandlerUDP;
+    private RPServerTester rpServerTester;
 
     public RP(String args[], boolean debugMode, String bootstrapperIP){
         super(-1, debugMode, bootstrapperIP);
@@ -42,12 +45,15 @@ public class RP extends Node{
             }
 
             // Launch tcp worker
-            Thread tcp = new Thread(new RPHandlerTCP(this));
+            this.rpHandlerTCP = new RPHandlerTCP(this);
+            Thread tcp = new Thread(this.rpHandlerTCP);
             tcp.start();
             // Launch udp worker
-            Thread udp = new Thread(new RPHandlerUDP(this));
+            this.rpHandlerUDP = new RPHandlerUDP(this);
+            Thread udp = new Thread(this.rpHandlerUDP);
             udp.start();
-            Thread serverTester = new Thread(new RPServerTester(this));
+            this.rpServerTester = new RPServerTester(this);
+            Thread serverTester = new Thread(this.rpServerTester);
             serverTester.start();
 
             // join threads
@@ -150,6 +156,13 @@ public class RP extends Node{
 
     public synchronized Map<Integer, String> getServers(){
         return this.servers;
+    }
+
+    public void turnOff()
+    {
+        this.rpHandlerTCP.turnOff();
+        this.rpHandlerUDP.turnOfF();
+        this.rpServerTester.turnOff();
     }
 
     public static void main(String args[]){

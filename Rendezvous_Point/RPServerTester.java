@@ -20,6 +20,7 @@ import Common.Util;
 public class RPServerTester implements Runnable{
     private RP rp;
     private Map<Integer, TCPConnection> serverConnections;
+    private boolean running;
 
     public RPServerTester(RP rp){
         this.rp = rp;
@@ -43,7 +44,8 @@ public class RPServerTester implements Runnable{
     }
 
     public void run(){
-        while(true){
+        this.running = true;
+        while(this.running){
             Map<Integer, String> servers = this.rp.getServers();
             try{
                 for(Map.Entry<Integer,String> server : servers.entrySet()){
@@ -76,5 +78,12 @@ public class RPServerTester implements Runnable{
                 e.printStackTrace();
             }
         }
+
+        this.serverConnections.values().stream().map((c) -> { c.stopConnection(); return c; });
+    }
+
+    public void turnOff()
+    {
+        this.running = false;
     }
 }

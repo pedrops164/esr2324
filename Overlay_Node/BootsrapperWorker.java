@@ -77,7 +77,7 @@ public class BootsrapperWorker implements Runnable {
             if (response.equals("OK"))
             {
                 this.node.log(new LogEntry("Bootstrapper : Successfully sent neighbour information to " + fromIp));
-                this.bootstrapperHandler.addConnected(fromID);
+                this.bootstrapperHandler.addConnected(fromID, fromIp);
             }
             else
             {

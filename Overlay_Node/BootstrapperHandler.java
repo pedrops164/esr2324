@@ -14,7 +14,7 @@ import org.json.*;
 public class BootstrapperHandler {
     private String configFile;
     private int RPID;
-    private List<Integer> connected;
+    private Map<Integer,String> connected;
     private List<String> RPIPs;
     private Map<String, Integer> ipToId; // Maps node ip to node id
     private Map<Integer, List<String>> idToIps;
@@ -28,7 +28,7 @@ public class BootstrapperHandler {
         this.ipToId = new HashMap<>();
         this.idToNeighbours = new HashMap<>();
         this.idToIps = new HashMap<>();
-        this.connected = new ArrayList<>();
+        this.connected = new HashMap<>();
         loadConfig();
         this.lock = new ReentrantLock();
         this.verifyChanges = this.lock.newCondition();
@@ -116,7 +116,7 @@ public class BootstrapperHandler {
      * Parse the config file and see what nodes changed
      * @return this list of node ids whose information changed
      */
-    public List<Integer> parseChanges(long waitTime)
+    public Set<Integer> parseChanges(long waitTime, Set<String> removedNodes)
     {
         this.lock.lock();
         try
@@ -124,7 +124,7 @@ public class BootstrapperHandler {
             boolean timePassed;
             do
             {
-                timePassed = this.verifyChanges.await(waitTime, TimeUnit.MILLISECONDS);
+                timePassed = !this.verifyChanges.await(waitTime, TimeUnit.MILLISECONDS);
             }
             while(!this.changed && !timePassed); 
 
@@ -140,11 +140,12 @@ public class BootstrapperHandler {
     
             this.loadConfig();
     
-            List<Integer> changedNodes = new ArrayList<>();
+            Set<Integer> changedNodes = new HashSet<>(),
+                        removedNodesIDs = new HashSet<>();
     
             if (oldRPID != this.RPID || !compareIPLists(oldRPIPs, this.RPIPs))
             {
-                changedNodes.addAll(this.connected);
+                changedNodes.addAll(this.connected.keySet());
                 return changedNodes;
             }
             
@@ -152,7 +153,8 @@ public class BootstrapperHandler {
             {
                 String ip = entry.getKey();
                 int oldID = entry.getValue();
-                if (oldID != this.ipToId.get(ip))
+                Integer newId = this.ipToId.get(ip); 
+                if (newId!=null && oldID != newId.intValue())
                 {
                     changedNodes.add(this.ipToId.get(ip));
                 }
@@ -161,7 +163,12 @@ public class BootstrapperHandler {
             for (Map.Entry<Integer,List<String>> entry : oldidToIps.entrySet())
             {
                 List<String> old = entry.getValue();
-                if (!compareIPLists(old, this.idToIps.get(entry.getKey())))
+                if (!this.idToIps.containsKey(entry.getKey()))
+                {
+                    System.out.println("Nao ta no idToTps");
+                    removedNodesIDs.add(entry.getKey());
+                }
+                else if (!compareIPLists(old, this.idToIps.get(entry.getKey())))
                 {
                     changedNodes.add(entry.getKey());
                 }
@@ -169,14 +176,25 @@ public class BootstrapperHandler {
     
             for (Map.Entry<Integer, Map<Integer, String>> entry : oldidToNeighbours.entrySet())
             {
-                if (!compareNeighbourMaps(entry.getValue(), this.idToNeighbours.get(entry.getKey())))
+                if (!this.idToNeighbours.containsKey(entry.getKey()))
+                {
+                    System.out.println("Nao ta no idToNeighbours");
+                    removedNodesIDs.add(entry.getKey());
+                }
+                else if (!compareNeighbourMaps(entry.getValue(), this.idToNeighbours.get(entry.getKey())))
                     changedNodes.add(entry.getKey());
             }
 
             this.changed = false;
             this.changes.signalAll();
             
-            changedNodes.removeIf((i) -> !this.connected.contains(i));
+            
+            removedNodesIDs.removeIf((id) -> !this.connected.containsKey(id));
+            removedNodes.addAll(removedNodesIDs.stream().map((id) -> {
+                return this.connected.get(id);
+            }).toList());
+            changedNodes.removeIf((id) -> (!this.connected.containsKey(id) || removedNodesIDs.contains(id)));
+
             return changedNodes;
         }
         catch(Exception e)
@@ -187,7 +205,7 @@ public class BootstrapperHandler {
         {
             this.lock.unlock();
         }
-        return new ArrayList<>();
+        return new HashSet<>();
     }
 
     public void setChanged(boolean status)
@@ -255,13 +273,25 @@ public class BootstrapperHandler {
         return new HashMap<>(this.idToNeighbours.get(id));
     }
 
-    public void addConnected(int id)
+    public void addConnected(int id, String ip)
     {
-        this.connected.add(id);
+        this.connected.put(id, ip);
     }
 
     public void removeConnected(int id)
     {
-        this.connected.add(id);
+        this.connected.remove(id);
+    }
+
+    public void removeConnected(String ip)
+    {
+        int id = -1;
+        for (Map.Entry<Integer, String> c : this.connected.entrySet())
+        {
+            if (ip.equals(c.getValue()))
+                id = c.getKey();
+        }
+        if (id != -1)
+            this.removeConnected(id);
     }
 }

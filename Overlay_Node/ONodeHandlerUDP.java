@@ -7,6 +7,7 @@ import Common.*;
 public class ONodeHandlerUDP implements Runnable {
     private DatagramSocket ds;
     private ONode oNode;
+    private boolean running;
     
     public ONodeHandlerUDP(ONode oNode)
     {
@@ -33,7 +34,8 @@ public class ONodeHandlerUDP implements Runnable {
             DatagramPacket receivedPacket = new DatagramPacket(receiveData, receiveData.length);
 
             this.oNode.log(new LogEntry("Listening on UDP:" + Util.PORT));
-            while(true) {
+            this.running = true;
+            while(this.running) {
                 try {
                     // Receive the packet
                     this.ds.receive(receivedPacket);
@@ -65,9 +67,16 @@ public class ONodeHandlerUDP implements Runnable {
             }
             
         } catch (Exception e) {
-            e.printStackTrace();  
+            if (this.running)
+                e.printStackTrace();
         } finally {
             this.ds.close();
         }
+    }
+
+    public void turnOff()
+    {
+        this.running = false;;
+        this.ds.close();
     }
 }

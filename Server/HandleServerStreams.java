@@ -2,6 +2,7 @@ package Server;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
+import java.net.SocketException;
 
 import Common.LogEntry;
 import Common.ServerStreams;
@@ -14,6 +15,7 @@ import Common.TCPConnection;
 public class HandleServerStreams implements Runnable{
     private Server server;
     private TCPConnection c;
+    private boolean running;
 
     public HandleServerStreams(Server s, TCPConnection c){
         this.server = s;
@@ -21,7 +23,8 @@ public class HandleServerStreams implements Runnable{
     }
 
     public void run(){
-        while(true){
+        this.running = true;
+        while(this.running){
             try{
                 this.server.log(new LogEntry("Got a new ServerStream request from the RP!"));
                 // Send the ServerStream to the RP
@@ -36,9 +39,21 @@ public class HandleServerStreams implements Runnable{
                 
                 // Wait for the next request 
                 this.c.receive();
-            }catch(Exception e){
+            }
+            catch (SocketException e)
+            {
+                this.server.log(new LogEntry("Turning off TCP handler"));
+                return;
+            } 
+            catch(Exception e){
                 e.printStackTrace();
             }   
         }
+    }
+
+    public void turnOff()
+    {
+        this.running = false;
+        this.c.stopConnection();
     }
 }

@@ -1,30 +1,16 @@
 package Overlay_Node;
 
 import Common.LogEntry;
-import Common.NeighbourReader;
-import Common.LivenessCheckWorker;
 import Common.Node;
-import Common.PathNode;
-import Common.StreamRequest;
-import Common.TCPConnection;
-import Common.UDPDatagram;
-import Common.VideoMetadata;
-import Common.TCPConnection.Packet;
-import Common.NormalFloodWorker;
-import Common.Util;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.net.*;
-import java.nio.ByteBuffer;
 import java.util.*;
 
 public class ONode extends Node {
     private Map<String, List<Integer>> streamNeighours;
     private BootstrapperHandler bootstrapperHandler;
     private String bootstrapConfigFile;
+    private ONodeHandlerTCP oNodeHandlerTCP;
+    private ONodeHandlerUDP oNodeHandlerUDP;
+
 
     public ONode(String bootstrapperIP, boolean debugMode)
     {
@@ -105,10 +91,12 @@ public class ONode extends Node {
             }
 
             // Launch tcp worker
-            Thread tcp = new Thread(new ONodeHandlerTCP(this));
+            this.oNodeHandlerTCP = new ONodeHandlerTCP(this);
+            Thread tcp = new Thread(this.oNodeHandlerTCP);
             tcp.start();
             // Launch udp worker
-            Thread udp = new Thread(new ONodeHandlerUDP(this));
+            this.oNodeHandlerUDP = new ONodeHandlerUDP(this);
+            Thread udp = new Thread(this.oNodeHandlerUDP);
             udp.start();
 
             // join threads
@@ -137,6 +125,12 @@ public class ONode extends Node {
     public boolean isBoostrapper()
     {
         return this.bootstrapperHandler != null;
+    }
+
+    public void turnOff()
+    {
+        this.oNodeHandlerTCP.turnOff();
+        this.oNodeHandlerUDP.turnOff();
     }
 
     public static void main(String args[]){

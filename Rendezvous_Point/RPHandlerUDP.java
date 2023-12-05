@@ -14,6 +14,7 @@ class RPHandlerUDP implements Runnable{
     private int numThreads, pushQuantity;
     private Thread[] threadPool;
     private RPDatagramPacketQueue datagramPacketQueue;
+    private boolean running;
 
     public RPHandlerUDP(RP rp){
         this.rp = rp;
@@ -49,8 +50,9 @@ class RPHandlerUDP implements Runnable{
 
             for (Thread thread : this.threadPool)
                 thread.start();
-    
-            while(true) {
+            
+            this.running = true;
+            while(this.running) {
                 try {
                     // Receive the packet
                     this.ds.receive(receivePacket);
@@ -76,9 +78,16 @@ class RPHandlerUDP implements Runnable{
                 }
             }
         }  catch (Exception e) {
-            e.printStackTrace();
+            if (this.running)
+                e.printStackTrace();
         } finally {
             this.ds.close();
         }
     }    
+
+    public void turnOfF()
+    {
+        this.running = false;
+        this.ds.close();
+    }
 }

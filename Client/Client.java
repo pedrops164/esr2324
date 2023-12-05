@@ -23,6 +23,9 @@ public class Client extends Node {
     private Lock routingTreeLock;
     private Condition hasPaths;
     ClientVideoManager cvm;
+    private ClientHandlerTCP clientHandlerTCP;
+    private ClientHandlerUDP clientHandlerUDP;
+    private ClientPathManager clientPathManager;
 
     public Client(String args[], boolean debugMode, String bootstrapperIP){
         super(-1, debugMode, bootstrapperIP);
@@ -185,13 +188,19 @@ public class Client extends Node {
         }
 
         // inicializar a receção por TCP
-        Thread tcp = new Thread(new ClientHandlerTCP(this));
+        this.clientHandlerTCP = new ClientHandlerTCP(this);
+        Thread tcp = new Thread(this.clientHandlerTCP);
         tcp.start();
-        Thread udp = new Thread(new ClientHandlerUDP(this));
+        this.clientHandlerUDP = new ClientHandlerUDP(this);
+        Thread udp = new Thread(this.clientHandlerUDP);
         udp.start();
         
         // executar o flood
         this.flood();
+
+        this.clientPathManager = new ClientPathManager(this);
+        Thread pathManager = new Thread(this.clientPathManager);
+        pathManager.start();
         
         // enquanto não houver caminhos esperar
         this.routingTreeLock.lock();
@@ -205,8 +214,6 @@ public class Client extends Node {
             this.routingTreeLock.unlock();
         }
         
-        Thread pathManager = new Thread(new ClientPathManager(this));
-        pathManager.start();
 
         this.getAvailableStreams();
         this.clientGUI = new ClientGUI(this);
@@ -214,6 +221,13 @@ public class Client extends Node {
 
     public List<String> getAvailableStreamsList(){
         return this.availableStreams;
+    }
+
+    public void turnOff()
+    {
+        this.clientHandlerTCP.turnOff();
+        this.clientHandlerUDP.turnOff();
+        this.clientPathManager.turnOff();
     }
 
     public static void main(String args[]) throws InterruptedException, NoPathsAvailableException{

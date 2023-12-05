@@ -7,6 +7,7 @@ import Common.*;
 public class ClientHandlerUDP implements Runnable {
     private DatagramSocket ds;
     private Client client;
+    private boolean running;
     
     public ClientHandlerUDP(Client client)
     {
@@ -33,8 +34,8 @@ public class ClientHandlerUDP implements Runnable {
             DatagramPacket receivedPacket = new DatagramPacket(receiveData, receiveData.length);
 
             this.client.log(new LogEntry("Listening on UDP:" + this.client.getIps().get(0) + ":" + Util.PORT));
-
-            while(true) {
+            this.running = true;
+            while(this.running) {
                 try {
                     // Receive the packet
                     this.ds.receive(receivedPacket);
@@ -49,15 +50,25 @@ public class ClientHandlerUDP implements Runnable {
                 } catch (java.awt.HeadlessException e) {
                     this.client.log(new LogEntry("Must run 'export DISPLAY=:0.0' before running the client"));
                     break;
+                } catch (SocketException se) {
+                    this.client.log(new LogEntry("Turning off UDP handler"));
+                    break;
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
             
         } catch (Exception e) {
-            e.printStackTrace();  
+            if (this.running)
+                e.printStackTrace();  
         } finally {
             this.ds.close();
         }
+    }
+
+    public void turnOff()
+    {
+        this.running = false;
+        this.ds.close();
     }
 }

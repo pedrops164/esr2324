@@ -14,6 +14,7 @@ import Common.TCPConnection.Packet;
 import Common.Util;
 
 class ClientPathManager implements Runnable {
+    private boolean running;
     private Client client;
     /**
      * Interval in millis between path verification
@@ -40,7 +41,6 @@ class ClientPathManager implements Runnable {
 
             byte[] serializedPath = path.serialize();
             boolean alive = false;
-
             try 
             {
                 // falar com o nó
@@ -74,13 +74,14 @@ class ClientPathManager implements Runnable {
     {
         try 
         {
+            this.running = true;
             this.client.log(new LogEntry("Path Manager started.."));
             LocalDateTime start = LocalDateTime.now();
-            while (true)
-            {
-                Thread.sleep(verificationInterval);
-                List<Path> paths = this.client.getOrderedPaths();
 
+            while (this.running)
+            {
+                List<Path> paths = this.client.getOrderedPaths();
+                
                 int i;
                 for (i=0 ; i<paths.size() ; i++)
                 {
@@ -95,7 +96,13 @@ class ClientPathManager implements Runnable {
                         break;
                 }
 
-                if (i == paths.size())
+                if (paths.size() == 0)
+                {
+                    client.log(new LogEntry("There are no previous calculated paths, a flood will occur"));
+                    client.flood();
+                    start = LocalDateTime.now();
+                }
+                else if (i == paths.size())
                 {
                     client.log(new LogEntry("The previous calculated paths are not available, a flood will occur"));
                     client.flood();
@@ -108,11 +115,17 @@ class ClientPathManager implements Runnable {
                     client.flood();
                     start = LocalDateTime.now();
                 }
+                Thread.sleep(verificationInterval);
             }    
         } 
         catch (Exception e) 
         {
             e.printStackTrace();
         }
+    }
+
+    public void turnOff()
+    {
+        this.running = false;
     }
 }
