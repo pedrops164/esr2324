@@ -45,6 +45,7 @@ public class RPServerTester implements Runnable{
 
     public void run(){
         this.running = true;
+
         while(this.running){
             Map<Integer, String> servers = this.rp.getServers();
             try{
@@ -55,26 +56,32 @@ public class RPServerTester implements Runnable{
                         addServerConnection(server);
                     }
 
-                    // Send request for ServerStreams
-                    byte[] msg = "ServerStreams request!".getBytes();
-                    TCPConnection c = this.serverConnections.get(server.getKey());
-                    c.send(new TCPConnection.Packet(1, msg));
+                    try{
+                        // Send request for ServerStreams
+                        byte[] msg = "ServerStreams request!".getBytes();
+                        TCPConnection c = this.serverConnections.get(server.getKey());
+                        c.send(new TCPConnection.Packet(1, msg));
+                        
+                        // Server Response
+                        TCPConnection.Packet receivedPacket = c.receive();
+                        byte[] data = receivedPacket.data;
+                        ByteArrayInputStream bais = new ByteArrayInputStream(data);
+                        DataInputStream in = new DataInputStream(bais);
+                        ServerStreams sstreams = ServerStreams.deserialize(in);
+                        
+                        this.rp.log(new LogEntry("RP received the ServerStreams response and is going to update the server ranking!"));
 
-                    // Server Response
-                    TCPConnection.Packet receivedPacket = c.receive();
-                    byte[] data = receivedPacket.data;
-                    ByteArrayInputStream bais = new ByteArrayInputStream(data);
-                    DataInputStream in = new DataInputStream(bais);
-                    ServerStreams sstreams = ServerStreams.deserialize(in);
-                    
-                    this.rp.log(new LogEntry("RP received the ServerStreams response and is going to update the server ranking!"));
-
-                    // Rank server connection speed
-                    LocalDateTime receivingTimeStamp = LocalDateTime.now();
-                    this.rp.rankServer(sstreams, receivingTimeStamp);
+                        // Rank server connection speed
+                        LocalDateTime receivingTimeStamp = LocalDateTime.now();
+                        this.rp.rankServer(sstreams, receivingTimeStamp);
+                    }catch(Exception e){
+                        // Server has been terminated
+                        this.serverConnections.remove(server.getKey());
+                        this.rp.removeServer(server.getKey());
+                    }
                 }       
                 Thread.sleep(2000);
-            }catch(Exception e){
+            } catch(Exception e){
                 e.printStackTrace();
             }
         }

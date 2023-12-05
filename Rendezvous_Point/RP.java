@@ -8,6 +8,7 @@ import Common.ServerStreams;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.Map.Entry;
 
 public class RP extends Node{
     private Map<String, List<Integer>> streamServers; // stream name to list of available servers
@@ -151,6 +152,33 @@ public class RP extends Node{
         return streams;
     }
 
+    // Removes all the info of a server from the RP
+    public void removeServer(int serverID){
+        System.out.println("Before:");
+        System.out.println(this.servers);
+        System.out.println(this.rankedServers);
+        System.out.println(this.streamServers);
+        
+        List<String> streamsToRemove = new ArrayList<>();
+        this.servers.remove(serverID);
+        this.rankedServers.removeIf(rs -> rs.getServerID() == serverID);
+        for(Entry<String, List<Integer>> pair: this.streamServers.entrySet()){
+            pair.getValue().removeIf(id -> id == serverID);
+            if(pair.getValue().size() == 0){
+                streamsToRemove.add(pair.getKey());
+            }
+        }
+        
+        for(String streamToRemove: streamsToRemove){
+            this.streamServers.remove(streamToRemove);
+        }
+
+        System.out.println("After:");
+        System.out.println(this.servers);
+        System.out.println(this.rankedServers);
+        System.out.println(this.streamServers);
+    }
+
     public void stopStreaming(String streamName) {
         this.streamNeighbours.remove(streamName);
     }
@@ -170,7 +198,10 @@ public class RP extends Node{
     }
 
     public synchronized Map<Integer, String> getServers(){
-        return this.servers;
+        Map<Integer, String> clonedServers = new HashMap<>();
+        clonedServers.putAll(this.servers);
+
+        return clonedServers;
     }
 
     public void turnOff()
