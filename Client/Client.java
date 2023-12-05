@@ -17,6 +17,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Client extends Node {
+    private ClientGUI clientGUI;
     private List<String> availableStreams;
     private RoutingTree routingTree;
     private Lock routingTreeLock;
@@ -207,20 +208,12 @@ public class Client extends Node {
         Thread pathManager = new Thread(new ClientPathManager(this));
         pathManager.start();
 
-        Scanner in = new Scanner(System.in);
-        boolean b = true;
-        while(b){
-            this.getAvailableStreams();
-            this.showAvailableStreams();
-            int streamId = in.nextInt();
-            
-            if(streamId >= 1 && streamId <= this.availableStreams.size()){
-                this.requestStreaming(streamId);
-            }else{
-                in.close();
-                b = false;
-            }
-        }   
+        this.getAvailableStreams();
+        this.clientGUI = new ClientGUI(this);
+    }
+
+    public List<String> getAvailableStreamsList(){
+        return this.availableStreams;
     }
 
     public static void main(String args[]) throws InterruptedException, NoPathsAvailableException{

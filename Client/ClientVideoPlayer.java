@@ -37,7 +37,7 @@ class ClientVideoPlayer {
     public void initializeGUI() {
         //GUI
         //----
-        this.jframe = new JFrame("Cliente de Testes");
+        this.jframe = new JFrame(this.streamName);
         JButton setupButton = new JButton("Setup");
         playButton = new JButton("Play");
         JButton pauseButton = new JButton("Pause");

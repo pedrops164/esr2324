@@ -3,7 +3,6 @@ package Client;
 import Client.ClientVideoManager;
 
 import Common.UDPDatagram;
-import Common.VideoMetadata;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -79,21 +78,6 @@ public class ClientVideoManager {
         }
 
         cvp.addFrame(udpDatagram);
-    }
-
-    // synchronized so that the same stream isn't added twice
-    public synchronized void updateVideoInfo(VideoMetadata vm) {
-        //gets video metadata of the stream
-
-        String streamName = vm.getStreamName();
-        if (!videoPlayers.containsKey(streamName)) {
-            createVideoPlayer(streamName);
-        }
-        // Get the video player respective to the metadata of the stream received,
-        // and update its frame period
-        ClientVideoPlayer cvp = videoPlayers.get(streamName);
-        cvp.setVideoPeriod(vm.getFramePeriod());
-        cvp.setStreamName(streamName);
     }
 
     public ClientVideoPlayer createVideoPlayer(String streamName) {
