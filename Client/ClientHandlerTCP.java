@@ -64,6 +64,11 @@ public class ClientHandlerTCP implements Runnable {
                         this.client.log(new LogEntry("Received flood response from RP: " + s.getInetAddress().getHostAddress()));
                         client.receivePath(p);
                         break;
+                    case 7: // ALIVE? message
+                        //this.oNode.log(new LogEntry("Received liveness check from " + s.getInetAddress().getHostAddress()));
+                        t = new Thread(new LivenessCheckWorker(this.client, c, p));
+                        t.start();
+                        break;
                     case 8: // End of stream notification
                         t = new Thread(new HandleEndOfStream(client, p));
                         t.start();
