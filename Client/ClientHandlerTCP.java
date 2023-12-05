@@ -4,7 +4,6 @@ import java.util.*;
 import java.net.*;
 import Common.*;
 import Common.TCPConnection.Packet;
-import Common.Util;
 
 public class ClientHandlerTCP implements Runnable {
     private ServerSocket ss;
@@ -38,6 +37,11 @@ public class ClientHandlerTCP implements Runnable {
                 
                 switch(p.type)
                 {
+                    case 4: // Topology changes message from Bootstrapper
+                        this.client.log(new LogEntry("Received topology changes message from Bootstrapper"));
+                        t = new Thread(new TopologyChangesWorker(this.client, c));
+                        t.start();
+                        break;
                     case 5: // Flood Message from client
                     this.client.log(new LogEntry("Received flood message from " + s.getInetAddress().getHostAddress()));
                         t = new Thread(new NormalFloodWorker(client, p));    

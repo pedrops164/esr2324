@@ -81,12 +81,27 @@ public class ONode extends Node {
     public void run()
     {
         try {
+            Thread changesWorker = null;
             if (!this.isBoostrapper())
             {
                 this.log(new LogEntry("Sending neighbour request to Bootstrapper"));
-                boolean successful = this.messageBootstrapper();
-                if (!successful)
+                int successfull = this.messageBootstrapper();
+
+                if (successfull == 1)
+                {
+                    System.out.println("Bootstrapper is not available.. Shutting down");
                     return;
+                }
+                else if (successfull == 2)
+                {
+                    System.out.println("This node is not on the overlay network.. Shutting down");
+                    return;
+                }
+            }
+            else
+            {
+                changesWorker = new Thread(new BoostrapperChangesWorker(this, this.bootstrapperHandler));
+                changesWorker.start();
             }
 
             // Launch tcp worker
@@ -99,6 +114,8 @@ public class ONode extends Node {
             // join threads
             tcp.join();
             udp.join();
+            if (this.isBoostrapper())
+                changesWorker.join();
         } catch (Exception e) {
             e.printStackTrace();
         }
