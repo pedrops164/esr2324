@@ -78,6 +78,10 @@ public class RPHandlerTCP implements Runnable {
                         t = new Thread(new HandleEndOfStream(rp, p));
                         t.start();
                         break;
+                    case 9: // Stop streaming request
+                        t = new Thread(new HandleStopStreaming(rp, p));
+                        t.start();
+                        break;
                     default:
                         rp.log(new LogEntry("Packet type not recognized. Message ignored! Type: " + p.type ));
                         c.stopConnection();

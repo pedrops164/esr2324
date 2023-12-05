@@ -8,6 +8,8 @@ import Common.TCPConnection;
 import Common.TCPConnection.Packet;
 import Common.LogEntry;
 import Common.Util;
+import Common.NotificationStopStream;
+import Common.InvalidNodeException;
 
 import java.io.*;
 import java.net.*;
@@ -143,6 +145,49 @@ public class Client extends Node {
             byte[] srBytes = sr.serialize();
             neighbourConnection.send(2, srBytes); // Send the request to the next node in the path
         }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    public void requestStopStreaming(String streamName) {
+        
+        Path bestPath = null;
+        try {
+            bestPath = this.routingTree.getBestPath();
+            NotificationStopStream notificationStopStream = new NotificationStopStream(streamName, bestPath);
+            Packet stopStreamPacket = new Packet(9, notificationStopStream.serialize());
+            // Gets the next node in the path
+            PathNode nextNode = bestPath.getNext(this.getId());
+
+            // Get current node in the path (client)
+            PathNode currentNode = bestPath.getClient();
+
+            // While we haven't iterated through all nodes in the path, get the next node that we can establish connection,
+            // and propagate the stop streaming signal
+            while (true) {
+                try {
+                    // get next node
+                    currentNode = bestPath.getNext(currentNode.getNodeId());
+                    // Try to establish TCP connection with the next node
+                    Socket socket = new Socket(currentNode.getNodeIpAddressStr(), Util.PORT);
+                    TCPConnection neighbourConnection = new TCPConnection(socket);
+                    // Propagate the stop stream request to the neighbor
+                    neighbourConnection.send(stopStreamPacket);
+                    socket.close();
+                    break;
+                } catch (InvalidNodeException e) {
+                    this.log(new LogEntry("Iterated through all nodes"));
+                    break;
+                } catch (Exception e) {
+                    // if we couldn't establish tcp connection with the next, continue to the next iteration
+                    //continue;
+                    e.printStackTrace();
+                }
+                break;
+            }
+        } catch (NoPathsAvailableException e) {
+            this.log(new LogEntry("No paths available!"));
+        } catch(Exception e){
             e.printStackTrace();
         }
     }

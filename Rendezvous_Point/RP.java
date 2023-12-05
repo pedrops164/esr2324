@@ -87,6 +87,11 @@ public class RP extends Node{
         return this.getNeighboursIps(neighbours);
     }
 
+    public List<Integer> getNeighborIds(String streamName) {
+        List<Integer> neighbours = this.streamNeighbours.get(streamName);
+        return neighbours;
+    }
+
     public synchronized void addServerStreams(int serverID, String serverIP, List<String> streams){
         this.logger.log(new LogEntry("Adding available streams from server " + serverIP));
 
@@ -150,8 +155,18 @@ public class RP extends Node{
         this.streamNeighbours.remove(streamName);
     }
 
+    // Stops this stream for the neighbor received as argument
+    public void stopStreaming(String streamName, int nodeId) {
+        List<Integer> neighbourIds = this.getNeighborIds(streamName);
+        // removes the object, not the index!!
+        if (neighbourIds!=null) {
+            neighbourIds.remove(Integer.valueOf(nodeId));
+        }
+        // if the neighbourIds list is now empty for this stream, inform the server to stop streaming this stream!
+    }
+
     public boolean isStreaming(String streamName) {
-        return this.streamNeighbours.containsKey(streamName);
+        return (this.streamNeighbours.containsKey(streamName) && !this.streamNeighbours.get(streamName).isEmpty());
     }
 
     public synchronized Map<Integer, String> getServers(){

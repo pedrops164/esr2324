@@ -57,6 +57,8 @@ class RPHandlerUDP implements Runnable{
                     // Receive the packet
                     this.ds.receive(receivePacket);
 
+                    // if this datagram belongs to a stream that the rp doesnt want, discard it!
+
                     DatagramPacket copy = new DatagramPacket(receivePacket.getData(), receivePacket.getLength());
                     packetsToPush.add(copy);
                     //this.rp.log(new LogEntry("Received UDP packet"));

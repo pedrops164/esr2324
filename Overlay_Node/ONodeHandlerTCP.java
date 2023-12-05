@@ -86,6 +86,10 @@ class ONodeHandlerTCP implements Runnable
                         t = new Thread(new HandleEndOfStream(this.oNode, p));
                         t.start();
                         break;
+                    case 9: // Stop streaming request
+                        t = new Thread(new HandleStopStreaming(this.oNode, p));
+                        t.start();
+                        break;
                     default:
                         this.oNode.log(new LogEntry("Packet type < " + p.type + " > not recognized. Message ignored!"));
                         c.stopConnection();

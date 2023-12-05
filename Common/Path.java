@@ -89,6 +89,12 @@ public class Path implements Serializable {
         return nodeList.get(index-1);
     }
 
+    public PathNode getCurrent(int id)
+    {
+        int index = this.indexOf(id);
+        return nodeList.get(index);
+    }
+
     public PathNode getClient()
     {
         return this.nodeList.get(0);

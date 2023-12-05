@@ -59,8 +59,13 @@ public class ONode extends Node {
     }
 
     public List<String> getNeighbourIpsStream(String streamName){
-        List<Integer> neighbours = this.streamNeighours.get(streamName);
+        List<Integer> neighbours = this.getNeighborIds(streamName);
         return this.getNeighboursIps(neighbours);
+    }
+
+    public List<Integer> getNeighborIds(String streamName) {
+        List<Integer> neighbours = this.streamNeighours.get(streamName);
+        return neighbours;
     }
 
 
@@ -109,8 +114,18 @@ public class ONode extends Node {
         }
     }
 
+    // Stops this stream for all clients
     public void stopStreaming(String streamName) {
         this.streamNeighours.remove(streamName);
+    }
+
+    // Stops this stream for the client received as argument
+    public void stopStreaming(String streamName, int nodeId) {
+        List<Integer> neighbourIds = this.getNeighborIds(streamName);
+        // removes the object, not the index!!
+        if (neighbourIds!=null) {
+            neighbourIds.remove(Integer.valueOf(nodeId));
+        }
     }
 
     public boolean isStreaming(String streamName) {

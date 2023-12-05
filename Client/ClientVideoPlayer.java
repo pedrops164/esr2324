@@ -47,11 +47,8 @@ class ClientVideoPlayer {
         iconLabel = new JLabel();
 
         //Frame
-        this.jframe.addWindowListener(new WindowAdapter() {
-           public void windowClosing(WindowEvent e) {
-         System.exit(0);
-           }
-        });
+        // adds the listener that implements the behaviour that happens when window is closed
+        this.jframe.addWindowListener(new windowCloseListener(this));
     
         //Buttons
         buttonPanel.setLayout(new GridLayout(1,0));
@@ -94,6 +91,20 @@ class ClientVideoPlayer {
 
     public void setStreamName(String streamName) {
         this.streamName = streamName;
+    }
+
+    class windowCloseListener extends WindowAdapter {
+        private ClientVideoPlayer cvp;
+
+        public windowCloseListener(ClientVideoPlayer cvp) {
+            this.cvp = cvp;
+        }
+
+        public void windowClosing(WindowEvent e) {
+            client.log(new LogEntry("Window closed! Sending stop stream request!"));
+            client.requestStopStreaming(this.cvp.streamName);
+            System.exit(0);
+        }
     }
     
     class updateFrameListener implements ActionListener {

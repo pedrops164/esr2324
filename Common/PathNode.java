@@ -9,12 +9,14 @@ import java.io.Serializable;
 public class PathNode implements Serializable {
     private int nodeId, nodePort;
     private IPAddress nodeIPAddress;
+    private String nodeIpAddressString;
     private LocalDateTime timeStamp;
     
     public PathNode (int nodeID, int nodePort, String nodeIPAddress)
     {
         this.nodeId = nodeID;
         this.nodePort = nodePort;
+        this.nodeIpAddressString = nodeIPAddress;
         this.nodeIPAddress = new IPAddress(nodeIPAddress);
         this.timeStamp = LocalDateTime.now();
     }
@@ -53,6 +55,10 @@ public class PathNode implements Serializable {
     
     public IPAddress getNodeIPAddress() {
         return nodeIPAddress;
+    }
+
+    public String getNodeIpAddressStr() {
+        return nodeIpAddressString;
     }
     
     public void setNodeIPAddress(IPAddress nodeIPAddress) {

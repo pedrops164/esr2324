@@ -31,7 +31,6 @@ public class RPThreadPoolWorker implements Runnable{
         while (true)
         {
             List<DatagramPacket> packets = this.datagramPacketQueue.popPackets();
-            this.rp.log(new LogEntry("Thread pool worker " + this.workerID + " is handling an UDP packet."));
             
             for (DatagramPacket packet : packets)
             {
@@ -50,6 +49,8 @@ public class RPThreadPoolWorker implements Runnable{
                             this.rp.log(new LogEntry("Thread pool worker " + this.workerID + " sent UDP packet to " + neighbourIp));
                             Thread.sleep(25);
                         }
+                    } else {
+                        this.rp.log(new LogEntry("Not streaming this packet, therefore I discarded it!"));
                     }
                 } catch (java.io.IOException e) {
                     this.rp.log(new LogEntry("Packet lost"));
