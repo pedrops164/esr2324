@@ -45,12 +45,6 @@ class HandleStreamingRequest implements Runnable{
                 byte[] srBytes = sr.serialize();
                 nextC.send(2, srBytes); // Send the request to the next node in the path
 
-                // Receive and send end of stream notification
-                //Packet endOfStreamNotification = nextC.receive();
-                //this.c.send(endOfStreamNotification);
-                //this.oNode.log(new LogEntry("Received end of stream notification!"));
-                //this.oNode.stopStreaming(this.sr.getStreamName());
-
                 this.c.stopConnection();
             }catch(Exception e){
                 e.printStackTrace();
@@ -59,10 +53,6 @@ class HandleStreamingRequest implements Runnable{
             addFlux();
             this.oNode.log(new LogEntry("This Overlay Node is already streaming: " + this.sr.getStreamName()));;
             try{
-                //this.oNode.log(new LogEntry("Sending video metadata!"));
-                //VideoMetadata vm = new VideoMetadata(100, this.sr.getStreamName());
-                //byte[] vmBytes = vm.serialize();
-                //this.c.send(6, vmBytes); // Send the request to the next node in the path
                 this.c.stopConnection();
             }catch(Exception e){
                 e.printStackTrace();
