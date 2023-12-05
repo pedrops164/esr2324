@@ -175,7 +175,8 @@ public class BootstrapperHandler {
 
             this.changed = false;
             this.changes.signalAll();
-    
+            
+            changedNodes.removeIf((i) -> !this.connected.contains(i));
             return changedNodes;
         }
         catch(Exception e)
