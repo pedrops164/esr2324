@@ -5,6 +5,8 @@ import Client.ClientVideoManager;
 import Common.UDPDatagram;
 import Common.VideoMetadata;
 
+import java.util.List;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
@@ -39,14 +41,19 @@ public class ClientVideoManager {
      */
     private void checkAndCloseInactivePlayers() {
         // Iterates over the set of <key,value> pairs
+
+        List<String> endingStreams = new ArrayList<>();
         for (Map.Entry<String, ClientVideoPlayer> entry : videoPlayers.entrySet()) {
             String streamName = entry.getKey();
             ClientVideoPlayer cvp = entry.getValue();
             if ((cvp.streamEnded() && cvp.allFramesRead())) {
                 // Close player if the stream has ended and all frames have been read
-                closePlayer(streamName);
+                endingStreams.add(streamName);
             }
         }
+
+        for(String stream: endingStreams)
+            closePlayer(stream);
     }
 
     /*
