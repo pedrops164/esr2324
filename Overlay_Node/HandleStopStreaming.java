@@ -1,10 +1,7 @@
 package Overlay_Node;
 
-import Server.Server;
-
 import Common.TCPConnection;
 import Common.TCPConnection.Packet;
-import Common.StreamRequest;
 import Common.LogEntry;
 import Common.PathNode;
 import Common.Path;
@@ -13,7 +10,6 @@ import Common.NotificationStopStream;
 import Common.InvalidNodeException;
 
 import java.net.*;
-import java.util.*;
 
 // Responsible to handle stop streaming requests from the previous node (may be the client)
 // This stop streaming request is propagated all the way to the RP

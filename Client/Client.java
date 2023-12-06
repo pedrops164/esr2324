@@ -148,7 +148,8 @@ public class Client extends Node {
         }
     }
 
-    public void requestStopStreaming(String streamName) {
+    // The boolean stopStream distinguishes from the cases when the client closes the GUI and we a node in the path breaks down
+    public void requestStopStreaming(String streamName, boolean stopStream) {
         
         // get current path of this stream
         Path currentPath = this.clientPathManager.getStreamPath(streamName);
@@ -162,7 +163,7 @@ public class Client extends Node {
             return;
         }
         try {
-            NotificationStopStream notificationStopStream = new NotificationStopStream(streamName, currentPath);
+            NotificationStopStream notificationStopStream = new NotificationStopStream(streamName, currentPath, stopStream);
             Packet stopStreamPacket = new Packet(9, notificationStopStream.serialize());
             // Gets the next node in the path
             PathNode nextNode = currentPath.getNext(this.getId());

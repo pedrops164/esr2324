@@ -120,8 +120,11 @@ class ClientPathManager implements Runnable {
                         if (!alive) {
                             //this.client.log(new LogEntry("Path " + path.toString() + " is not alive, removing from routing tree."));
                             this.client.removePath(path);
+
                             // since the path is corrupted, we stop the stream through this path
-                            this.client.requestStopStreaming(streamName);
+                            // stopStream is false because we want to continue the stream through another path
+                            this.client.requestStopStreaming(streamName, false);
+                            
                             // we request the stream through the best new path
                             // If there are no paths, internally there will be a flood and the best path will be set
                             this.client.requestStreaming(streamName);

@@ -154,10 +154,6 @@ public class RP extends Node{
 
     // Removes all the info of a server from the RP
     public void removeServer(int serverID){
-        //System.out.println(this.servers);
-        //System.out.println(this.rankedServers);
-        //System.out.println(this.streamServers);
-        
         List<String> streamsToRemove = new ArrayList<>();
         this.servers.remove(serverID);
         this.rankedServers.removeIf(rs -> rs.getServerID() == serverID);
@@ -171,17 +167,13 @@ public class RP extends Node{
         for(String streamToRemove: streamsToRemove){
             this.streamServers.remove(streamToRemove);
         }
-
-        //System.out.println(this.servers);
-        //System.out.println(this.rankedServers);
-        //System.out.println(this.streamServers);
     }
 
     public void stopStreaming(String streamName) {
         this.streamNeighbours.remove(streamName);
     }
-
-    // Stops this stream for the neighbor received as argument
+    
+    // Stops this stream for the neighbour received as argument
     public void stopStreaming(String streamName, int nodeId) {
         List<Integer> neighbourIds = this.getNeighborIds(streamName);
         // removes the object, not the index!!

@@ -102,7 +102,8 @@ class ClientVideoPlayer {
 
         public void windowClosing(WindowEvent e) {
             client.log(new LogEntry("Window closed! Sending stop stream request!"));
-            client.requestStopStreaming(this.cvp.streamName);
+            // stopStream is true because the client closed the Video Player
+            client.requestStopStreaming(this.cvp.streamName, true);
             System.exit(0);
         }
     }
