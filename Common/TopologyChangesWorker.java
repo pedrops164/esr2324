@@ -30,7 +30,7 @@ public class TopologyChangesWorker implements Runnable {
             this.node.setId(Util.deserializeInt(pID.data));
 
             List<?> auxIps = (List<?>)Util.deserializeObject(pIPs.data);
-            this.node.setIp(auxIps.stream().map(s->(String)s).toList());
+            this.node.setIps(auxIps.stream().map(s->(String)s).toList());
             
             List<?> aux = (List<?>)Util.deserializeObject(pRPIPs.data);
             this.node.RPIPs = aux.stream().map(s -> (String)s).toList();

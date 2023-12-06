@@ -61,6 +61,7 @@ class ONodeHandlerTCP implements Runnable
                             if (msg.equals("REMOVED"))
                             {
                                 c.send(4, "OK".getBytes());
+                                this.oNode.log(new LogEntry("Received REMOVED message from bootstrapper. Turning off..."));
                                 this.oNode.turnOff();
                             }
                             else
