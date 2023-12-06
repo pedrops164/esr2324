@@ -24,6 +24,7 @@ public class HandleServerStreams implements Runnable{
 
     public void run(){
         this.running = true;
+
         while(this.running){
             try{
                 this.server.log(new LogEntry("Got a new ServerStream request from the RP!"));
@@ -39,14 +40,9 @@ public class HandleServerStreams implements Runnable{
                 
                 // Wait for the next request 
                 this.c.receive();
-            }
-            catch (SocketException e)
-            {
-                this.server.log(new LogEntry("Turning off TCP handler"));
-                return;
-            } 
-            catch(Exception e){
-                e.printStackTrace();
+            }catch(Exception e){
+                this.c.stopConnection();
+                this.running = false;
             }   
         }
     }

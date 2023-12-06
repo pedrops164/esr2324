@@ -43,7 +43,6 @@ class ClientVideoPlayer {
         JButton setupButton = new JButton("Setup");
         playButton = new JButton("Play");
         JButton pauseButton = new JButton("Pause");
-        JButton tearButton = new JButton("Teardown");
         JPanel mainPanel = new JPanel();
         JPanel buttonPanel = new JPanel();
         iconLabel = new JLabel();
@@ -57,10 +56,8 @@ class ClientVideoPlayer {
         buttonPanel.add(setupButton);
         buttonPanel.add(playButton);
         buttonPanel.add(pauseButton);
-        buttonPanel.add(tearButton);
     
         // handlers
-        //tearButton.addActionListener(new tearButtonListener());
         playButton.addActionListener(new playButtonListener(this, this.client));
         pauseButton.addActionListener(new pauseButtonListener(this, this.client));
     
