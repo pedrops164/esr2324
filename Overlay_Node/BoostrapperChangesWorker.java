@@ -70,6 +70,19 @@ public class BoostrapperChangesWorker implements Runnable{
 
             for (String ip : ips)
             {
+                if (this.node.getIps().contains(ip))
+                {
+                    List<String> newIPs = this.bootstrapperHandler.getIPsfromID(id);
+                    this.node.setIps(newIPs);
+
+                    List<String> newRPIPs = this.bootstrapperHandler.getRPIPs();
+                    this.node.setRPIPs(newRPIPs);
+
+                    Map<Integer,String> newNeighbours = this.bootstrapperHandler.getNeighboursFromID(id);
+                    this.node.setNeighbours(newNeighbours);
+
+                    this.node.log(new LogEntry("Bootstrapper : Set own new neighbour information.."));
+                }
                 try {
                     Socket socket = new Socket(ip, Util.PORT);
                     TCPConnection tcpConnection = new TCPConnection(socket);

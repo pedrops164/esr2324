@@ -55,6 +55,7 @@ public class RPHandlerTCP implements Runnable {
                         if (msg.equals("REMOVED"))
                         {
                             c.send(4, "OK".getBytes());
+                            this.rp.log(new LogEntry("Received REMOVED message from bootstrapper. Turning off..."));
                             this.rp.turnOff();
                         }
                         else

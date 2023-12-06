@@ -124,6 +124,7 @@ public class Server extends Node {
                         if (msg.equals("REMOVED"))
                         {
                             tcpConnection.send(4, "OK".getBytes());
+                            this.log(new LogEntry("Received REMOVED message from bootstrapper. Turning off..."));
                             this.turnOff();
                         }
                         else

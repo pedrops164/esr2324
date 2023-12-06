@@ -63,7 +63,7 @@ public abstract class Node {
         return ips;
     }
     
-    public void setIp(List<String> ips) {
+    public void setIps(List<String> ips) {
         this.ips = ips;
     }
 
@@ -73,6 +73,16 @@ public abstract class Node {
 
     public void setBootstrapperIP(String bootstrapperIP) {
         this.bootstrapperIP = bootstrapperIP;
+    }
+
+    public List<String> getRPIPs()
+    {
+        return this.RPIPs;
+    }
+
+    public void setRPIPs(List<String> rpips)
+    {
+        this.RPIPs = rpips;
     }
     
     public Map<Integer, String> getNeighbours() {
@@ -103,6 +113,7 @@ public abstract class Node {
         }
         return ips;
     }
+
 
     public void createDefaultLogFile()
     {
@@ -192,7 +203,7 @@ public abstract class Node {
                 this.setId(Util.deserializeInt(pID.data));
 
                 List<?> auxIps = (List<?>)Util.deserializeObject(pIPs.data);
-                this.setIp(auxIps.stream().map(s->(String)s).toList());
+                this.setIps(auxIps.stream().map(s->(String)s).toList());
                 
                 List<?> aux = (List<?>)Util.deserializeObject(pRPIPs.data);
                 this.RPIPs = aux.stream().map(s -> (String)s).toList();

@@ -46,6 +46,7 @@ public class ClientHandlerTCP implements Runnable {
                         if (msg.equals("REMOVED"))
                         {
                             c.send(4, "OK".getBytes());
+                            this.client.log(new LogEntry("Received REMOVED message from bootstrapper. Turning off..."));
                             this.client.turnOff();
                         }
                         else
