@@ -127,7 +127,8 @@ class ClientPathManager implements Runnable {
                             
                             // we request the stream through the best new path
                             // If there are no paths, internally there will be a flood and the best path will be set
-                            this.client.requestStreaming(streamName);
+                            // We set the fixPath flag to true
+                            this.client.requestStreaming(streamName, true);
     
                         }
                     }

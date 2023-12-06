@@ -29,7 +29,7 @@ public class UDPStreaming {
                 this.videoType = 26;
                 this.video = new VideoMjpeg(videoPath);
             }else if(videoExtension.equals("MP4")){
-                this.videoType = 26;
+                this.videoType = 27;
                 this.video = new VideoMP4(videoPath);
             }else{
                 System.out.println("Extensão de vídeo inválida!");

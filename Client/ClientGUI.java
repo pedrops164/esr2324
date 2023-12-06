@@ -88,7 +88,8 @@ public class ClientGUI {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            this.client.requestStreaming(this.streamName);
+            // This is not a request to fix the path in case of a failed overlay node. So we set the fixPath flag to false
+            this.client.requestStreaming(this.streamName, false);
 
             // Close this frame
             this.frame.dispose();

@@ -116,7 +116,7 @@ public class Client extends Node {
     }
 
     // Method responsible to request the UDP streaming 
-    public void requestStreaming(String streamName){
+    public void requestStreaming(String streamName, boolean fixPath){
         try{
             // get the best path
             Path path;
@@ -135,7 +135,7 @@ public class Client extends Node {
 
             // Send request
             this.logger.log(new LogEntry("Client requesting stream: " + streamName));
-            StreamRequest sr = new StreamRequest(streamName, this.id, path);
+            StreamRequest sr = new StreamRequest(streamName, this.id, path, fixPath);
 
             // Send the request through TCP to the next node in the path
             PathNode nextNode = path.getNext(this.id);
