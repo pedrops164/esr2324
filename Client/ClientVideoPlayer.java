@@ -32,6 +32,7 @@ class ClientVideoPlayer {
         this.framesReceived = 0;
         this.lastFrameUpdate = System.currentTimeMillis();
         this.streamEnded = false;
+        this.paused = false;
         initializeGUI();        
     }
 
@@ -59,8 +60,9 @@ class ClientVideoPlayer {
         buttonPanel.add(tearButton);
     
         // handlers
-        //playButton.addActionListener(new playButtonListener());
         //tearButton.addActionListener(new tearButtonListener());
+        playButton.addActionListener(new playButtonListener(this, this.client));
+        pauseButton.addActionListener(new pauseButtonListener(this, this.client));
     
         //Image display label
         iconLabel.setIcon(null);
@@ -122,19 +124,21 @@ class ClientVideoPlayer {
         public void actionPerformed(ActionEvent e) {
             try {
                 try {
-                    UDPDatagram nextFrame = frameQueue.getNextFrame();
-                    //byte[] payload = nextFrame.getPayload();
-                    //int payload_length = payload.length;
-                    ////get an Image object from the payload bitstream
-                    //Image image = toolkit.createImage(payload, 0, payload_length);
-                    Image image = VideoMjpeg.decode(nextFrame);
-                    //display the image as an ImageIcon object
-                    //client.log(new LogEntry("Updating Frame!"));
-                    icon = new ImageIcon(image);
-                    iconLabel.setIcon(icon);
-                    // Updates the time of the last frame update
-                    cvp.lastFrameUpdate = System.currentTimeMillis();
-                //this.closeCounter = 0;
+                    if(!paused){
+                        UDPDatagram nextFrame = frameQueue.getNextFrame();
+                        //byte[] payload = nextFrame.getPayload();
+                        //int payload_length = payload.length;
+                        ////get an Image object from the payload bitstream
+                        //Image image = toolkit.createImage(payload, 0, payload_length);
+                        Image image = VideoMjpeg.decode(nextFrame);
+                        //display the image as an ImageIcon object
+                        //client.log(new LogEntry("Updating Frame!"));
+                        icon = new ImageIcon(image);
+                        iconLabel.setIcon(icon);
+                        // Updates the time of the last frame update
+                        cvp.lastFrameUpdate = System.currentTimeMillis();
+                        //this.closeCounter = 0;
+                    }
                 } catch (NoNextFrameException exception) {
                     // There are no frames in the queue, so we don't update the frame
                     //client.log(new LogEntry("No new frames have arrived!"));
@@ -148,11 +152,33 @@ class ClientVideoPlayer {
         }
     }
 
+    class pauseButtonListener implements ActionListener{
+        private Client client;
+        private ClientVideoPlayer cvp;
+
+        public pauseButtonListener(ClientVideoPlayer cvp, Client client){
+            this.client = client;
+            this.cvp = cvp;
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            this.client.log(new LogEntry("Pause Button pressed!"));
+            this.cvp.setPaused(true);
+        }        
+    }
+
     class playButtonListener implements ActionListener {
+        private Client client;
+        private ClientVideoPlayer cvp;
+
+        public playButtonListener(ClientVideoPlayer cvp, Client client){
+            this.client = client;
+            this.cvp = cvp;
+        }
+
         public void actionPerformed(ActionEvent e){
-            client.log(new LogEntry("Play Button pressed !"));
-            //start the timer
-            updateFrame.start();
+            this.client.log(new LogEntry("Play Button pressed!"));
+            this.cvp.setPaused(false);
         }
     }
 
@@ -166,6 +192,10 @@ class ClientVideoPlayer {
     public long getLastFrameUpdateTime() {
         // returns the instant when the last frame was updated
         return lastFrameUpdate;
+    }
+
+    public void setPaused(boolean paused){
+        this.paused = paused;
     }
 
     public void setStreamEnded() {
