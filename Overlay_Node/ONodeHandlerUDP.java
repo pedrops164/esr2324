@@ -47,7 +47,7 @@ public class ONodeHandlerUDP implements Runnable {
                     // Convert the received bytes into a Frame Packet
                     UDPDatagram datagram = UDPDatagram.deserialize(receivedBytes);
                     
-                    if (oNode.isStreaming(datagram.getStreamName())) {
+                    if (oNode.alreadyStreaming(datagram.getStreamName())) {
                         // Get this of IP's of neighbours that want this stream
                         List<String> neighbourIps = this.oNode.getNeighbourIpsStream(datagram.getStreamName()); 
                         // For each neighbour send the UDPDatagram

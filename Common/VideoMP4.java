@@ -12,7 +12,7 @@ public class VideoMP4 extends Video {
 
     public VideoMP4(String videoPath) {
         // TODO: get frame_period from MP4
-        super(videoPath, 25);
+        super(videoPath, 50);
     }
 
     // Returns the bytes of the next frame, or returns null if all frames have been read

@@ -129,10 +129,6 @@ public class ONode extends Node {
         return this.streamNeighours.get(streamName).isEmpty();
     }
 
-    public boolean isStreaming(String streamName) {
-        return this.streamNeighours.containsKey(streamName);
-    }
-
     public BootstrapperHandler getBootstrapperHandler()
     {
         return this.bootstrapperHandler;

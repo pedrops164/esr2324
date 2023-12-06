@@ -51,6 +51,7 @@ public class LivenessCheckWorker implements Runnable {
             catch (Exception e)
             {
                 //this.node.log(new LogEntry("Neighbour " + nextNeighbourIP + " is no longer active. Sending confirmation to client."));
+                sendResponse(alive);
             }
         }
         catch (Exception e)

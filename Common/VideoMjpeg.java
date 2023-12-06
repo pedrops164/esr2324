@@ -7,7 +7,7 @@ public class VideoMjpeg extends Video {
     private Toolkit toolkit;
 
     public VideoMjpeg(String videoPath) {
-        super(videoPath, 25);
+        super(videoPath, 50);
         // We cant get the value of fps from a MJpeg video, so we just set an arbitrary value in the frame period
         // Frame period is the inverse of fps (frames per second)
         this.toolkit = Toolkit.getDefaultToolkit();

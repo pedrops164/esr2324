@@ -27,7 +27,7 @@ class HandleEndOfStream implements Runnable {
         String streamName = notificationEOS.getStreamName();
 
         // If this stream is being streamed, stop streaming it, and propagate the EOS signal to the neighbours who want the stream
-        if (oNode.isStreaming(streamName)) {
+        if (oNode.alreadyStreaming(streamName)) {
             List<String> neighbourIps = oNode.getNeighbourIpsStream(streamName);
             for (String neighbourIp: neighbourIps) {
                 try {

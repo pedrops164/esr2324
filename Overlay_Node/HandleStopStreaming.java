@@ -42,7 +42,7 @@ class HandleStopStreaming implements Runnable {
             // Gets the next node in the path
             PathNode nextNode = pathToRP.getNext(oNode.getId());
 
-            if (oNode.isStreaming(streamName)) {
+            if (oNode.alreadyStreaming(streamName)) {
                 // Stop streaming 'streamName' to the previous node
                 this.oNode.log(new LogEntry("previous node id - " + previousNode.getNodeId()));
                 this.oNode.log(new LogEntry("Stopped streaming - " + streamName));
@@ -73,10 +73,9 @@ class HandleStopStreaming implements Runnable {
                     break;
                 } catch (Exception e) {
                     // if we couldn't establish tcp connection with the next, continue to the next iteration
-                    //continue;
-                    e.printStackTrace();
+                    continue;
+                    //e.printStackTrace();
                 }
-                break;
             }
         }
     }

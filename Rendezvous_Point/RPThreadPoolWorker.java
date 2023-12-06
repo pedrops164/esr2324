@@ -47,7 +47,7 @@ public class RPThreadPoolWorker implements Runnable{
                             // Send the DatagramPacket through the UDP socket
                             this.datagramSocket.send(toSend);
                             this.rp.log(new LogEntry("Thread pool worker " + this.workerID + " sent UDP packet to " + neighbourIp));
-                            Thread.sleep(25);
+                            Thread.sleep(50);
                         }
                     } else {
                         this.rp.log(new LogEntry("Not streaming this packet, therefore I discarded it!"));
