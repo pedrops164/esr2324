@@ -28,6 +28,9 @@ class HandleStreamRequests implements Runnable{
             TCPConnection serverConnection = new TCPConnection(s);
             byte [] data = sr.serialize();
             serverConnection.send(2, data); // Send the video stream request to the Server
+            
+            // Add the server to the streaming servers
+            this.rp.addStreamingServer(sr.getStreamName(), serverIP);
 
             serverConnection.stopConnection();
         }catch(Exception e){

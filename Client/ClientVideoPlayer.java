@@ -23,6 +23,7 @@ class ClientVideoPlayer {
     private String streamName;
     private long lastFrameUpdate;
     private boolean streamEnded;
+    private boolean paused;
 
     public ClientVideoPlayer(Client client, ClientVideoManager cvm) {
         this.frameQueue = new FrameQueue();

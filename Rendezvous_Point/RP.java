@@ -2,7 +2,6 @@ package Rendezvous_Point;
 
 import Common.LogEntry;
 import Common.Node;
-import Common.Path;
 import Common.ServerStreams;
 
 import java.time.LocalDateTime;
@@ -11,6 +10,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class RP extends Node{
+    private Map<String, String> streamingServer; // Map that associates a stream to the ServerIP that is streaming it
     private Map<String, List<Integer>> streamServers; // stream name to list of available servers
     private Map<Integer, String> servers; // serverID to serverIP
     private List<ServerRanking> rankedServers; // Organized list with the ranking from the best to the worst server 
@@ -25,6 +25,7 @@ public class RP extends Node{
         this.servers = new HashMap<>();
         this.rankedServers = new ArrayList<>();
         this.streamNeighbours = new HashMap<>();
+        this.streamingServer = new HashMap<>();
     }
 
     public void run() {
@@ -135,6 +136,10 @@ public class RP extends Node{
         return "0.0.0.0";
     }
 
+    public void addStreamingServer(String streamName, String serverIP){
+        this.streamingServer.put(streamName, serverIP);
+    }
+
     public synchronized List<String> getAvailableStreams(){
         List<String> streams = new ArrayList<String>();
         for(Map.Entry<String, List<Integer>> entry : this.streamServers.entrySet()){
@@ -172,6 +177,12 @@ public class RP extends Node{
             neighbourIds.remove(Integer.valueOf(nodeId));
         }
         // if the neighbourIds list is now empty for this stream, inform the server to stop streaming this stream!
+    }
+
+    public String stopServerStreaming(String streamName){
+        String serverIP = this.streamingServer.get(streamName);
+        this.streamingServer.remove(streamName);
+        return serverIP;
     }
 
     public boolean isStreaming(String streamName) {

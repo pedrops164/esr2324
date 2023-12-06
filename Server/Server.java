@@ -21,11 +21,13 @@ public class Server extends Node {
     private String streamsDir;
     private HandleServerStreams sHandleServerStreams;
     private boolean running;
+    private Map<String, HandleStreamRequests> streamingWorkers; // Keeps track of all the workers that are sending streams
 
     public Server(String []args, boolean debugMode, String bootstrapperIP){
         super(-1, debugMode, bootstrapperIP);
         this.streams = new ArrayList<>();
         this.streamsDir = args[1];
+        this.streamingWorkers = new HashMap<>();
         
         if(this.streamsDir.charAt(this.streamsDir.length() - 1) != '/'){
             this.streamsDir += "/";
@@ -141,6 +143,10 @@ public class Server extends Node {
                         t = new Thread(new LivenessCheckWorker(this, tcpConnection, p));
                         t.start();
                         break;
+                    case 9: // Stop Streaming
+                        t = new Thread(new HandleStopStreaming(this, p));
+                        t.start();
+                        break;
                     default:
                         this.logger.log(new LogEntry("Packet type not recognized. Message ignored!"));
                         break;
@@ -152,9 +158,12 @@ public class Server extends Node {
         }
     }
 
+    // Called when stream is terminated normally
     public void notifyEndOfStream(String streamName) {
         // Establishes TCP Connection with RP
         try {
+            // Remove the worker
+            this.streamingWorkers.remove(streamName);
             Socket socket = new Socket(this.RPIPs.get(0), Util.PORT);
             TCPConnection rpConnection = new TCPConnection(socket);
 
@@ -164,6 +173,22 @@ public class Server extends Node {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    // Add a worker that sends the stream
+    public void addStreamingWorker(String streamName, HandleStreamRequests worker){
+        this.streamingWorkers.put(streamName, worker);
+    }
+
+    // Stop and remove a worker from sending a stream
+    // Called when the streaming is stopped 
+    public void stopStreaming(String streamName){
+        HandleStreamRequests worker = this.streamingWorkers.get(streamName);
+        
+        // Make the worker stop sending UDP Packets
+        worker.setSending(false);
+        // Remove the worker
+        this.streamingWorkers.remove(streamName);
     }
 
     public List<String> getStreams(){

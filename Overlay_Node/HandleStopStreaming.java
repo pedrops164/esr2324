@@ -66,6 +66,7 @@ class HandleStopStreaming implements Runnable {
                     TCPConnection neighbourConnection = new TCPConnection(socket);
                     // Propagate the stop stream request to the neighbor
                     neighbourConnection.send(this.stopStreamPacket);
+                    neighbourConnection.stopConnection();
                     break;
                 } catch (InvalidNodeException e) {
                     this.oNode.log(new LogEntry("Iterated through all nodes"));

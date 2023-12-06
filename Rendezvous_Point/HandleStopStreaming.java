@@ -1,8 +1,13 @@
 package Rendezvous_Point;
 
 import Common.TCPConnection.Packet;
+import Common.Util;
+
+import java.net.Socket;
+
 import Common.LogEntry;
 import Common.PathNode;
+import Common.TCPConnection;
 import Common.Path;
 import Common.NotificationStopStream;
 
@@ -45,7 +50,14 @@ class HandleStopStreaming implements Runnable {
             
             // Notify the server to stop streaming
             if(endStream && this.rp.noNeighbours(streamName)) {
-                
+                String serverIP = this.rp.stopServerStreaming(streamName);
+
+                // Try to establish TCP connection with the next node
+                Socket socket = new Socket(serverIP, Util.PORT);
+                TCPConnection serverConnection = new TCPConnection(socket);
+                // Propagate the stop stream request to the neighbor
+                serverConnection.send(this.stopStreamPacket);
+                serverConnection.stopConnection();
             }
         } catch (Exception e) {
             e.printStackTrace();

@@ -16,12 +16,15 @@ class HandleStreamRequests implements Runnable{
     private String RPIP;
     private DatagramSocket ds;
     private Server server;
+    private boolean sending;
 
     public HandleStreamRequests(TCPConnection connection, Packet p, String RPIP, Server server){
         this.connection = connection;
         this.receivedPacket = p;
         this.RPIP = RPIP;
         this.server = server;
+        this.sending = true;
+
         try {
             this.ds = new DatagramSocket();
         } catch (Exception e) {
@@ -37,11 +40,19 @@ class HandleStreamRequests implements Runnable{
         return fileName.substring(lastIndexOfDot + 1);
     }
 
+    public void setSending(boolean sending){
+        this.sending = sending;
+    }
+
     public void run(){
+
         // Receive request
         byte[] data = this.receivedPacket.data;
         StreamRequest sr = StreamRequest.deserialize(data);
         String streamName = sr.getStreamName();
+
+        // Add streaming worker to the Server
+        this.server.addStreamingWorker(streamName ,this);
 
         String extension = getExtension(streamName);
         
@@ -51,9 +62,9 @@ class HandleStreamRequests implements Runnable{
         // Start the UDP video streaming. (Send directly to the RP)
         try {
             this.server.log(new LogEntry("Streaming '" + streamName + "' through UDP!"));
-            boolean sent = true;
-            while (sent) {
-                sent = streaming.sendNextFrame();
+            
+            while (sending) {
+                sending = streaming.sendNextFrame();
                 // Wait for 'frame_period' milliseconds before sending the next packet
                 Thread.sleep(frame_period);
             }
