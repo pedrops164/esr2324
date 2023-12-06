@@ -14,8 +14,7 @@ public class RP extends Node{
     private Map<String, List<Integer>> streamServers; // stream name to list of available servers
     private Map<Integer, String> servers; // serverID to serverIP
     private List<ServerRanking> rankedServers; // Organized list with the ranking from the best to the worst server 
-    private Map<String, List<Integer>> streamNeighbours; // Maps each stream to the id's of the neighbours of want it 
-    private Map<Integer, Path> paths; // maps clients to their respective paths (paths from RP to each client)
+    private Map<String, List<Integer>> streamNeighbours; // Maps each stream to the id's of the neighbours of want it
     private RPHandlerTCP rpHandlerTCP;
     private RPHandlerUDP rpHandlerUDP;
     private RPServerTester rpServerTester;
@@ -25,7 +24,6 @@ public class RP extends Node{
         this.streamServers = new HashMap<>();
         this.servers = new HashMap<>();
         this.rankedServers = new ArrayList<>();
-        this.paths = new HashMap<>();
         this.streamNeighbours = new HashMap<>();
     }
 
@@ -64,13 +62,6 @@ public class RP extends Node{
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    /*
-    Associates client id to its path
-    */
-    public void addPathToClient(int clientId, Path path) {
-        this.paths.put(clientId, path);
     }
 
     public void addStreamingFlux(String streamName, int neighbour){

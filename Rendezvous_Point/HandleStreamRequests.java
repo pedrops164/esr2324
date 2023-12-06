@@ -49,6 +49,7 @@ class HandleStreamRequests implements Runnable{
         this.rp.addStreamingFlux(sr.getStreamName(), previous.getNodeId());
 
         this.rp.log(new LogEntry("A client wants the stream: " + sr.getStreamName() + "!"));
+        
         // Now we have to request to a server to stream this video
         this.requestStreamToServer(sr);
         this.neighbourConnection.stopConnection();

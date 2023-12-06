@@ -29,7 +29,6 @@ public class RPFloodWorker implements Runnable
             byte[] serializedPath = this.path.serialize();
             try {
                 PathNode client = path.getClient();
-                this.rp.addPathToClient(client.getNodeId(), this.path);
                 Socket s = new Socket(client.getNodeIPAddress().toString(), Util.PORT);
                 TCPConnection c = new TCPConnection(s);
                 c.send(new Packet(6, serializedPath));
