@@ -51,6 +51,7 @@ class HandleStreamingRequest implements Runnable{
             }   
         }else{
             addFlux();
+            this.oNode.log(new LogEntry("Already streaming - " + this.sr.getStreamName()));
             this.oNode.log(new LogEntry("This Overlay Node is already streaming: " + this.sr.getStreamName()));;
             try{
                 this.c.stopConnection();

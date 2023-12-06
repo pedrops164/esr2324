@@ -41,10 +41,7 @@ public class ONode extends Node {
     }
 
     public boolean alreadyStreaming(String stream){
-        if(this.streamNeighours.containsKey(stream)) 
-            return true;
-        
-        return false;
+        return (this.streamNeighours.containsKey(stream) && !this.streamNeighours.get(stream).isEmpty());
     }
 
     public void addStreamingFlux(String streamName, int neighbour){

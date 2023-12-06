@@ -45,6 +45,8 @@ class HandleStopStreaming implements Runnable {
 
             if (oNode.isStreaming(streamName)) {
                 // Stop streaming 'streamName' to the previous node
+                this.oNode.log(new LogEntry("previous node id - " + previousNode.getNodeId()));
+                this.oNode.log(new LogEntry("Stopped streaming - " + streamName));
                 oNode.stopStreaming(streamName, previousNode.getNodeId());
             }
         } catch (Exception e) {
