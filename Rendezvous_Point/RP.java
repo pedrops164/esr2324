@@ -154,10 +154,9 @@ public class RP extends Node{
 
     // Removes all the info of a server from the RP
     public void removeServer(int serverID){
-        System.out.println("Before:");
-        System.out.println(this.servers);
-        System.out.println(this.rankedServers);
-        System.out.println(this.streamServers);
+        //System.out.println(this.servers);
+        //System.out.println(this.rankedServers);
+        //System.out.println(this.streamServers);
         
         List<String> streamsToRemove = new ArrayList<>();
         this.servers.remove(serverID);
@@ -173,10 +172,9 @@ public class RP extends Node{
             this.streamServers.remove(streamToRemove);
         }
 
-        System.out.println("After:");
-        System.out.println(this.servers);
-        System.out.println(this.rankedServers);
-        System.out.println(this.streamServers);
+        //System.out.println(this.servers);
+        //System.out.println(this.rankedServers);
+        //System.out.println(this.streamServers);
     }
 
     public void stopStreaming(String streamName) {

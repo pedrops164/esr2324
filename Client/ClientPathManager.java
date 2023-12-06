@@ -5,6 +5,8 @@ import java.net.Socket;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import Common.LogEntry;
 import Common.Path;
@@ -16,6 +18,7 @@ import Common.Util;
 class ClientPathManager implements Runnable {
     private boolean running;
     private Client client;
+    private Map<String, Path> streamPaths;
     /**
      * Interval in millis between path verification
      */
@@ -29,6 +32,7 @@ class ClientPathManager implements Runnable {
     public ClientPathManager(Client client)
     {
         this.client = client;
+        this.streamPaths = new HashMap<>();
     }
 
     public boolean doLivenessCheck(Path path)
@@ -68,6 +72,28 @@ class ClientPathManager implements Runnable {
             return false;
         }
     }
+
+    public void setStreamPath(String streamName, Path path) {
+        /*
+         * Associates the stream with name 'streamName' to the path received as argument
+         * This means that this stream is being received through this path
+         */
+        this.streamPaths.put(streamName, path);
+    }
+
+    public Path getStreamPath(String streamName) {
+        /*
+         * Returns the path from where the stream with name 'streamName' is being streamed
+         */
+        return this.streamPaths.get(streamName);
+    }
+
+    public void removeStreamPath(String streamName) {
+        /*
+         * Removes the path associated with this stream
+         */
+        this.streamPaths.remove(streamName);
+    }
     
     @Override
     public void run()
@@ -80,34 +106,42 @@ class ClientPathManager implements Runnable {
 
             while (this.running)
             {
-                List<Path> paths = this.client.getOrderedPaths();
-                
-                int i;
-                for (i=0 ; i<paths.size() ; i++)
-                {
-                    Path p = paths.get(i);
-                    boolean alive = this.doLivenessCheck(p);
-                    if (!alive)
-                    {
-                        //this.client.log(new LogEntry("Path " + p.toString() + " is not alive, removing from routing tree."));
-                        this.client.removePath(p);
+
+                /*
+                 * Iterate through all paths being streamed, and do a liveness check
+                 * If the liveness check fails for any path, we get the best path, stop the stream through the
+                 * corrupted path, and request stream through the new best path
+                 */
+                for (Map.Entry<String,Path> entry: this.streamPaths.entrySet()) {
+                    String streamName = entry.getKey();
+                    Path path = entry.getValue();
+                    if (path != null) {
+                        boolean alive = this.doLivenessCheck(path);
+                        if (!alive) {
+                            //this.client.log(new LogEntry("Path " + path.toString() + " is not alive, removing from routing tree."));
+                            this.client.removePath(path);
+                            // since the path is corrupted, we stop the stream through this path
+                            this.client.requestStopStreaming(streamName);
+                            // we request the stream through the best new path
+                            // If there are no paths, internally there will be a flood and the best path will be set
+                            this.client.requestStreaming(streamName);
+    
+                        }
                     }
-                    else
-                        break;
                 }
 
-                if (paths.size() == 0)
-                {
-                    client.log(new LogEntry("There are no previous calculated paths, a flood will occur"));
-                    client.flood();
-                    start = LocalDateTime.now();
-                }
-                else if (i == paths.size())
-                {
-                    client.log(new LogEntry("The previous calculated paths are not available, a flood will occur"));
-                    client.flood();
-                    start = LocalDateTime.now();
-                }
+                //if (paths.size() == 0)
+                //{
+                //    client.log(new LogEntry("There are no previous calculated paths, a flood will occur"));
+                //    client.flood();
+                //    start = LocalDateTime.now();
+                //}
+                //else if (i == paths.size())
+                //{
+                //    client.log(new LogEntry("The previous calculated paths are not available, a flood will occur"));
+                //    client.flood();
+                //    start = LocalDateTime.now();
+                //}
 
                 if (ChronoUnit.MILLIS.between(start, LocalDateTime.now()) >= floodInterval)
                 {

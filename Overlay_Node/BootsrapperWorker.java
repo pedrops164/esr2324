@@ -84,7 +84,7 @@ public class BootsrapperWorker implements Runnable {
                 this.node.log(new LogEntry("Bootstrapper : Error sending neighbour information to " + fromIp));
             }
         } 
-        catch (EOFException e) 
+        catch (Exception e) 
         {
             e.printStackTrace();
         }

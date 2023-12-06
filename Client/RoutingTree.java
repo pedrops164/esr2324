@@ -13,17 +13,20 @@ public class RoutingTree {
     private List<Path> paths;
     public enum Heuristic { N_JUMPS, DELAY };
     private Heuristic heuristic;
+    private Client client;
     
-    public RoutingTree()
+    public RoutingTree(Client client)
     {
         this.paths = new ArrayList<>();
         this.heuristic = Heuristic.N_JUMPS;
+        this.client = client;
     }    
     
-    public RoutingTree(Heuristic heuristic)
+    public RoutingTree(Heuristic heuristic, Client client)
     {
         this.paths = new ArrayList<>();
         this.heuristic = heuristic;
+        this.client = client;
     }
     
     public Heuristic getHeuristic() {
@@ -46,10 +49,21 @@ public class RoutingTree {
             this.paths.remove(idx);
     }
 
-    public Path getBestPath() throws NoPathsAvailableException
+    public Path getBestPath()
     {
-        if (paths.size() == 0)
-            throw new NoPathsAvailableException("Exception: There are no available paths yet");
+        /*
+         * Get the best path. If there are no paths, flood first!
+         */
+        while (paths.size() == 0) {
+            // If there are no paths, send flood, and wait a second
+            this.client.flood();
+            try {
+                Thread.sleep(1000);
+            } catch (Exception e) {
+                //Sleep interrupted
+            }
+        }
+        
         Comparator<Path> c = (heuristic == Heuristic.DELAY) ?(new ComparePathDelay()) :(new ComparePathJumps());
 
         return paths.stream().min(c).get();

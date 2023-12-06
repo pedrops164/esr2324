@@ -52,7 +52,7 @@ public class ClientGUI {
             this.buttons.add(button);
             this.buttonsPanel.add(this.buttons.get(i));
             // handler
-            button.addActionListener(new ButtonListener(i+1, this.client, this.jframe));
+            button.addActionListener(new ButtonListener(streams.get(i), this.client, this.jframe));
         }
 
         // Exit panel
@@ -77,18 +77,18 @@ public class ClientGUI {
 
     class ButtonListener implements ActionListener{
         private JFrame frame; 
-        private int streamID;
+        private String streamName;
         private Client client;
 
-        public ButtonListener(int streamID, Client client, JFrame frame){
-            this.streamID = streamID;
+        public ButtonListener(String streamName, Client client, JFrame frame){
+            this.streamName = streamName;
             this.client = client;
             this.frame = frame;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            this.client.requestStreaming(this.streamID);
+            this.client.requestStreaming(this.streamName);
 
             // Close this frame
             this.frame.dispose();

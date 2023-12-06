@@ -32,7 +32,7 @@ public class Client extends Node {
     public Client(String args[], boolean debugMode, String bootstrapperIP){
         super(-1, debugMode, bootstrapperIP);
         this.availableStreams = new ArrayList<>();
-        this.routingTree = new RoutingTree();
+        this.routingTree = new RoutingTree(this);
         this.routingTreeLock = new ReentrantLock();
         this.hasPaths = this.routingTreeLock.newCondition();
         this.cvm = new ClientVideoManager(this);
@@ -44,17 +44,13 @@ public class Client extends Node {
             this.availableStreams = new ArrayList<>();
 
             // Send the request
-            Socket s = new Socket(this.RPIPs.get(0), Util.PORT);
-            TCPConnection c = new TCPConnection(s);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            DataOutputStream out = new DataOutputStream(baos);
-            out.writeUTF("Available streams.");
-            out.flush();
-            byte [] data = baos.toByteArray();
-            c.send(3, data); // Send the request to the RP
+            Socket socket = new Socket(this.RPIPs.get(0), Util.PORT);
+            TCPConnection rpConnection = new TCPConnection(socket);
+            Packet availableStreamsRequest = new Packet(3);
+            rpConnection.send(availableStreamsRequest); // Send the request to the RP
 
             // Answer to the request
-            Packet p = c.receive();
+            Packet p = rpConnection.receive();
             ByteArrayInputStream bais = new ByteArrayInputStream(p.data);
             DataInputStream in = new DataInputStream(bais);
             int nr = in.readInt();
@@ -120,23 +116,26 @@ public class Client extends Node {
     }
 
     // Method responsible to request the UDP streaming 
-    public void requestStreaming(int streamId){
+    public void requestStreaming(String streamName){
         try{
             // get the best path
             Path path;
-            this.routingTreeLock.lock();
+            //this.routingTreeLock.lock();
             try
             {
                 path = this.routingTree.getBestPath();
             }
             finally
             {
-                this.routingTreeLock.unlock();
+                //this.routingTreeLock.unlock();
             }
+
+            // set the current path of this stream to the best path
+            this.clientPathManager.setStreamPath(streamName, path);
+
             // Send request
-            String stream = this.availableStreams.get(streamId-1);
-            this.logger.log(new LogEntry("Client requesting stream: " + stream));
-            StreamRequest sr = new StreamRequest(stream, this.id, path);
+            this.logger.log(new LogEntry("Client requesting stream: " + streamName));
+            StreamRequest sr = new StreamRequest(streamName, this.id, path);
 
             // Send the request through TCP to the next node in the path
             PathNode nextNode = path.getNext(this.id);
@@ -145,29 +144,38 @@ public class Client extends Node {
             byte[] srBytes = sr.serialize();
             neighbourConnection.send(2, srBytes); // Send the request to the next node in the path
         }catch(Exception e){
-            e.printStackTrace();
+            // stream request failed
         }
     }
 
     public void requestStopStreaming(String streamName) {
         
-        Path bestPath = null;
+        // get current path of this stream
+        Path currentPath = this.clientPathManager.getStreamPath(streamName);
+        // disassociate this path from this stream, because we are stopping the stream
+        // (sending a stop stream request through this path)
+        this.clientPathManager.removeStreamPath(streamName);
+
+        // If there is no current path, don't send the request
+        if (currentPath == null) {
+            this.log(new LogEntry("Current Path of stream " + streamName + " is null"));
+            return;
+        }
         try {
-            bestPath = this.routingTree.getBestPath();
-            NotificationStopStream notificationStopStream = new NotificationStopStream(streamName, bestPath);
+            NotificationStopStream notificationStopStream = new NotificationStopStream(streamName, currentPath);
             Packet stopStreamPacket = new Packet(9, notificationStopStream.serialize());
             // Gets the next node in the path
-            PathNode nextNode = bestPath.getNext(this.getId());
+            PathNode nextNode = currentPath.getNext(this.getId());
 
             // Get current node in the path (client)
-            PathNode currentNode = bestPath.getClient();
+            PathNode currentNode = currentPath.getClient();
 
             // While we haven't iterated through all nodes in the path, get the next node that we can establish connection,
             // and propagate the stop streaming signal
             while (true) {
                 try {
                     // get next node
-                    currentNode = bestPath.getNext(currentNode.getNodeId());
+                    currentNode = currentPath.getNext(currentNode.getNodeId());
                     // Try to establish TCP connection with the next node
                     Socket socket = new Socket(currentNode.getNodeIpAddressStr(), Util.PORT);
                     TCPConnection neighbourConnection = new TCPConnection(socket);
@@ -180,13 +188,11 @@ public class Client extends Node {
                     break;
                 } catch (Exception e) {
                     // if we couldn't establish tcp connection with the next, continue to the next iteration
-                    //continue;
-                    e.printStackTrace();
+                    this.log(new LogEntry("Couldnt establish TCPConnection"));
+                    continue;
+                    //e.printStackTrace();
                 }
-                break;
             }
-        } catch (NoPathsAvailableException e) {
-            this.log(new LogEntry("No paths available!"));
         } catch(Exception e){
             e.printStackTrace();
         }
