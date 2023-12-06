@@ -28,10 +28,13 @@ class HandleStopStreaming implements Runnable {
         this.oNode.log(new LogEntry("Handling stop stream request!"));
         // get received bytes
         NotificationStopStream notificationStopStream = NotificationStopStream.deserialize(stopStreamPacket.data);
+       
         // get stream name
         String streamName = notificationStopStream.getStreamName();
         // get path
         Path pathToRP = notificationStopStream.getPath();
+        // get endStream
+        boolean endStream = notificationStopStream.getEndStream();
 
         try {
             // Gets the previous node in the path
@@ -49,30 +52,31 @@ class HandleStopStreaming implements Runnable {
             e.printStackTrace();
         }
 
-        // Propagate the Stop streaming request to the next node
-        // If the TCP connection fails, try to connect with the next node after that, and so on
-        PathNode currentNode = pathToRP.getCurrent(oNode.getId());
-        while (true) {
-            try {
-                // get next node
-                currentNode = pathToRP.getNext(currentNode.getNodeId());
-                // Try to establish TCP connection with the next node
-                Socket socket = new Socket(currentNode.getNodeIpAddressStr(), Util.PORT);
-                TCPConnection neighbourConnection = new TCPConnection(socket);
-                // Propagate the stop stream request to the neighbor
-                neighbourConnection.send(this.stopStreamPacket);
+        // We only keep spreading the StopStreaming if there are no more neighbours wanting this stream of if we don't want to end the stream
+        if(this.oNode.noNeighbours(streamName) || endStream == false){
+            // Propagate the Stop streaming request to the next node
+            // If the TCP connection fails, try to connect with the next node after that, and so on
+            PathNode currentNode = pathToRP.getCurrent(oNode.getId());
+            while (true) {
+                try {
+                    // get next node
+                    currentNode = pathToRP.getNext(currentNode.getNodeId());
+                    // Try to establish TCP connection with the next node
+                    Socket socket = new Socket(currentNode.getNodeIpAddressStr(), Util.PORT);
+                    TCPConnection neighbourConnection = new TCPConnection(socket);
+                    // Propagate the stop stream request to the neighbor
+                    neighbourConnection.send(this.stopStreamPacket);
+                    break;
+                } catch (InvalidNodeException e) {
+                    this.oNode.log(new LogEntry("Iterated through all nodes"));
+                    break;
+                } catch (Exception e) {
+                    // if we couldn't establish tcp connection with the next, continue to the next iteration
+                    //continue;
+                    e.printStackTrace();
+                }
                 break;
-            } catch (InvalidNodeException e) {
-                this.oNode.log(new LogEntry("Iterated through all nodes"));
-                break;
-            } catch (Exception e) {
-                // if we couldn't establish tcp connection with the next, continue to the next iteration
-                //continue;
-                e.printStackTrace();
             }
-            break;
         }
-
     }
-
 }

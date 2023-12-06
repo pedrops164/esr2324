@@ -187,6 +187,10 @@ public class RP extends Node{
         return (this.streamNeighbours.containsKey(streamName) && !this.streamNeighbours.get(streamName).isEmpty());
     }
 
+    public boolean noNeighbours(String streamName){
+        return this.streamNeighbours.get(streamName).isEmpty();
+    }
+
     public synchronized Map<Integer, String> getServers(){
         Map<Integer, String> clonedServers = new HashMap<>();
         clonedServers.putAll(this.servers);

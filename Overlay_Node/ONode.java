@@ -116,13 +116,17 @@ public class ONode extends Node {
         this.streamNeighours.remove(streamName);
     }
 
-    // Stops this stream for the client received as argument
+    // Stops this stream for the node received as argument
     public void stopStreaming(String streamName, int nodeId) {
         List<Integer> neighbourIds = this.getNeighborIds(streamName);
         // removes the object, not the index!!
         if (neighbourIds!=null) {
             neighbourIds.remove(Integer.valueOf(nodeId));
         }
+    }
+
+    public boolean noNeighbours(String streamName){
+        return this.streamNeighours.get(streamName).isEmpty();
     }
 
     public boolean isStreaming(String streamName) {

@@ -42,6 +42,11 @@ class HandleStopStreaming implements Runnable {
                 // Stop streaming 'streamName' to the previous node
                 rp.stopStreaming(streamName, previousNode.getNodeId());
             }
+            
+            // Notify the server to stop streaming
+            if(endStream && this.rp.noNeighbours(streamName)) {
+                
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
