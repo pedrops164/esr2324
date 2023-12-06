@@ -42,6 +42,7 @@ class HandleStreamRequests implements Runnable{
         // Receive request
         byte[] data = this.receivedPacket.data;
         StreamRequest sr = StreamRequest.deserialize(data);
+        boolean fixPath = sr.fixingPath();
 
         PathNode previous = null;
         try{

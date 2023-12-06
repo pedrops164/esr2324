@@ -10,11 +10,14 @@ public class StreamRequest implements Serializable {
     private String streamName;
     private int clientID; // Acho que o clientID não vai ser necessário
     private Path path;
+    // Flag that represents whether or not this is a stream request to fix a path in case of a faild node
+    private boolean fixPath;
 
-    public StreamRequest(String streamName, int id, Path path){
+    public StreamRequest(String streamName, int id, Path path, boolean fixPath){
         this.streamName = streamName;
         this.clientID = id;
         this.path = path;
+        this.fixPath = fixPath;
     }
 
     public byte[] serialize() {
@@ -56,5 +59,9 @@ public class StreamRequest implements Serializable {
 
     public Path getPath() {
         return this.path;
+    }
+
+    public boolean fixingPath() {
+        return this.fixPath;
     }
 }

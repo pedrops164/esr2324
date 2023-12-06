@@ -32,10 +32,15 @@ class HandleStreamingRequest implements Runnable{
 
     public void run(){
 
+        boolean fixPath = this.sr.fixingPath();
         // This overlay node is not streaming is stream at the moment
-        if(!this.oNode.alreadyStreaming(this.sr.getStreamName())){
+        if(!this.oNode.alreadyStreaming(this.sr.getStreamName()) || fixPath){
             addFlux();
-            this.oNode.log(new LogEntry("This Overlay Node isn't streaming: " + this.sr.getStreamName()));
+            if (fixPath) {
+                this.oNode.log(new LogEntry("Fixing path of stream " + this.sr.getStreamName()));
+            } else {
+                this.oNode.log(new LogEntry("This Overlay Node isn't streaming: " + this.sr.getStreamName()));
+            }
             // Send the streaming request to the next node in the path
             try{
                 this.oNode.log(new LogEntry("Resending the streaming request along the path!"));
